@@ -1,5 +1,7 @@
 import { SignInForm } from "@/components/refine-ui/form/sign-in-form";
 
-export const Login = () => {
+const Login = () => {
   return <SignInForm />;
 };
+
+export default Login;
