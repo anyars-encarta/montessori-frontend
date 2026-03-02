@@ -15,9 +15,11 @@ import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import { dataProvider } from "./providers/data";
 
 import {
+  BookOpen,
   GraduationCap,
   Home,
   Users,
+  Users2Icon,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -39,6 +41,18 @@ import Register from "./pages/register";
 // import EnrollmentConfirm from "./pages/enrollments/confirm";
 import { authProvider } from "./providers/auth";
 import Dashboard from "./pages/dashboard";
+import ListStudents from "./pages/students/list";
+import CreateStudent from "./pages/students/create";
+import ShowStudent from "./pages/students/show";
+import EditStudent from "./pages/students/edit";
+import ListStaff from "./pages/staff/list";
+import EditStaff from "./pages/staff/edit";
+import CreateStaff from "./pages/staff/create";
+import ShowStaff from "./pages/staff/show";
+import CreateUser from "./pages/users/create";
+import EditUser from "./pages/users/edit";
+import ShowUser from "./pages/users/show";
+import ListUsers from "./pages/users/list";
 // import UpdateSubject from "./pages/subjects/edit";
 
 function App() {
@@ -74,49 +88,40 @@ function App() {
                   edit: "/classes/edit/:id",
                   meta: {
                     label: "Classes",
+                    icon: <BookOpen />,
+                  },
+                },
+                {
+                  name: "students",
+                  list: "/students",
+                  create: "/students/create",
+                  show: "/students/show/:id",
+                  edit: "/students/edit/:id",
+                  meta: {
+                    label: "Students",
                     icon: <GraduationCap />,
                   },
                 },
                 {
-                  name: "users",
-                  list: "/faculty",
-                  show: "/faculty/show/:id",
+                  name: "staff",
+                  list: "/staff",
+                  show: "/staff/show/:id",
+                  edit: "/staff/edit/:id",
+                  create: "/staff/create",
                   meta: {
-                    label: "Faculty",
+                    label: "Staff",
+                    icon: <Users2Icon />,
+                  },
+                },
+                {
+                  name: "users",
+                  list: "/users",
+                  show: "/users/show/:id",
+                  meta: {
+                    label: "Users",
                     icon: <Users />,
                   },
                 },
-                // {
-                //   name: "subjects",
-                //   list: "/subjects",
-                //   create: "/subjects/create",
-                //   show: "/subjects/show/:id",
-                //   edit: "/subjects/edit/:id",
-                //   meta: {
-                //     label: "Subjects",
-                //     icon: <BookOpen />,
-                //   },
-                // },
-                // {
-                //   name: "departments",
-                //   list: "/departments",
-                //   show: "/departments/show/:id",
-                //   edit: "/departments/edit/:id",
-                //   create: "/departments/create",
-                //   meta: {
-                //     label: "Departments",
-                //     icon: <Building2 />,
-                //   },
-                // },
-                // {
-                //   name: "enrollments",
-                //   list: "/enrollments/create",
-                //   create: "/enrollments/create",
-                //   meta: {
-                //     label: "Enrollments",
-                //     icon: <ClipboardCheck />,
-                //   },
-                // },
               ]}
             >
               <Routes>
@@ -148,30 +153,27 @@ function App() {
                     <Route path="show/:id" element={<ShowClass />} />
                     <Route path="edit/:id" element={<EditClass />} />
                   </Route>
-                  {/* <Route path="subjects">
-                    <Route index element={<SubjectsList />} />
-                    <Route path="create" element={<CreateSubject />} />
-                    <Route path="show/:id" element={<SubjectsShow />} />
-                    <Route path="edit/:id" element={<UpdateSubject />} />
-                  </Route> */}
 
-                  {/* <Route path="departments">
-                    <Route index element={<DepartmentsList />} />
-                    <Route path="create" element={<DepartmentsCreate />} />
-                    <Route path="show/:id" element={<DepartmentsShow />} />
-                  </Route> */}
+                  <Route path="students">
+                    <Route index element={<ListStudents />} />
+                    <Route path="create" element={<CreateStudent />} />
+                    <Route path="show/:id" element={<ShowStudent />} />
+                    <Route path="edit/:id" element={<EditStudent />} />
+                  </Route>
 
-                  {/* <Route path="faculty">
-                    <Route index element={<FacultyList />} />
-                    <Route path="show/:id" element={<FacultyShow />} />
-                  </Route> */}
+                  <Route path="staff">
+                    <Route index element={<ListStaff />} />
+                    <Route path="create" element={<CreateStaff />} />
+                    <Route path="show/:id" element={<ShowStaff />} />
+                    <Route path="edit/:id" element={<EditStaff />} />
+                  </Route>
 
-                  {/* <Route path="enrollments">
-                    <Route path="create" element={<EnrollmentsCreate />} />
-                    <Route path="join" element={<EnrollmentsJoin />} />
-                    <Route path="confirm" element={<EnrollmentConfirm />} />
-                  </Route> */}
-
+                  <Route path="users">
+                    <Route index element={<ListUsers />} />
+                    <Route path="create" element={<CreateUser />} />
+                    <Route path="show/:id" element={<ShowUser />} />
+                    <Route path="edit/:id" element={<EditUser />} />
+                  </Route>
                 </Route>
               </Routes>
               <Toaster />
