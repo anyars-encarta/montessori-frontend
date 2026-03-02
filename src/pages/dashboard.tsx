@@ -20,19 +20,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { Subject, Student, Staff } from "@/types";
-
-type ClassListItem = {
-  id: number;
-  name: string;
-  createdAt?: string;
-  subject?: {
-    name: string;
-  };
-  teacher?: {
-    name: string;
-  };
-};
+import type { Student, Staff, StudentAttendance, ClassRecord } from "@/types";
+import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
@@ -47,14 +36,17 @@ const Dashboard = () => {
     resource: "staff",
     pagination: { mode: "off" },
   });
+  //   resource: "subjects",
+  //   pagination: { mode: "off" },
+  // });
 
-  const { query: subjectsQuery } = useList<Subject>({
-    resource: "subjects",
+  const { query: classesQuery } = useList<ClassRecord>({
+    resource: "classes",
     pagination: { mode: "off" },
   });
 
-  const { query: classesQuery } = useList<ClassListItem>({
-    resource: "classes",
+  const { query: studentAttendanceQuery } = useList<StudentAttendance>({
+    resource: "student-attendances",
     pagination: { mode: "off" },
   });
 
@@ -66,13 +58,15 @@ const Dashboard = () => {
     () => staffQuery.data?.data ?? [],
     [staffQuery.data?.data],
   );
-  const subjects = useMemo(
-    () => subjectsQuery.data?.data ?? [],
-    [subjectsQuery.data?.data],
-  );
+
   const classes = useMemo(
     () => classesQuery.data?.data ?? [],
     [classesQuery.data?.data],
+  );
+
+  const studentsAttendances = useMemo(
+    () => studentAttendanceQuery.data?.data ?? [],
+    [studentAttendanceQuery.data?.data],
   );
 
   const studentsByGender = useMemo(() => {
@@ -98,34 +92,6 @@ const Dashboard = () => {
     [studentsByGender]
   );
 
-  const subjectsByDepartment = useMemo(() => {
-    const counts = subjects.reduce<Record<string, number>>((acc, subject) => {
-      const departmentName =
-        (subject as { department?: { name?: string } }).department?.name ??
-        "Unassigned";
-      acc[departmentName] = (acc[departmentName] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts).map(([departmentName, totalSubjects]) => ({
-      departmentName,
-      totalSubjects,
-    }));
-  }, [subjects]);
-
-  const classesBySubject = useMemo(() => {
-    const counts = classes.reduce<Record<string, number>>((acc, classItem) => {
-      const subjectName = classItem.subject?.name ?? "Unassigned";
-      acc[subjectName] = (acc[subjectName] || 0) + 1;
-      return acc;
-    }, {});
-
-    return Object.entries(counts).map(([subjectName, totalClasses]) => ({
-      subjectName,
-      totalClasses,
-    }));
-  }, [classes]);
-
   const newestStudents = useMemo(() => {
     return [...students]
       .sort((a, b) => {
@@ -146,26 +112,6 @@ const Dashboard = () => {
       })
       .slice(0, 5);
   }, [staff]);
-
-  // const topDepartments = useMemo(() => {
-  //   return [...subjectsByDepartment]
-  //     .sort((a, b) => b.totalSubjects - a.totalSubjects)
-  //     .slice(0, 5)
-  //     .map((item, index) => ({
-  //       ...item,
-  //       departmentId: index,
-  //     }));
-  // }, [subjectsByDepartment]);
-
-  // const topSubjects = useMemo(() => {
-  //   return [...classesBySubject]
-  //     .sort((a, b) => b.totalClasses - a.totalClasses)
-  //     .slice(0, 5)
-  //     .map((item, index) => ({
-  //       ...item,
-  //       subjectId: index,
-  //     }));
-  // }, [classesBySubject]);
 
   const kpis = [
     {
@@ -217,8 +163,6 @@ const Dashboard = () => {
   ], [boys, girls]);
 
   const user = localStorage.getItem("user");
-
-  console.log("Students:", students);
 
   return (
     <div className="space-y-6">
@@ -354,21 +298,10 @@ const Dashboard = () => {
         <CardContent className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground">
-              Subjects per Department
+              Weekly Attendance
             </h3>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={subjectsByDepartment}>
-                  <XAxis dataKey="departmentName" tick={{ fontSize: 12 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="totalSubjects"
-                    fill="#f97316"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <AttendanceChartContainer attendances={studentsAttendances} roleColors={roleColors} />
             </div>
           </div>
 
@@ -378,7 +311,7 @@ const Dashboard = () => {
             </h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={classesBySubject}>
+                <BarChart data={classes}>
                   <XAxis dataKey="subjectName" tick={{ fontSize: 12 }} />
                   <YAxis allowDecimals={false} />
                   <Tooltip />

@@ -379,3 +379,8 @@ export type SignUpPayload = {
   role: UserRole;
   department?: string;
 };
+
+export type WeekdayAttendancePoint = {
+  date: string;
+  present: boolean;
+};
