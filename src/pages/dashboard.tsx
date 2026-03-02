@@ -1,27 +1,21 @@
 import { useMemo } from "react";
 import { useLink, useList } from "@refinedev/core";
-import {
-  Bar,
-  BarChart,
-  RadialBar,
-  RadialBarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  GraduationCap,
-  Layers,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
+import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import type { Student, Staff, StudentAttendance, ClassRecord } from "@/types";
+import type {
+  Student,
+  Staff,
+  StudentAttendance,
+  ClassRecord,
+  StudentFeeRecord,
+  PaymentRecord,
+} from "@/types";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
+import FinanceChart from "@/components/FinanceChart";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
@@ -47,6 +41,16 @@ const Dashboard = () => {
 
   const { query: studentAttendanceQuery } = useList<StudentAttendance>({
     resource: "student-attendances",
+    pagination: { mode: "off" },
+  });
+
+  const { query: studentFeesQuery } = useList<StudentFeeRecord>({
+    resource: "student-fees/yearly-summary",
+    pagination: { mode: "off" },
+  });
+
+  const { query: studentPaymentsQuery } = useList<PaymentRecord>({
+    resource: "payments/yearly-summary",
     pagination: { mode: "off" },
   });
 
@@ -83,13 +87,13 @@ const Dashboard = () => {
   }, [students]);
 
   const boys = useMemo(
-    () => studentsByGender.find(item => item.gender === "male")?.total ?? 0,
-    [studentsByGender]
+    () => studentsByGender.find((item) => item.gender === "male")?.total ?? 0,
+    [studentsByGender],
   );
 
   const girls = useMemo(
-    () => studentsByGender.find(item => item.gender === "female")?.total ?? 0,
-    [studentsByGender]
+    () => studentsByGender.find((item) => item.gender === "female")?.total ?? 0,
+    [studentsByGender],
   );
 
   const newestStudents = useMemo(() => {
@@ -129,7 +133,9 @@ const Dashboard = () => {
     },
     {
       label: "Non-Teaching Staff",
-      value: staff.filter((staffMember) => staffMember.staffType === "non_teaching").length,
+      value: staff.filter(
+        (staffMember) => staffMember.staffType === "non_teaching",
+      ).length,
       icon: ShieldCheck,
       accent: "text-amber-600",
     },
@@ -141,26 +147,38 @@ const Dashboard = () => {
     },
   ];
 
-  const data = useMemo(() => [
-    {
-      name: "Boys",
-      count: boys,
-      pv: 2400,
-      fill: roleColors[0 % roleColors.length],
-    },
-    {
-      name: "Girls",
-      count: girls,
-      pv: 4800,
-      fill: roleColors[1 % roleColors.length],
-    },
-    {
-      name: "Total",
-      count: boys + girls,
-      pv: 4800,
-      fill: roleColors[2 % roleColors.length],
-    },
-  ], [boys, girls]);
+  const data = useMemo(
+    () => [
+      {
+        name: "Boys",
+        count: boys,
+        pv: 2400,
+        fill: roleColors[0 % roleColors.length],
+      },
+      {
+        name: "Girls",
+        count: girls,
+        pv: 4800,
+        fill: roleColors[1 % roleColors.length],
+      },
+      {
+        name: "Total",
+        count: boys + girls,
+        pv: 4800,
+        fill: roleColors[2 % roleColors.length],
+      },
+    ],
+    [boys, girls],
+  );
+
+  const studentFees = useMemo(
+    () => studentFeesQuery.data?.data ?? [],
+    [studentFeesQuery.data?.data],
+  );
+  const studentPayments = useMemo(
+    () => studentPaymentsQuery.data?.data ?? [],
+    [studentPaymentsQuery.data?.data],
+  );
 
   const user = localStorage.getItem("user");
 
@@ -208,28 +226,28 @@ const Dashboard = () => {
             <CardTitle>Students By Gender</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-              <div className="relative w-full h-72">
-                <ResponsiveContainer>
-                  <RadialBarChart
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="40%"
-                    outerRadius="100%"
-                    barSize={32}
-                    data={data}
-                  >
-                    <RadialBar background dataKey="count" />
-                  </RadialBarChart>
-                </ResponsiveContainer>
+            <div className="relative w-full h-72">
+              <ResponsiveContainer>
+                <RadialBarChart
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="40%"
+                  outerRadius="100%"
+                  barSize={32}
+                  data={data}
+                >
+                  <RadialBar background dataKey="count" />
+                </RadialBarChart>
+              </ResponsiveContainer>
 
-                <img
-                  src="/maleFemale.png"
-                  alt="maleFemale"
-                  width={50}
-                  height={50}
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                />
-              </div>
+              <img
+                src="/maleFemale.png"
+                alt="maleFemale"
+                width={50}
+                height={50}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              />
+            </div>
             <div className="flex flex-wrap gap-2">
               {studentsByGender.map((entry, index) => (
                 <span
@@ -242,13 +260,13 @@ const Dashboard = () => {
                       backgroundColor: roleColors[index % roleColors.length],
                     }}
                   />
-                  {entry.gender.charAt(0).toUpperCase() + entry.gender.slice(1).toLowerCase()} · {entry.total}
+                  {entry.gender.charAt(0).toUpperCase() +
+                    entry.gender.slice(1).toLowerCase()}{" "}
+                  · {entry.total}
                 </span>
               ))}
 
-              <span
-                className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium"
-              >
+              <span className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs font-medium">
                 <span
                   className="h-2 w-2 rounded-full"
                   style={{
@@ -301,27 +319,19 @@ const Dashboard = () => {
               Weekly Attendance
             </h3>
             <div className="h-80">
-              <AttendanceChartContainer attendances={studentsAttendances} roleColors={roleColors} />
+              <AttendanceChartContainer
+                attendances={studentsAttendances}
+                roleColors={roleColors}
+              />
             </div>
           </div>
 
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground">
-              Classes per Subject
+              Finance
             </h3>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={classes}>
-                  <XAxis dataKey="subjectName" tick={{ fontSize: 12 }} />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar
-                    dataKey="totalClasses"
-                    fill="#0ea5e9"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <FinanceChart fees={studentFees} payments={studentPayments} />
             </div>
           </div>
         </CardContent>
@@ -349,7 +359,9 @@ const Dashboard = () => {
                     #{index + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium">{item.firstName + " " + item.lastName}</p>
+                    <p className="text-sm font-medium">
+                      {item.firstName + " " + item.lastName}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {item.enrollments?.[0]?.class?.name ?? "No class"} ·{" "}
                       {item.enrollments?.[0]?.supervisor
@@ -385,7 +397,9 @@ const Dashboard = () => {
                     #{index + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium">{teacher.firstName + " " + teacher.lastName}</p>
+                    <p className="text-sm font-medium">
+                      {teacher.firstName + " " + teacher.lastName}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {teacher.email}
                     </p>
