@@ -33,7 +33,7 @@ const AttendanceChart = ({
               borderRadius: "10px",
               borderColor: "black",
               backgroundColor: "black",
-              color: colors[2],
+              color: "white",
             }}
           />
           <Legend

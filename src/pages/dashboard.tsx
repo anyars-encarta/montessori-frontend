@@ -411,63 +411,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader>
-            <CardTitle>Classes with Most Students</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {topDepartments.map((dept, index) => (
-              <div
-                key={dept.departmentId}
-                className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{index + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">{dept.departmentName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {dept.totalSubjects} subjects
-                    </p>
-                  </div>
-                </div>
-                <Badge>{dept.totalSubjects}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="hover:shadow-md transition-shadow">
-          <CardHeader>
-            <CardTitle>Subjects with Most Classes</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {topSubjects.map((subject, index) => (
-              <div
-                key={subject.subjectId}
-                className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{index + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">{subject.subjectName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {subject.totalClasses} classes
-                    </p>
-                  </div>
-                </div>
-                <Badge>{subject.totalClasses}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div> */}
-
       <Separator />
     </div>
   );

@@ -11,9 +11,6 @@ import {
 } from "recharts";
 
 const FinanceChart = ({fees, payments}: {fees: any, payments: any}) => {
-  console.log("studentFees", fees);
-  console.log("studentPayments", payments);
-  
   const data = [
     {
       name: "Jan",
