@@ -147,25 +147,25 @@ const Dashboard = () => {
       .slice(0, 5);
   }, [staff]);
 
-  const topDepartments = useMemo(() => {
-    return [...subjectsByDepartment]
-      .sort((a, b) => b.totalSubjects - a.totalSubjects)
-      .slice(0, 5)
-      .map((item, index) => ({
-        ...item,
-        departmentId: index,
-      }));
-  }, [subjectsByDepartment]);
+  // const topDepartments = useMemo(() => {
+  //   return [...subjectsByDepartment]
+  //     .sort((a, b) => b.totalSubjects - a.totalSubjects)
+  //     .slice(0, 5)
+  //     .map((item, index) => ({
+  //       ...item,
+  //       departmentId: index,
+  //     }));
+  // }, [subjectsByDepartment]);
 
-  const topSubjects = useMemo(() => {
-    return [...classesBySubject]
-      .sort((a, b) => b.totalClasses - a.totalClasses)
-      .slice(0, 5)
-      .map((item, index) => ({
-        ...item,
-        subjectId: index,
-      }));
-  }, [classesBySubject]);
+  // const topSubjects = useMemo(() => {
+  //   return [...classesBySubject]
+  //     .sort((a, b) => b.totalClasses - a.totalClasses)
+  //     .slice(0, 5)
+  //     .map((item, index) => ({
+  //       ...item,
+  //       subjectId: index,
+  //     }));
+  // }, [classesBySubject]);
 
   const kpis = [
     {
@@ -465,10 +465,10 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* <div className="grid gap-6 lg:grid-cols-2">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
-            <CardTitle>Departments with Most Subjects</CardTitle>
+            <CardTitle>Classes with Most Students</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {topDepartments.map((dept, index) => (
@@ -519,7 +519,7 @@ const Dashboard = () => {
             ))}
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Separator />
     </div>
