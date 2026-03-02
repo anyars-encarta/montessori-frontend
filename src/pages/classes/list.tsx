@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import ActionButton from "@/components/actionButton";
 import { CreateButton } from "@/components/refine-ui/buttons/create";
 import { DeleteButton } from "@/components/refine-ui/buttons/delete";
@@ -8,7 +9,6 @@ import { ListView } from "@/components/refine-ui/views/list-view";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Staff } from "@/types";
-import { useList } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/table-core";
 import { Search } from "lucide-react";

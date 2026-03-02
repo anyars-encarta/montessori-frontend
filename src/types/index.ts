@@ -280,6 +280,60 @@ export type StudentFeeWithMeta = {
   term: TermRecord | null;
 };
 
+export type ClassDetails = {
+  id: number;
+  name: string;
+  description: string;
+  status: "active" | "inactive";
+  level: string;
+  capacity: number;
+  bannerUrl?: string;
+  bannerCldPubId?: string;
+  supervisorId: number;
+  createdAt: string;
+  updatedAt: string;
+  supervisor: Staff | null;
+  subjects: Array<{
+    classId: number;
+    subjectId: number;
+    subject: Subject | null;
+  }>;
+  enrollments: Array<{
+    enrollment: {
+      id: number;
+      studentId: number;
+      classId: number;
+      academicYearId: number;
+      enrollmentDate: string;
+      promotionDate: string | null;
+      createdAt: string;
+    };
+    student: {
+      id: number;
+      firstName: string;
+      lastName: string;
+      cloudinaryImageUrl: string | null;
+      registrationNumber: string | null;
+    } | null;
+    academicYear: {
+      id: number;
+      year: number;
+      startDate: string;
+      endDate: string;
+      createdAt: string;
+    } | null;
+  }>;
+};
+
+export type StudentTableRow = {
+  id: number;
+  name: string;
+  registrationNumber: string | null;
+  academicYear: string;
+  enrollmentDate: string;
+  image: string | null;
+};
+
 export type PaymentRecord = {
   id: number;
   studentId: number;
@@ -351,23 +405,6 @@ export type Department = {
   id: number;
   name: string;
   description: string;
-};
-
-export type ClassDetails = {
-  id: number;
-  name: string;
-  description: string;
-  status: "active" | "inactive";
-  capacity: number;
-  courseCode: string;
-  courseName: string;
-  bannerUrl?: string;
-  bannerCldPubId?: string;
-  subject?: Subject;
-  teacher?: Staff;
-  department?: Department;
-  schedules: Schedule[];
-  inviteCode?: string;
 };
 
 export type SignUpPayload = {
