@@ -13,7 +13,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Student, StudentEnrollmentRow, StudentPaymentRow } from "@/types";
+import {
+  Student,
+  StudentEnrollmentRow,
+  StudentPaymentRow,
+  StudentSiblingRow,
+} from "@/types";
 import PageLoader from "@/components/PageLoader";
 
 const getInitials = (name = "") => {
@@ -73,25 +78,6 @@ const ShowStudent = () => {
           </span>
         ),
       },
-      // {
-      //   id: "actions",
-      //   size: 140,
-      //   header: () => <p className="column-title">Actions</p>,
-      //   cell: ({ row }) => {
-      //     return (
-      //       <div className="flex items-center gap-2">
-      //         <ShowButton
-      //           resource="enrollments"
-      //           recordItemId={row.original.id}
-      //           variant="outline"
-      //           size="sm"
-      //         >
-      //           <ActionButton type="view" />
-      //         </ShowButton>
-      //       </div>
-      //     );
-      //   },
-      // },
     ],
     [],
   );
@@ -149,25 +135,41 @@ const ShowStudent = () => {
         size: 130,
         header: () => <p className="column-title">Reference</p>,
       },
-      // {
-      //   id: "actions",
-      //   size: 140,
-      //   header: () => <p className="column-title">Actions</p>,
-      //   cell: ({ row }) => {
-      //     return (
-      //       <div className="flex items-center gap-2">
-      //         <ShowButton
-      //           resource="payments"
-      //           recordItemId={row.original.id}
-      //           variant="outline"
-      //           size="sm"
-      //         >
-      //           <ActionButton type="view" />
-      //         </ShowButton>
-      //       </div>
-      //     );
-      //   },
-      // },
+    ],
+    [],
+  );
+
+  const siblingsColumns = useMemo<ColumnDef<StudentSiblingRow>[]>(
+    () => [
+      {
+        id: "name",
+        accessorKey: "name",
+        size: 180,
+        header: "Name",
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue<string>()}</span>
+        ),
+      },
+      {
+        id: "admissionDate",
+        accessorKey: "admissionDate",
+        size: 130,
+        header: "Admission Date",
+        cell: ({ getValue }) => (
+          <span className="text-foreground">
+            {formatDate(getValue<string>())}
+          </span>
+        ),
+      },
+      {
+        id: "currentClass",
+        accessorKey: "currentClass",
+        size: 220,
+        header: "Current Class",
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue<string>()}</span>
+        ),
+      },
     ],
     [],
   );
@@ -187,6 +189,17 @@ const ShowStudent = () => {
     columns: paymentColumns,
     refineCoreProps: {
       resource: `students/${studentId}/payments`,
+      pagination: {
+        pageSize: 5,
+        mode: "server",
+      },
+    },
+  });
+
+  const siblingsTable = useTable<StudentSiblingRow>({
+    columns: siblingsColumns,
+    refineCoreProps: {
+      resource: `students/${studentId}/siblings`,
       pagination: {
         pageSize: 5,
         mode: "server",
@@ -254,7 +267,10 @@ const ShowStudent = () => {
                 {student.isActive ? "Active" : "Inactive"}
               </Badge>
               {student.gender && (
-                <Badge variant="outline">{student.gender}</Badge>
+                <Badge variant="outline">
+                  {student.gender.split("")[0].toUpperCase() +
+                    student.gender.slice(1)}
+                </Badge>
               )}
             </div>
           </div>
@@ -336,6 +352,19 @@ const ShowStudent = () => {
           </div>
 
           <Separator />
+
+          {student.siblingRelations.length > 0 && (
+            <>
+              <div>
+                <h3 className="font-semibold mb-3">
+                  Siblings ({student.siblingRelations.length})
+                </h3>
+                <DataTable table={siblingsTable} />
+              </div>
+
+              <Separator />
+            </>
+          )}
 
           <div>
             <h3 className="font-semibold mb-3">🎒 Academic Snapshot</h3>
@@ -474,12 +503,14 @@ const ShowStudent = () => {
 
           <Separator />
 
-          <div>
-            <h3 className="font-semibold mb-3">
-              Payments ({student.payments.length})
-            </h3>
-            <DataTable table={paymentsTable} />
-          </div>
+          {student.payments.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3">
+                Payments ({student.payments.length})
+              </h3>
+              <DataTable table={paymentsTable} />
+            </div>
+          )}
         </CardContent>
       </Card>
     </ShowView>

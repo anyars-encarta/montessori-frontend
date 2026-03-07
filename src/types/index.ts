@@ -108,6 +108,11 @@ export type StudentSiblingRelation = {
   studentId: number;
   siblingId: number;
   sibling: StudentBasic | null;
+  currentClass?: {
+    class: ClassRecord | null;
+    academicYear: AcademicYearRecord | null;
+    enrollmentDate: string;
+  } | null;
 };
 
 export type HealthDetails = {
@@ -241,6 +246,13 @@ export type StudentPaymentRow = {
   reference: string;
   feeName: string;
   status: string;
+};
+
+export type StudentSiblingRow = {
+  id: number;
+  name: string;
+  admissionDate: string;
+  currentClass: string;
 };
 
 export type SubjectRecord = {
