@@ -86,7 +86,7 @@ const UploadWidget = ({
       try {
         setIsRemoving(true);
 
-        const response = await fetch(`${BACKEND_BASE_URL}cloudinary/delete`, {
+        const response = await fetch(`${BACKEND_BASE_URL}/cloudinary/delete`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -105,9 +105,9 @@ function App() {
                 {
                   name: "staff",
                   list: "/staff",
+                  create: "/staff/create",
                   show: "/staff/show/:id",
                   edit: "/staff/edit/:id",
-                  create: "/staff/create",
                   meta: {
                     label: "Staff",
                     icon: <Users2Icon />,
@@ -116,7 +116,9 @@ function App() {
                 {
                   name: "users",
                   list: "/users",
+                  create: "/users/create",
                   show: "/users/show/:id",
+                  edit: "/users/edit/:id",
                   meta: {
                     label: "Users",
                     icon: <Users />,

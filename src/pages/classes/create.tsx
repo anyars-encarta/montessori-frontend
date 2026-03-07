@@ -173,8 +173,11 @@ const CreateClass = () => {
                             type="number"
                             min={0}
                             placeholder="30"
-                            value={field.value ?? 0}
-                            onChange={(e) => field.onChange(e.target.value)}
+                            value={(field.value as number | undefined) ?? ""}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              field.onChange(value === "" ? undefined : Number(value));
+                            }}
                             onBlur={field.onBlur}
                             name={field.name}
                             ref={field.ref}

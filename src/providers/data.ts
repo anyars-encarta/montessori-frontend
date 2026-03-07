@@ -5,32 +5,34 @@ import { HttpError } from "@refinedev/core";
 
 if (!BACKEND_BASE_URL) {
   throw new Error("BACKEND_BASE_URL is not defined");
-};
+}
 
 const buildHttpError = async (response: Response): Promise<HttpError> => {
-  let message ='Request failed.';
+  let message = "Request failed.";
 
   try {
-    const payload = (await response.json() as { message?: string });
+    const payload = (await response.json()) as { message?: string };
 
     if (payload?.message) message = payload.message;
   } catch (e) {
     console.error("Failed to parse error response:", e);
     // Ignore errors
-  };
+  }
 
   return {
     message,
     statusCode: response.status,
   };
-}
+};
 
 const parseJsonSafely = async <T>(response: Response): Promise<T> => {
   const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
 
   if (!contentType.includes("application/json")) {
     throw {
-      message: `Expected JSON response but received '${contentType || "unknown"}' from ${response.url}`,
+      message: `Expected JSON response but received '${
+        contentType || "unknown"
+      }' from ${response.url}`,
       statusCode: response.status,
     } as HttpError;
   }
@@ -42,18 +44,22 @@ const options: CreateDataProviderOptions = {
   getList: {
     getEndpoint: ({ resource }) => resource,
 
-    buildQueryParams: async ({ resource, pagination, filters}) => {
-      const page = pagination?.currentPage ?? 1;
-      const pageSize = pagination?.pageSize ?? 10;
+    buildQueryParams: async ({ resource, pagination, filters }) => {
+      const params: Record<string, string | number> = {};
 
-      const params: Record<string, string | number> = { page, limit: pageSize };
+      if (pagination?.mode !== "off") {
+        const page = pagination?.currentPage ?? 1;
+        const pageSize = pagination?.pageSize ?? 10;
+        params.page = page;
+        params.limit = pageSize;
+      }
 
       filters?.forEach((filter) => {
-        const field = 'field' in filter ? filter.field : '';
+        const field = "field" in filter ? filter.field : "";
 
         if (filter.value == null) return;
-        
-        const value = String(filter.value)
+
+        const value = String(filter.value);
 
         if (field === "role") {
           params.role = value;
@@ -68,7 +74,7 @@ const options: CreateDataProviderOptions = {
         //     params.search = value;
         //   }
         // }
-        
+
         // if (resource === "subjects") {
         //   if (field === "department") params.department = value;
         //   if (field === "name" || field === "code") params.search = value;
@@ -85,17 +91,21 @@ const options: CreateDataProviderOptions = {
     },
 
     mapResponse: async (response) => {
-      if(!response.ok) throw await buildHttpError(response);
+      if (!response.ok) throw await buildHttpError(response);
 
-      const payload: ListResponse = await parseJsonSafely<ListResponse>(response.clone());
+      const payload: ListResponse = await parseJsonSafely<ListResponse>(
+        response.clone(),
+      );
 
       return payload.data ?? [];
     },
 
-    getTotalCount: async(response) => {
-      if(!response.ok) throw await buildHttpError(response);
+    getTotalCount: async (response) => {
+      if (!response.ok) throw await buildHttpError(response);
 
-      const payload: ListResponse = await parseJsonSafely<ListResponse>(response.clone());
+      const payload: ListResponse = await parseJsonSafely<ListResponse>(
+        response.clone(),
+      );
 
       return payload.pagination?.total ?? payload.data?.length ?? 0;
     },
@@ -105,11 +115,20 @@ const options: CreateDataProviderOptions = {
     getEndpoint: ({ resource }) => resource,
     buildBodyParams: ({ variables }) => variables,
     mapResponse: async (response) => {
-      if(!response.ok) throw await buildHttpError(response);
-      
-      const json: CreateResponse = await parseJsonSafely<CreateResponse>(response);
+      if (!response.ok) throw await buildHttpError(response);
 
-      return json.data ?? [];
+      const json: CreateResponse = await parseJsonSafely<CreateResponse>(
+        response,
+      );
+
+      if (!json.data) {
+        throw {
+          message: "Create response did not include a record payload.",
+          statusCode: response.status,
+        } as HttpError;
+      }
+
+      return json.data;
     },
   },
 
@@ -117,29 +136,33 @@ const options: CreateDataProviderOptions = {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
     buildBodyParams: ({ variables }) => variables,
     mapResponse: async (response) => {
-      if(!response.ok) throw await buildHttpError(response);
+      if (!response.ok) throw await buildHttpError(response);
 
-      const json: CreateResponse = await parseJsonSafely<CreateResponse>(response);
+      const json: CreateResponse = await parseJsonSafely<CreateResponse>(
+        response,
+      );
 
-      return json.data ?? null;
+      return json.data ?? {};
     },
   },
-  
+
   deleteOne: {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
     mapResponse: async (response) => {
-      if(!response.ok) throw await buildHttpError(response);
+      if (!response.ok) throw await buildHttpError(response);
 
-      return null;
+      return {};
     },
   },
 
   getOne: {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
     mapResponse: async (response) => {
-      if(!response.ok) throw await buildHttpError(response);
+      if (!response.ok) throw await buildHttpError(response);
 
-      const json: GetOneResponse = await parseJsonSafely<GetOneResponse>(response);
+      const json: GetOneResponse = await parseJsonSafely<GetOneResponse>(
+        response,
+      );
 
       return json.data ?? null;
     },
@@ -152,7 +175,7 @@ const options: CreateDataProviderOptions = {
   // updateMany: ({ resource, ids, variables, meta }) => Promise,
   // custom: ({ url, method, filters, sorters, payload, query, headers, meta }) =>
   //   Promise,
-}
+};
 
 const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options);
 

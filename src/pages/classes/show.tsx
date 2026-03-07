@@ -78,14 +78,12 @@ const ShowClass = () => {
         cell: ({ getValue }) => {
           const date = new Date(getValue<string>());
           return (
-            <span className="text-foreground">
-              {date.toLocaleDateString()}
-            </span>
+            <span className="text-foreground">{date.toLocaleDateString()}</span>
           );
         },
       },
     ],
-    []
+    [],
   );
 
   const studentData: StudentTableRow[] = useMemo(
@@ -101,7 +99,7 @@ const ShowClass = () => {
         enrollmentDate: enrollment.enrollment.enrollmentDate,
         image: enrollment.student?.cloudinaryImageUrl ?? null,
       })) ?? [],
-    [classDetails?.enrollments]
+    [classDetails?.enrollments],
   );
 
   const studentsTable = useTable<StudentTableRow>({
@@ -115,13 +113,15 @@ const ShowClass = () => {
     return (
       <ShowView className="class-view class-show">
         <ShowViewHeader resource="classes" title="Class Details" />
-        <p className="state-message">
-          {query.isLoading
-            ? <PageLoader />
-            : query.isError
-              ? "Failed to load class details."
-              : "Class details not found."}
-        </p>
+        {query.isLoading ? (
+          <PageLoader />
+        ) : (
+          <p className="state-message">
+            {" "}
+            query.isError ? "Failed to load class details." : "Class details not
+            found."
+          </p>
+        )}
       </ShowView>
     );
   }
@@ -170,7 +170,9 @@ const ShowClass = () => {
                 <p className="text-xs text-muted-foreground">
                   Hired:{" "}
                   {classDetails.supervisor?.hireDate
-                    ? new Date(classDetails.supervisor.hireDate).toLocaleDateString()
+                    ? new Date(
+                        classDetails.supervisor.hireDate,
+                      ).toLocaleDateString()
                     : "N/A"}
                 </p>
               </div>

@@ -3,8 +3,9 @@ import * as z from "zod";
 export const createClassSchema = z.object({
   name: z.string().trim().min(1, "Class name is required"),
   level: z.string().trim().min(1, "Level is required"),
-  capacity: z.coerce
+  capacity: z
     .number({
+      required_error: "Capacity is required",
       invalid_type_error: "Capacity is required",
     })
     .int("Capacity must be a whole number")

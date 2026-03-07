@@ -1,6 +1,11 @@
 import { StudentAttendance, WeekdayAttendancePoint } from "@/types";
 import AttendanceChart from "./AttendanceChart";
 
+const parseAttendanceDate = (value: string) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? new Date(`${value}T00:00:00`)
+    : new Date(value);
+
 const getStudentAttendance = (attendances: StudentAttendance[]) => {
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -12,7 +17,7 @@ const getStudentAttendance = (attendances: StudentAttendance[]) => {
 
   const resData: WeekdayAttendancePoint[] = attendances
     .filter((item) => {
-      const date = new Date(item.attendanceDate);
+      const date = parseAttendanceDate(item.attendanceDate);
       const itemDayOfWeek = date.getDay();
       const isWeekday = itemDayOfWeek >= 1 && itemDayOfWeek <= 5;
       return date >= lastMonday && isWeekday;
@@ -39,7 +44,7 @@ const AttendanceChartContainer = ({ attendances, roleColors }: { attendances: St
   };
 
   resData.forEach((item) => {
-    const itemDate = new Date(item.date);
+    const itemDate = parseAttendanceDate(item.date);
     const itemDayOfWeek = itemDate.getDay();
     if (itemDayOfWeek >= 1 && itemDayOfWeek <= 5) {
       const dayName = daysOfWeek[itemDayOfWeek - 1];
