@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { ClassDetails, StudentTableRow } from "@/types";
+import PageLoader from "@/components/PageLoader";
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -116,7 +117,7 @@ const ShowClass = () => {
         <ShowViewHeader resource="classes" title="Class Details" />
         <p className="state-message">
           {query.isLoading
-            ? "Loading class details..."
+            ? <PageLoader />
             : query.isError
               ? "Failed to load class details."
               : "Class details not found."}

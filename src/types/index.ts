@@ -1,3 +1,5 @@
+import { CreateClassValues } from "@/validations";
+
 export type Subject = {
   id: number;
   name: string;
@@ -155,8 +157,27 @@ export type ClassRecord = {
   level: string;
   capacity: number;
   supervisorId: number;
+  subjectIds: number[];
   createdAt: string;
   updatedAt: string;
+};
+
+export type EditClassFormValues = Omit<CreateClassValues, "subjectIds"> & {
+  subjectIds?: number[];
+};
+
+export type ClassSubjectRow = {
+  classId: number;
+  subjectId: number;
+};
+
+export type ClassEditRecord = {
+  id: number;
+  name: string;
+  level: string;
+  capacity: number;
+  supervisorId: number;
+  subjects: ClassSubjectRow[];
 };
 
 export type AcademicYearRecord = {
