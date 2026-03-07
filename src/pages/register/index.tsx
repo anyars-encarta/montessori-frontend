@@ -1,5 +1,7 @@
 import { SignUpForm } from "@/components/refine-ui/form/sign-up-form";
 
-export const Register = () => {
+const Register = () => {
   return <SignUpForm />;
 };
+
+export default Register;
