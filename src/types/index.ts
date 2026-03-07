@@ -162,6 +162,16 @@ export type ClassRecord = {
   updatedAt: string;
 };
 
+export type ClassStudentRow = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  registrationNumber: string | null;
+  cloudinaryImageUrl: string | null;
+  enrollmentDate: string;
+  isActive: boolean;
+};
+
 export type EditClassFormValues = Omit<CreateClassValues, "subjectIds"> & {
   subjectIds?: number[];
 };

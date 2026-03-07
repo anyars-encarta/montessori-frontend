@@ -14,20 +14,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ClassDetails } from "@/types";
+import { ClassDetails, ClassStudentRow } from "@/types";
 import PageLoader from "@/components/PageLoader";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
 import ActionButton from "@/components/actionButton";
-
-type ClassStudentRow = {
-  id: number;
-  firstName: string;
-  lastName: string;
-  registrationNumber: string | null;
-  cloudinaryImageUrl: string | null;
-  enrollmentDate: string;
-  isActive: boolean;
-};
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
