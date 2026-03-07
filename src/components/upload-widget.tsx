@@ -75,7 +75,7 @@ const UploadWidget = ({
     }, 500);
 
     return () => window.clearInterval(intervalId);
-  }, [publicId]);
+  }, []);
 
   const openWidget = () => {
     if (!disabled) widgetRef.current?.open();
@@ -86,7 +86,7 @@ const UploadWidget = ({
       try {
         setIsRemoving(true);
 
-        const response = await fetch(`${BACKEND_BASE_URL}/cloudinary/delete`, {
+        const response = await fetch(`${BACKEND_BASE_URL.replace(/\/$/, "")}/cloudinary/delete`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

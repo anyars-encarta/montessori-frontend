@@ -14,13 +14,16 @@ const getStudentAttendance = (attendances: StudentAttendance[]) => {
   const lastMonday = new Date(today);
   lastMonday.setDate(today.getDate() - daySinceMonday);
   lastMonday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(today);
+  endOfToday.setHours(23, 59, 59, 999);
 
   const resData: WeekdayAttendancePoint[] = attendances
     .filter((item) => {
       const date = parseAttendanceDate(item.attendanceDate);
       const itemDayOfWeek = date.getDay();
       const isWeekday = itemDayOfWeek >= 1 && itemDayOfWeek <= 5;
-      return date >= lastMonday && isWeekday;
+      
+      return date >= lastMonday && date <= endOfToday && isWeekday
     })
     .map((item) => ({
       date: item.attendanceDate,
@@ -30,18 +33,25 @@ const getStudentAttendance = (attendances: StudentAttendance[]) => {
   return { resData, dayOfWeek };
 };
 
-const AttendanceChartContainer = ({ attendances, roleColors }: { attendances: StudentAttendance[]; roleColors: string[] }) => {
+const AttendanceChartContainer = ({
+  attendances,
+  roleColors,
+}: {
+  attendances: StudentAttendance[];
+  roleColors: string[];
+}) => {
   const { resData } = getStudentAttendance(attendances);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
-  const attendanceMap: {[key: string] : { present: number; absent: number }} = {
-    Mon: { present: 0, absent: 0 },
-    Tue: { present: 0, absent: 0 },
-    Wed: { present: 0, absent: 0 },
-    Thu: { present: 0, absent: 0 },
-    Fri: { present: 0, absent: 0 },
-  };
+  const attendanceMap: { [key: string]: { present: number; absent: number } } =
+    {
+      Mon: { present: 0, absent: 0 },
+      Tue: { present: 0, absent: 0 },
+      Wed: { present: 0, absent: 0 },
+      Thu: { present: 0, absent: 0 },
+      Fri: { present: 0, absent: 0 },
+    };
 
   resData.forEach((item) => {
     const itemDate = parseAttendanceDate(item.date);

@@ -44,6 +44,7 @@ const CreateClass = () => {
     defaultValues: {
       name: "",
       level: "",
+      capacity: 0,
       supervisorId: undefined,
       subjectIds: [],
     },

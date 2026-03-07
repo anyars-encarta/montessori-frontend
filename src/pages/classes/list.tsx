@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import ActionButton from "@/components/actionButton";
 import { CreateButton } from "@/components/refine-ui/buttons/create";
-import { DeleteButton } from "@/components/refine-ui/buttons/delete";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
@@ -160,7 +159,7 @@ const ClassesList = () => {
                 >
                   <ActionButton type="view" />
                 </ShowButton>
-                <DeleteButton
+                {/* <DeleteButton
                   resource="classes"
                   recordItemId={row.original.id}
                   variant="outline"
@@ -168,7 +167,7 @@ const ClassesList = () => {
                   className="cursor-pointer"
                 >
                   <ActionButton type="delete" />
-                </DeleteButton>
+                </DeleteButton> */}
               </div>
             );
           },

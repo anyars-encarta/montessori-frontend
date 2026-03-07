@@ -14,8 +14,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ClassDetails, StudentTableRow } from "@/types";
+import { ClassDetails } from "@/types";
 import PageLoader from "@/components/PageLoader";
+import { ShowButton } from "@/components/refine-ui/buttons/show";
+import ActionButton from "@/components/actionButton";
+
+type ClassStudentRow = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  registrationNumber: string | null;
+  cloudinaryImageUrl: string | null;
+  enrollmentDate: string;
+  isActive: boolean;
+};
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -37,23 +49,32 @@ const ShowClass = () => {
 
   const classDetails = query.data?.data;
 
-  const studentColumns = useMemo<ColumnDef<StudentTableRow>[]>(
+  const studentColumns = useMemo<ColumnDef<ClassStudentRow>[]>(
     () => [
       {
         id: "name",
-        accessorKey: "name",
+        accessorFn: (row) => `${row.firstName} ${row.lastName}`.trim(),
         size: 240,
         header: () => <p className="column-title">Student</p>,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <Avatar className="size-7">
-              {row.original.image && (
-                <AvatarImage src={row.original.image} alt={row.original.name} />
+              {row.original.cloudinaryImageUrl && (
+                <AvatarImage
+                  src={row.original.cloudinaryImageUrl}
+                  alt={`${row.original.firstName} ${row.original.lastName}`}
+                />
               )}
-              <AvatarFallback>{getInitials(row.original.name)}</AvatarFallback>
+              <AvatarFallback>
+                {getInitials(
+                  `${row.original.firstName} ${row.original.lastName}`,
+                )}
+              </AvatarFallback>
             </Avatar>
             <div className="flex flex-col truncate">
-              <span className="truncate font-medium">{row.original.name}</span>
+              <span className="truncate font-medium">
+                {row.original.firstName} {row.original.lastName}
+              </span>
               <span className="text-xs text-muted-foreground truncate">
                 {row.original.registrationNumber ?? "N/A"}
               </span>
@@ -62,23 +83,58 @@ const ShowClass = () => {
         ),
       },
       {
-        id: "academicYear",
-        accessorKey: "academicYear",
+        id: "admissionDate",
+        accessorKey: "admissionDate",
         size: 120,
-        header: () => <p className="column-title">Year</p>,
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue<string>()}</span>
-        ),
-      },
-      {
-        id: "enrollmentDate",
-        accessorKey: "enrollmentDate",
-        size: 140,
         header: () => <p className="column-title">Enrollment Date</p>,
         cell: ({ getValue }) => {
           const date = new Date(getValue<string>());
           return (
-            <span className="text-foreground">{date.toLocaleDateString()}</span>
+            <span className="text-foreground">
+              {Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString()}
+            </span>
+          );
+        },
+      },
+      {
+        id: "status",
+        accessorKey: "isActive",
+        size: 110,
+        header: () => <p className="column-title">Status</p>,
+        cell: ({ getValue }) => {
+          const isActive = Boolean(getValue<boolean>());
+          return (
+            <Badge variant={isActive ? "default" : "secondary"}>
+              {isActive ? "Active" : "Inactive"}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "actions",
+        size: 140,
+        header: () => <p className="column-title">Actions</p>,
+        cell: ({ row }) => {
+          return (
+            <div className="flex items-center gap-2">
+              <ShowButton
+                resource="students"
+                recordItemId={row.original.id}
+                variant="outline"
+                size="sm"
+              >
+                <ActionButton type="view" />
+              </ShowButton>
+              {/* <DeleteButton
+                        resource="classes"
+                        recordItemId={row.original.id}
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer"
+                      >
+                        <ActionButton type="delete" />
+                      </DeleteButton> */}
+            </div>
           );
         },
       },
@@ -86,27 +142,15 @@ const ShowClass = () => {
     [],
   );
 
-  const studentData: StudentTableRow[] = useMemo(
-    () =>
-      classDetails?.enrollments?.map((enrollment) => ({
-        id: enrollment.student?.id ?? 0,
-        name:
-          enrollment.student?.firstName && enrollment.student?.lastName
-            ? `${enrollment.student.firstName} ${enrollment.student.lastName}`
-            : "Unknown",
-        registrationNumber: enrollment.student?.registrationNumber ?? null,
-        academicYear: enrollment.academicYear?.year.toString() ?? "N/A",
-        enrollmentDate: enrollment.enrollment.enrollmentDate,
-        image: enrollment.student?.cloudinaryImageUrl ?? null,
-      })) ?? [],
-    [classDetails?.enrollments],
-  );
-
-  const studentsTable = useTable<StudentTableRow>({
+  const studentsTable = useTable<ClassStudentRow>({
     columns: studentColumns,
-    data: studentData,
-    enableSorting: true,
-    enableFilters: false,
+    refineCoreProps: {
+      resource: `classes/${classId}/students`,
+      pagination: {
+        pageSize: 3,
+        mode: "server",
+      },
+    },
   });
 
   if (query.isLoading || query.isError || !classDetails) {
@@ -117,9 +161,9 @@ const ShowClass = () => {
           <PageLoader />
         ) : (
           <p className="state-message">
-            {" "}
-            query.isError ? "Failed to load class details." : "Class details not
-            found."
+            {query.isError
+              ? "Failed to load class details."
+              : "Class details not found."}
           </p>
         )}
       </ShowView>
