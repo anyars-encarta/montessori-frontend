@@ -25,6 +25,19 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   };
 }
 
+const parseJsonSafely = async <T>(response: Response): Promise<T> => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+
+  if (!contentType.includes("application/json")) {
+    throw {
+      message: `Expected JSON response but received '${contentType || "unknown"}' from ${response.url}`,
+      statusCode: response.status,
+    } as HttpError;
+  }
+
+  return response.json() as Promise<T>;
+};
+
 const options: CreateDataProviderOptions = {
   getList: {
     getEndpoint: ({ resource }) => resource,
@@ -74,7 +87,7 @@ const options: CreateDataProviderOptions = {
     mapResponse: async (response) => {
       if(!response.ok) throw await buildHttpError(response);
 
-      const payload: ListResponse = await response.clone().json();
+      const payload: ListResponse = await parseJsonSafely<ListResponse>(response.clone());
 
       return payload.data ?? [];
     },
@@ -82,7 +95,7 @@ const options: CreateDataProviderOptions = {
     getTotalCount: async(response) => {
       if(!response.ok) throw await buildHttpError(response);
 
-      const payload: ListResponse = await response.clone().json();
+      const payload: ListResponse = await parseJsonSafely<ListResponse>(response.clone());
 
       return payload.pagination?.total ?? payload.data?.length ?? 0;
     },
@@ -94,7 +107,7 @@ const options: CreateDataProviderOptions = {
     mapResponse: async (response) => {
       if(!response.ok) throw await buildHttpError(response);
       
-      const json: CreateResponse = await response.json();
+      const json: CreateResponse = await parseJsonSafely<CreateResponse>(response);
 
       return json.data ?? [];
     },
@@ -106,7 +119,7 @@ const options: CreateDataProviderOptions = {
     mapResponse: async (response) => {
       if(!response.ok) throw await buildHttpError(response);
 
-      const json: CreateResponse = await response.json();
+      const json: CreateResponse = await parseJsonSafely<CreateResponse>(response);
 
       return json.data ?? null;
     },
@@ -126,7 +139,7 @@ const options: CreateDataProviderOptions = {
     mapResponse: async (response) => {
       if(!response.ok) throw await buildHttpError(response);
 
-      const json: GetOneResponse = await response.json();
+      const json: GetOneResponse = await parseJsonSafely<GetOneResponse>(response);
 
       return json.data ?? null;
     },
