@@ -225,6 +225,24 @@ export type StudentEnrollment = {
   academicYear: AcademicYearRecord | null;
 };
 
+export type StudentEnrollmentRow = {
+  id: number;
+  className: string;
+  academicYear: string;
+  supervisor: string;
+  enrollmentDate: string;
+};
+
+export type StudentPaymentRow = {
+  id: number;
+  amount: string;
+  paymentDate: string;
+  paymentMethod: string;
+  reference: string;
+  feeName: string;
+  status: string;
+};
+
 export type SubjectRecord = {
   id: number;
   name: string;

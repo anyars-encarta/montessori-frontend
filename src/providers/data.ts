@@ -65,25 +65,25 @@ const options: CreateDataProviderOptions = {
           params.role = value;
         }
 
-        // if (resource === "departments") {
-        //   if (field === "name" || field === "code") params.search = value;
-        // }
-
-        // if (resource === "users") {
-        //   if (field === "search" || field === "name" || field === "email") {
-        //     params.search = value;
-        //   }
-        // }
-
-        // if (resource === "subjects") {
-        //   if (field === "department") params.department = value;
-        //   if (field === "name" || field === "code") params.search = value;
-        // }
-
         if (resource === "classes") {
           if (field === "name" || field === "code") params.search = value;
           if (field === "subject.id") params.subject = value;
           if (field === "teacher.id") params.teacher = value;
+        }
+
+        if (resource === "students") {
+          if (
+            field === "search" ||
+            field === "name" ||
+            field === "firstName" ||
+            field === "lastName" ||
+            field === "registrationNumber"
+          ) {
+            params.search = value;
+          }
+          if (field === "classId") params.classId = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "parentId") params.parentId = value;
         }
       });
 
