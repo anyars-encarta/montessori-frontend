@@ -130,10 +130,12 @@ const options: CreateDataProviderOptions = {
 
       return json.data;
     },
+    transformError: async (response) => buildHttpError(response),
   },
 
   update: {
     getEndpoint: ({ resource, id }) => `${resource}/${id}`,
+    getRequestMethod: () => "put",
     buildBodyParams: ({ variables }) => variables,
     mapResponse: async (response) => {
       if (!response.ok) throw await buildHttpError(response);
@@ -144,6 +146,7 @@ const options: CreateDataProviderOptions = {
 
       return json.data ?? {};
     },
+    transformError: async (response) => buildHttpError(response),
   },
 
   deleteOne: {
@@ -153,6 +156,7 @@ const options: CreateDataProviderOptions = {
 
       return {};
     },
+    transformError: async (response) => buildHttpError(response),
   },
 
   getOne: {
