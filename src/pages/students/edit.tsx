@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { EditView } from "@/components/refine-ui/views/edit-view";
@@ -26,6 +26,9 @@ import { Textarea } from "@/components/ui/textarea";
 import UploadWidget from "@/components/upload-widget";
 import { BACKEND_BASE_URL } from "@/constants";
 import {
+  AcademicYearRecord,
+  ClassRecord,
+  EnrollmentWorkflowResponse,
   HealthFormValues,
   LivingWithValue,
   ParentRecord,
@@ -33,6 +36,7 @@ import {
   PreviousSchoolFormValues,
   Student,
   StudentBasic,
+  TermRecord,
   UploadWidgetValue,
 } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -77,7 +81,10 @@ const buildApiUrl = (path: string) => {
 
 const extractErrorMessage = async (response: Response) => {
   try {
-    const payload = (await response.json()) as { error?: string; message?: string };
+    const payload = (await response.json()) as {
+      error?: string;
+      message?: string;
+    };
     return payload.error ?? payload.message ?? "Request failed";
   } catch {
     return "Request failed";
@@ -85,6 +92,7 @@ const extractErrorMessage = async (response: Response) => {
 };
 
 const EditStudent = () => {
+  const navigate = useNavigate();
   const back = useBack();
   const { open } = useNotification();
   const { id } = useParams();
@@ -140,10 +148,26 @@ const EditStudent = () => {
     pagination: { pageSize: 500 },
   });
 
+  const { query: classesQuery } = useList<ClassRecord>({
+    resource: "classes",
+    pagination: { pageSize: 500 },
+  });
+
+  const { query: academicYearsQuery } = useList<AcademicYearRecord>({
+    resource: "academic-years",
+    pagination: { pageSize: 500 },
+  });
+
+  const { query: termsQuery } = useList<TermRecord>({
+    resource: "terms",
+    pagination: { pageSize: 500 },
+  });
+
   const [parentIdToAdd, setParentIdToAdd] = useState("");
   const [relationshipToAdd, setRelationshipToAdd] = useState("");
   const [siblingIdToAdd, setSiblingIdToAdd] = useState("");
-  const [healthValues, setHealthValues] = useState<HealthFormValues>(initialHealthValues);
+  const [healthValues, setHealthValues] =
+    useState<HealthFormValues>(initialHealthValues);
   const [livingWith, setLivingWith] = useState<LivingWithValue>("both_parents");
   const [otherDetails, setOtherDetails] = useState("");
   const [previousSchoolForm, setPreviousSchoolForm] =
@@ -152,6 +176,15 @@ const EditStudent = () => {
   const [isSavingHealth, setIsSavingHealth] = useState(false);
   const [isSavingOtherData, setIsSavingOtherData] = useState(false);
   const [isSavingPreviousSchool, setIsSavingPreviousSchool] = useState(false);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
+  const [selectedTermId, setSelectedTermId] = useState("");
+  const [enrollmentDate, setEnrollmentDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
+  const [isSubmittingAdmission, setIsSubmittingAdmission] = useState(false);
+
+  const [isSubmittingPromotion, setIsSubmittingPromotion] = useState(false);
 
   const imageUrl = watch("cloudinaryImageUrl");
   const imagePublicId = watch("imageCldPubId");
@@ -183,16 +216,45 @@ const EditStudent = () => {
     });
 
     setLivingWith(
-      (student.otherSignificantData?.livingWith as LivingWithValue) ?? "both_parents",
+      (student.otherSignificantData?.livingWith as LivingWithValue) ??
+        "both_parents",
     );
     setOtherDetails(student.otherSignificantData?.otherDetails ?? "");
   }, [student, reset]);
 
   const availableParents = parentsQuery.data?.data ?? [];
+  const availableClasses = classesQuery.data?.data ?? [];
+  const availableAcademicYears = academicYearsQuery.data?.data ?? [];
+
+  const availableTerms = useMemo(() => {
+    return termsQuery.data?.data ?? [];
+  }, [termsQuery.data?.data]);
+
+  const filteredTerms = useMemo(() => {
+    if (!selectedAcademicYearId) return [];
+    return availableTerms.filter(
+      (term) => String(term.academicYearId) === selectedAcademicYearId,
+    );
+  }, [availableTerms, selectedAcademicYearId]);
+
   const availableSiblings = useMemo(() => {
     const rows = studentsQuery.data?.data ?? [];
     return rows.filter((row) => String(row.id) !== studentId);
   }, [studentsQuery.data?.data, studentId]);
+
+  useEffect(() => {
+    if (!filteredTerms.length) {
+      setSelectedTermId("");
+      return;
+    }
+
+    const exists = filteredTerms.some(
+      (term) => String(term.id) === selectedTermId,
+    );
+    if (!exists) {
+      setSelectedTermId(String(filteredTerms[0].id));
+    }
+  }, [filteredTerms, selectedTermId]);
 
   const notifySuccess = (message: string, description?: string) => {
     open?.({ type: "success", message, description });
@@ -202,7 +264,11 @@ const EditStudent = () => {
     open?.({ type: "error", message, description });
   };
 
-  const request = async (path: string, method: "POST" | "PUT" | "DELETE", body?: object) => {
+  const request = async <TResponse = unknown,>(
+    path: string,
+    method: "POST" | "PUT" | "DELETE",
+    body?: object,
+  ): Promise<TResponse | undefined> => {
     const response = await fetch(buildApiUrl(path), {
       method,
       headers: {
@@ -215,6 +281,13 @@ const EditStudent = () => {
     if (!response.ok) {
       throw new Error(await extractErrorMessage(response));
     }
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return undefined;
+    }
+
+    return (await response.json()) as TResponse;
   };
 
   const onSubmit: SubmitHandler<CreateStudentValues> = async (values) => {
@@ -235,12 +308,21 @@ const EditStudent = () => {
 
   const handleImageChange = (value: UploadWidgetValue | null) => {
     if (!value) {
-      setValue("cloudinaryImageUrl", "", { shouldDirty: true, shouldValidate: true });
-      setValue("imageCldPubId", "", { shouldDirty: true, shouldValidate: true });
+      setValue("cloudinaryImageUrl", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      setValue("imageCldPubId", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
       return;
     }
 
-    setValue("cloudinaryImageUrl", value.url, { shouldDirty: true, shouldValidate: true });
+    setValue("cloudinaryImageUrl", value.url, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     setValue("imageCldPubId", value.publicId, {
       shouldDirty: true,
       shouldValidate: true,
@@ -254,7 +336,10 @@ const EditStudent = () => {
   const addParent = async () => {
     const parsedParentId = Number(parentIdToAdd);
     if (!Number.isFinite(parsedParentId) || parsedParentId <= 0) {
-      notifyError("Select a parent", "Please choose a valid parent record first.");
+      notifyError(
+        "Select a parent",
+        "Please choose a valid parent record first.",
+      );
       return;
     }
 
@@ -269,7 +354,10 @@ const EditStudent = () => {
       await refreshStudent();
       notifySuccess("Parent linked", "Parent was added to this student.");
     } catch (error) {
-      notifyError("Failed to add parent", error instanceof Error ? error.message : undefined);
+      notifyError(
+        "Failed to add parent",
+        error instanceof Error ? error.message : undefined,
+      );
     } finally {
       setIsSavingRelation(false);
     }
@@ -294,7 +382,10 @@ const EditStudent = () => {
   const addSibling = async () => {
     const parsedSiblingId = Number(siblingIdToAdd);
     if (!Number.isFinite(parsedSiblingId) || parsedSiblingId <= 0) {
-      notifyError("Select a sibling", "Please choose a valid student record first.");
+      notifyError(
+        "Select a sibling",
+        "Please choose a valid student record first.",
+      );
       return;
     }
 
@@ -307,7 +398,10 @@ const EditStudent = () => {
       await refreshStudent();
       notifySuccess("Sibling linked", "Sibling relationship was added.");
     } catch (error) {
-      notifyError("Failed to add sibling", error instanceof Error ? error.message : undefined);
+      notifyError(
+        "Failed to add sibling",
+        error instanceof Error ? error.message : undefined,
+      );
     } finally {
       setIsSavingRelation(false);
     }
@@ -396,7 +490,10 @@ const EditStudent = () => {
   const removePreviousSchool = async (schoolId: number) => {
     try {
       setIsSavingPreviousSchool(true);
-      await request(`/students/${studentId}/previous-schools/${schoolId}`, "DELETE");
+      await request(
+        `/students/${studentId}/previous-schools/${schoolId}`,
+        "DELETE",
+      );
       await refreshStudent();
       notifySuccess("Previous school removed");
     } catch (error) {
@@ -406,6 +503,78 @@ const EditStudent = () => {
       );
     } finally {
       setIsSavingPreviousSchool(false);
+    }
+  };
+
+  const runEnrollmentAction = async (mode: "admit" | "promote") => {
+    const parsedClassId = Number(selectedClassId);
+    const parsedAcademicYearId = Number(selectedAcademicYearId);
+    const parsedTermId = Number(selectedTermId);
+
+    if (!Number.isFinite(parsedClassId) || parsedClassId <= 0) {
+      notifyError("Select a class", "Choose a class before continuing.");
+      return;
+    }
+
+    if (!Number.isFinite(parsedAcademicYearId) || parsedAcademicYearId <= 0) {
+      notifyError(
+        "Select an academic year",
+        "Choose an academic year before continuing.",
+      );
+      return;
+    }
+
+    if (!Number.isFinite(parsedTermId) || parsedTermId <= 0) {
+      notifyError("Select a term", "Choose a term before continuing.");
+      return;
+    }
+
+    if (!enrollmentDate) {
+      notifyError("Enrollment date is required");
+      return;
+    }
+
+    try {
+      if (mode === "admit") {
+        setIsSubmittingAdmission(true);
+      } else if (mode === "promote") {
+        setIsSubmittingPromotion(true);
+      }
+      const response = await request<EnrollmentWorkflowResponse>(
+        `/student-class-enrollments/${mode}`,
+        "POST",
+        {
+          studentId: Number(studentId),
+          classId: parsedClassId,
+          academicYearId: parsedAcademicYearId,
+          termId: parsedTermId,
+          enrollmentDate,
+        },
+      );
+
+      const feeNames = response?.data?.feeNamesApplied ?? [];
+      const feesDescription = feeNames.length
+        ? `Fees applied: ${feeNames.join(
+            ", ",
+          )}. Enrollment, fees, and assessments were applied automatically.`
+        : "Enrollment, fees, and assessments were applied automatically.";
+
+      notifySuccess(
+        mode === "admit" ? "Student admitted" : "Student promoted",
+        feesDescription,
+      );
+
+      navigate(`/students/show/${studentId}`);
+    } catch (error) {
+      notifyError(
+        mode === "admit"
+          ? "Failed to admit student"
+          : "Failed to promote student",
+        error instanceof Error ? error.message : undefined,
+      );
+    } finally {
+      setIsSubmittingAdmission(false);
+      setIsSubmittingPromotion(false);
     }
   };
 
@@ -422,7 +591,9 @@ const EditStudent = () => {
     return (
       <EditView className="class-view">
         <Breadcrumb />
-        <p className="text-sm text-destructive">Failed to load student details.</p>
+        <p className="text-sm text-destructive">
+          Failed to load student details.
+        </p>
         <Button onClick={back} variant="outline" type="button">
           Go Back
         </Button>
@@ -448,7 +619,9 @@ const EditStudent = () => {
       <div className="my-4 space-y-6">
         <Card className="class-form-card w-full">
           <CardHeader className="relative z-10">
-            <CardTitle className="text-2xl pb-0 font-bold">Basic student details</CardTitle>
+            <CardTitle className="text-2xl pb-0 font-bold">
+              Basic student details
+            </CardTitle>
           </CardHeader>
           <Separator />
           <CardContent className="mt-7">
@@ -520,7 +693,10 @@ const EditStudent = () => {
                         <FormLabel>
                           Gender <span className="text-orange-600">*</span>
                         </FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="Select gender" />
@@ -559,10 +735,15 @@ const EditStudent = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Admission Date <span className="text-orange-600">*</span>
+                          Admission Date{" "}
+                          <span className="text-orange-600">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} value={field.value ?? ""} />
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -575,7 +756,11 @@ const EditStudent = () => {
                       <FormItem>
                         <FormLabel>Date of Birth</FormLabel>
                         <FormControl>
-                          <Input type="date" {...field} value={field.value ?? ""} />
+                          <Input
+                            type="date"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -590,7 +775,9 @@ const EditStudent = () => {
                     <FormItem>
                       <FormLabel>Status</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(value === "true")}
+                        onValueChange={(value) =>
+                          field.onChange(value === "true")
+                        }
                         value={field.value ? "true" : "false"}
                       >
                         <FormControl>
@@ -610,7 +797,12 @@ const EditStudent = () => {
 
                 <Separator />
 
-                <Button type="submit" size="lg" className="w-full cursor-pointer" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full cursor-pointer"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <div className="flex gap-1 items-center">
                       <span>Saving Student...</span>
@@ -622,6 +814,105 @@ const EditStudent = () => {
                 </Button>
               </form>
             </Form>
+          </CardContent>
+        </Card>
+
+        <Card className="class-form-card w-full">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">
+              Admission & Promotion
+            </CardTitle>
+          </CardHeader>
+          <Separator />
+          <CardContent className="space-y-4 mt-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Select
+                value={selectedClassId}
+                onValueChange={setSelectedClassId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select class" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableClasses.map((klass) => (
+                    <SelectItem key={klass.id} value={String(klass.id)}>
+                      {klass.name} ({klass.level})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedAcademicYearId}
+                onValueChange={setSelectedAcademicYearId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select academic year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAcademicYears.map((year) => (
+                    <SelectItem key={year.id} value={String(year.id)}>
+                      {year.year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedTermId}
+                onValueChange={setSelectedTermId}
+                disabled={!selectedAcademicYearId}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select term" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTerms.map((term) => (
+                    <SelectItem key={term.id} value={String(term.id)}>
+                      {term.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                type="date"
+                value={enrollmentDate}
+                onChange={(event) => setEnrollmentDate(event.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                onClick={() => runEnrollmentAction("admit")}
+                disabled={isSubmittingAdmission}
+              >
+                {isSubmittingAdmission ? (
+                  <div className="flex gap-1 items-center">
+                    <span>Admitting Student...</span>
+                    <Loader2 className="inline-block ml-2 animate-spin" />
+                  </div>
+                ) : (
+                  "Admit Student"
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => runEnrollmentAction("promote")}
+                disabled={isSubmittingPromotion}
+              >
+                {isSubmittingPromotion ? (
+                  <div className="flex gap-1 items-center">
+                    <span>Promoting Student...</span>
+                    <Loader2 className="inline-block ml-2 animate-spin" />
+                  </div>
+                ) : (
+                  "Promote Student"
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -649,14 +940,21 @@ const EditStudent = () => {
                 value={relationshipToAdd}
                 onChange={(event) => setRelationshipToAdd(event.target.value)}
               />
-              <Button type="button" onClick={addParent} disabled={isSavingRelation}>
+              <Button
+                type="button"
+                onClick={addParent}
+                disabled={isSavingRelation}
+              >
                 Add Parent
               </Button>
             </div>
 
             <div className="space-y-2">
               {(student.parentRelations ?? []).map((relation) => (
-                <div key={relation.parentId} className="flex items-center justify-between border rounded-md p-3">
+                <div
+                  key={relation.parentId}
+                  className="flex items-center justify-between border rounded-md p-3"
+                >
                   <span>
                     {relation.parent.firstName} {relation.parent.lastName}
                     {relation.relationship ? ` (${relation.relationship})` : ""}
@@ -696,14 +994,21 @@ const EditStudent = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button type="button" onClick={addSibling} disabled={isSavingRelation}>
+              <Button
+                type="button"
+                onClick={addSibling}
+                disabled={isSavingRelation}
+              >
                 Add Sibling
               </Button>
             </div>
 
             <div className="space-y-2">
               {(student.siblingRelations ?? []).map((relation) => (
-                <div key={relation.siblingId} className="flex items-center justify-between border rounded-md p-3">
+                <div
+                  key={relation.siblingId}
+                  className="flex items-center justify-between border rounded-md p-3"
+                >
                   <span>
                     {relation.sibling?.firstName} {relation.sibling?.lastName}
                     {" • "}
@@ -746,12 +1051,18 @@ const EditStudent = () => {
                   ["tuberculosis", "Tuberculosis"],
                 ] as Array<[keyof HealthFormValues, string]>
               ).map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2 border rounded-md p-3">
+                <label
+                  key={key}
+                  className="flex items-center gap-2 border rounded-md p-3"
+                >
                   <input
                     type="checkbox"
                     checked={Boolean(healthValues[key])}
                     onChange={(event) =>
-                      setHealthValues((prev) => ({ ...prev, [key]: event.target.checked }))
+                      setHealthValues((prev) => ({
+                        ...prev,
+                        [key]: event.target.checked,
+                      }))
                     }
                   />
                   <span>{label}</span>
@@ -763,7 +1074,10 @@ const EditStudent = () => {
               type="date"
               value={healthValues.lastCheckupDate}
               onChange={(event) =>
-                setHealthValues((prev) => ({ ...prev, lastCheckupDate: event.target.value }))
+                setHealthValues((prev) => ({
+                  ...prev,
+                  lastCheckupDate: event.target.value,
+                }))
               }
             />
 
@@ -771,11 +1085,18 @@ const EditStudent = () => {
               placeholder="Other conditions"
               value={healthValues.otherConditions}
               onChange={(event) =>
-                setHealthValues((prev) => ({ ...prev, otherConditions: event.target.value }))
+                setHealthValues((prev) => ({
+                  ...prev,
+                  otherConditions: event.target.value,
+                }))
               }
             />
 
-            <Button type="button" onClick={saveHealthDetails} disabled={isSavingHealth}>
+            <Button
+              type="button"
+              onClick={saveHealthDetails}
+              disabled={isSavingHealth}
+            >
               Save Health Details
             </Button>
           </CardContent>
@@ -783,11 +1104,16 @@ const EditStudent = () => {
 
         <Card className="class-form-card w-full">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Other Significant Data</CardTitle>
+            <CardTitle className="text-xl font-bold">
+              Other Significant Data
+            </CardTitle>
           </CardHeader>
           <Separator />
           <CardContent className="space-y-4 mt-6">
-            <Select value={livingWith} onValueChange={(value) => setLivingWith(value as LivingWithValue)}>
+            <Select
+              value={livingWith}
+              onValueChange={(value) => setLivingWith(value as LivingWithValue)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Living with" />
               </SelectTrigger>
@@ -806,7 +1132,11 @@ const EditStudent = () => {
               onChange={(event) => setOtherDetails(event.target.value)}
             />
 
-            <Button type="button" onClick={saveOtherData} disabled={isSavingOtherData}>
+            <Button
+              type="button"
+              onClick={saveOtherData}
+              disabled={isSavingOtherData}
+            >
               Save Other Significant Data
             </Button>
           </CardContent>
@@ -814,7 +1144,9 @@ const EditStudent = () => {
 
         <Card className="class-form-card w-full">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Previous Schools</CardTitle>
+            <CardTitle className="text-xl font-bold">
+              Previous Schools
+            </CardTitle>
           </CardHeader>
           <Separator />
           <CardContent className="space-y-4 mt-6">
@@ -823,7 +1155,10 @@ const EditStudent = () => {
                 placeholder="School name"
                 value={previousSchoolForm.schoolName}
                 onChange={(event) =>
-                  setPreviousSchoolForm((prev) => ({ ...prev, schoolName: event.target.value }))
+                  setPreviousSchoolForm((prev) => ({
+                    ...prev,
+                    schoolName: event.target.value,
+                  }))
                 }
               />
               <Input
@@ -832,7 +1167,10 @@ const EditStudent = () => {
                 min={0}
                 value={previousSchoolForm.ageAtAdmission}
                 onChange={(event) =>
-                  setPreviousSchoolForm((prev) => ({ ...prev, ageAtAdmission: event.target.value }))
+                  setPreviousSchoolForm((prev) => ({
+                    ...prev,
+                    ageAtAdmission: event.target.value,
+                  }))
                 }
               />
               <div className="space-y-2">
@@ -841,7 +1179,10 @@ const EditStudent = () => {
                   type="date"
                   value={previousSchoolForm.dateOfAdmission}
                   onChange={(event) =>
-                    setPreviousSchoolForm((prev) => ({ ...prev, dateOfAdmission: event.target.value }))
+                    setPreviousSchoolForm((prev) => ({
+                      ...prev,
+                      dateOfAdmission: event.target.value,
+                    }))
                   }
                 />
               </div>
@@ -851,23 +1192,38 @@ const EditStudent = () => {
                   type="date"
                   value={previousSchoolForm.dateLastAttended}
                   onChange={(event) =>
-                    setPreviousSchoolForm((prev) => ({ ...prev, dateLastAttended: event.target.value }))
+                    setPreviousSchoolForm((prev) => ({
+                      ...prev,
+                      dateLastAttended: event.target.value,
+                    }))
                   }
                 />
               </div>
             </div>
 
-            <Button type="button" onClick={addPreviousSchool} disabled={isSavingPreviousSchool}>
+            <Button
+              type="button"
+              onClick={addPreviousSchool}
+              disabled={isSavingPreviousSchool}
+            >
               Add Previous School
             </Button>
 
             <div className="space-y-2">
               {(student.previousSchools ?? []).map((school: PreviousSchool) => (
-                <div key={school.id} className="flex items-center justify-between border rounded-md p-3">
+                <div
+                  key={school.id}
+                  className="flex items-center justify-between border rounded-md p-3"
+                >
                   <span>
                     {school.schoolName}{" "}
-                    {school.ageAtAdmission !== null ? ` • Age at admission ${school.ageAtAdmission}` : ""} {" "} • Admiited on {school.dateOfAdmission}
-                    {school.dateLastAttended ? ` • Last attended on ${school.dateLastAttended}` : ""}
+                    {school.ageAtAdmission !== null
+                      ? ` • Age at admission ${school.ageAtAdmission}`
+                      : ""}{" "}
+                    • Admiited on {school.dateOfAdmission}
+                    {school.dateLastAttended
+                      ? ` • Last attended on ${school.dateLastAttended}`
+                      : ""}
                   </span>
                   <Button
                     variant="outline"

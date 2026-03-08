@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Student,
   StudentEnrollmentRow,
+  StudentFeeRow,
   StudentPaymentRow,
   StudentSiblingRow,
 } from "@/types";
@@ -102,8 +103,37 @@ const ShowStudent = () => {
     [],
   );
 
-  const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(
+  const feesColumns = useMemo<ColumnDef<StudentFeeRow>[]>(
     () => [
+      {
+        id: "feeName",
+        accessorKey: "feeName",
+        size: 160,
+        header: () => <p className="column-title">Fee</p>,
+      },
+      {
+        id: "academicYear",
+        accessorKey: "academicYear",
+        size: 120,
+        header: () => <p className="column-title">Academic Year</p>,
+      },
+      {
+        id: "term",
+        accessorKey: "term",
+        size: 120,
+        header: () => <p className="column-title">Term</p>,
+      },
+      {
+        id: "dueDate",
+        accessorKey: "dueDate",
+        size: 140,
+        header: () => <p className="column-title">Due Date</p>,
+        cell: ({ getValue }) => (
+          <span className="text-foreground">
+            {formatDate(getValue<string>())}
+          </span>
+        ),
+      },
       {
         id: "amount",
         accessorKey: "amount",
@@ -112,29 +142,6 @@ const ShowStudent = () => {
         cell: ({ getValue }) => (
           <span className="text-foreground">{getValue<string>()}</span>
         ),
-      },
-      {
-        id: "paymentDate",
-        accessorKey: "paymentDate",
-        size: 130,
-        header: () => <p className="column-title">Payment Date</p>,
-        cell: ({ getValue }) => (
-          <span className="text-foreground">
-            {formatDate(getValue<string>())}
-          </span>
-        ),
-      },
-      {
-        id: "paymentMethod",
-        accessorKey: "paymentMethod",
-        size: 120,
-        header: () => <p className="column-title">Method</p>,
-      },
-      {
-        id: "feeName",
-        accessorKey: "feeName",
-        size: 160,
-        header: () => <p className="column-title">Fee</p>,
       },
       {
         id: "status",
@@ -149,11 +156,62 @@ const ShowStudent = () => {
           </Badge>
         ),
       },
+    ],
+    [],
+  );
+
+  const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(
+    () => [
+      {
+        id: "feeName",
+        accessorKey: "feeName",
+        size: 160,
+        header: () => <p className="column-title">Fee</p>,
+      },
+      {
+        id: "paymentMethod",
+        accessorKey: "paymentMethod",
+        size: 120,
+        header: () => <p className="column-title">Method</p>,
+      },
+      {
+        id: "paymentDate",
+        accessorKey: "paymentDate",
+        size: 130,
+        header: () => <p className="column-title">Payment Date</p>,
+        cell: ({ getValue }) => (
+          <span className="text-foreground">
+            {formatDate(getValue<string>())}
+          </span>
+        ),
+      },
       {
         id: "reference",
         accessorKey: "reference",
         size: 130,
         header: () => <p className="column-title">Reference</p>,
+      },
+      {
+        id: "amount",
+        accessorKey: "amount",
+        size: 110,
+        header: () => <p className="column-title">Amount</p>,
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue<string>()}</span>
+        ),
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        size: 110,
+        header: () => <p className="column-title">Status</p>,
+        cell: ({ getValue }) => (
+          <Badge
+            variant={getValue<string>() === "paid" ? "default" : "secondary"}
+          >
+            {getValue<string>()}
+          </Badge>
+        ),
       },
     ],
     [],
@@ -215,6 +273,17 @@ const ShowStudent = () => {
     columns: enrollmentColumns,
     refineCoreProps: {
       resource: `students/${studentId}/enrollments`,
+      pagination: {
+        pageSize: 5,
+        mode: "server",
+      },
+    },
+  });
+
+  const feesTable = useTable<StudentFeeRow>({
+    columns: feesColumns,
+    refineCoreProps: {
+      resource: `students/${studentId}/fees`,
       pagination: {
         pageSize: 5,
         mode: "server",
@@ -544,7 +613,9 @@ const ShowStudent = () => {
         </CardContent>
       </Card>
 
-      {(student.enrollments.length > 0 || student.payments.length > 0) && (
+      {(student.enrollments.length > 0 ||
+        student.fees.length > 0 ||
+        student.payments.length > 0) && (
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
             <CardTitle>Detailed Records</CardTitle>
@@ -556,6 +627,17 @@ const ShowStudent = () => {
                   Enrollments ({student.enrollments.length})
                 </h3>
                 <DataTable table={enrollmentsTable} />
+              </div>
+            )}
+
+            <Separator />
+
+            {student.fees.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3">
+                  Fees ({student.fees.length})
+                </h3>
+                <DataTable table={feesTable} />
               </div>
             )}
 

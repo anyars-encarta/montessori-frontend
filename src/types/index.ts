@@ -249,6 +249,19 @@ export type StudentClassEnrollmentRecord = {
   createdAt: string;
 };
 
+export type EnrollmentWorkflowResponse = {
+  success: boolean;
+  data?: {
+    enrollment: {
+      id: number;
+    };
+    feesApplied: number;
+    feeNamesApplied?: string[];
+    subjectsApplied: number;
+  };
+  error?: string;
+};
+
 export type StudentEnrollment = {
   enrollment: StudentClassEnrollmentRecord;
   class: ClassRecord | null;
@@ -262,6 +275,16 @@ export type StudentEnrollmentRow = {
   academicYear: string;
   supervisor: string;
   enrollmentDate: string;
+};
+
+export type StudentFeeRow = {
+  id: number;
+  feeName: string;
+  amount: string;
+  dueDate: string;
+  academicYear: string;
+  term: string;
+  status: string;
 };
 
 export type StudentPaymentRow = {
