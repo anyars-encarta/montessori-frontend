@@ -489,30 +489,34 @@ const ShowStudent = () => {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader>
-          <CardTitle>Detailed Records</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-semibold mb-3">
-              Enrollments ({student.enrollments.length})
-            </h3>
-            <DataTable table={enrollmentsTable} />
-          </div>
+      {(student.enrollments.length > 0 || student.payments.length > 0) && (
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle>Detailed Records</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {student.enrollments.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3">
+                  Enrollments ({student.enrollments.length})
+                </h3>
+                <DataTable table={enrollmentsTable} />
+              </div>
+            )}
 
-          <Separator />
+            <Separator />
 
-          {student.payments.length > 0 && (
-            <div>
-              <h3 className="font-semibold mb-3">
-                Payments ({student.payments.length})
-              </h3>
-              <DataTable table={paymentsTable} />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            {student.payments.length > 0 && (
+              <div>
+                <h3 className="font-semibold mb-3">
+                  Payments ({student.payments.length})
+                </h3>
+                <DataTable table={paymentsTable} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </ShowView>
   );
 };

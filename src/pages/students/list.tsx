@@ -69,7 +69,7 @@ const ListStudents = () => {
           header: () => <p className="column-title">Gender</p>,
           cell: ({ getValue }) => {
             const value = (getValue<string | null>() ?? "N/A").toString();
-            return <Badge variant="secondary">{value}</Badge>;
+            return <Badge variant="secondary">{value.charAt(0).toUpperCase() + value.slice(1)}</Badge>;
           },
         },
         {
