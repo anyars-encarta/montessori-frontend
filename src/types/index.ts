@@ -79,6 +79,7 @@ export type StudentBasic = {
   lastName: string;
   dateOfBirth: string | null;
   admissionDate: string;
+  imageCldPubId: string | null;
   cloudinaryImageUrl: string | null;
   registrationNumber: string | null;
   createdAt: string;
@@ -128,6 +129,31 @@ export type HealthDetails = {
   lastCheckupDate: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type LivingWithValue =
+  | "both_parents"
+  | "mother_only"
+  | "father_only"
+  | "guardian"
+  | "other_person";
+
+export type HealthFormValues = {
+  diphtheria: boolean;
+  polio: boolean;
+  whoopingCough: boolean;
+  tetanus: boolean;
+  measles: boolean;
+  tuberculosis: boolean;
+  otherConditions: string;
+  lastCheckupDate: string;
+};
+
+export type PreviousSchoolFormValues = {
+  schoolName: string;
+  dateOfAdmission: string;
+  ageAtAdmission: string;
+  dateLastAttended: string;
 };
 
 export type LivingWith =
