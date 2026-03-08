@@ -20,3 +20,19 @@ export const createClassSchema = z.object({
 });
 
 export type CreateClassValues = z.infer<typeof createClassSchema>;
+
+export const createStudentSchema = z.object({
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  gender: z.enum(["male", "female", "other"], {
+    required_error: "Gender is required",
+  }),
+  admissionDate: z.string().trim().min(1, "Admission date is required"),
+  dateOfBirth: z.string(),
+  registrationNumber: z.string(),
+  cloudinaryImageUrl: z.string(),
+  imageCldPubId: z.string(),
+  isActive: z.boolean(),
+});
+
+export type CreateStudentValues = z.infer<typeof createStudentSchema>;
