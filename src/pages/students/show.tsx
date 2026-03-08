@@ -20,6 +20,8 @@ import {
   StudentSiblingRow,
 } from "@/types";
 import PageLoader from "@/components/PageLoader";
+import { ShowButton } from "@/components/refine-ui/buttons/show";
+import ActionButton from "@/components/actionButton";
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -35,6 +37,24 @@ const formatDate = (value?: string | null) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
 };
+
+const healthIndicators: Array<{
+  key:
+    | "diphtheria"
+    | "polio"
+    | "whoopingCough"
+    | "tetanus"
+    | "measles"
+    | "tuberculosis";
+  label: string;
+}> = [
+  { key: "diphtheria", label: "Diphtheria" },
+  { key: "polio", label: "Polio" },
+  { key: "whoopingCough", label: "Whooping Cough" },
+  { key: "tetanus", label: "Tetanus" },
+  { key: "measles", label: "Measles" },
+  { key: "tuberculosis", label: "Tuberculosis" },
+];
 
 const ShowStudent = () => {
   const { id } = useParams();
@@ -168,6 +188,23 @@ const ShowStudent = () => {
         header: "Current Class",
         cell: ({ getValue }) => (
           <span className="text-foreground">{getValue<string>()}</span>
+        ),
+      },
+      {
+        id: "actions",
+        size: 120,
+        header: () => <p className="column-title">Actions</p>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <ShowButton
+              resource="students"
+              recordItemId={row.original.id}
+              variant="outline"
+              size="sm"
+            >
+              <ActionButton type="view" />
+            </ShowButton>
+          </div>
         ),
       },
     ],
@@ -331,11 +368,21 @@ const ShowStudent = () => {
                     <div>
                       <p className="font-medium">
                         {relation.parent.firstName} {relation.parent.lastName}
+                        {", "}
+                        <span className="text-xs text-muted-foreground">
+                          {relation.parent.occupation}
+                        </span>
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {relation.parent.email ??
-                          relation.parent.phone ??
-                          "No contact"}
+                        {relation.parent.address}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Email: {relation.parent.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Phone: {relation.parent.phone}
                       </p>
                     </div>
                     <Badge variant="secondary">
@@ -428,6 +475,14 @@ const ShowStudent = () => {
           <div>
             <h3 className="font-semibold mb-3">🩺 Health & Living Data</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {healthIndicators.map(({ key, label }) => (
+                <div key={key} className="p-3 border rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                  <p className="font-semibold text-sm">
+                    {student.healthDetails?.[key] ? "Yes" : "No"}
+                  </p>
+                </div>
+              ))}
               <div className="p-3 border rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">
                   Other Conditions

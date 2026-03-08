@@ -132,7 +132,7 @@ const Dashboard = () => {
       accent: "text-emerald-600",
     },
     {
-      label: "Non-Teaching Staff",
+      label: "Other Staff",
       value: staff.filter(
         (staffMember) => staffMember.staffType === "non_teaching",
       ).length,
