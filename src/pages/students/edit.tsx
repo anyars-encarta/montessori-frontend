@@ -847,7 +847,7 @@ const EditStudent = () => {
                 onValueChange={setSelectedAcademicYearId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select academic year" />
+                  <SelectValue placeholder="Select Year" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableAcademicYears.map((year) => (
