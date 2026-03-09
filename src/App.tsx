@@ -18,6 +18,7 @@ import {
   BookOpen,
   GraduationCap,
   Home,
+  Settings,
   Users,
   Users2Icon,
 } from "lucide-react";
@@ -53,6 +54,9 @@ import CreateUser from "./pages/users/create";
 import EditUser from "./pages/users/edit";
 import ShowUser from "./pages/users/show";
 import ListUsers from "./pages/users/list";
+import ShowSetup from "./pages/setup/show";
+import CreateSetup from "./pages/setup/create";
+import EditSetup from "./pages/setup/edit";
 // import UpdateSubject from "./pages/subjects/edit";
 
 function App() {
@@ -124,6 +128,17 @@ function App() {
                     icon: <Users />,
                   },
                 },
+                {
+                  name: "setup",
+                  list: "/setup",
+                  create: "/setup/create",
+                  show: "/setup/show/:id",
+                  edit: "/setup/edit/:id",
+                  meta: {
+                    label: "Setup",
+                    icon: <Settings />,
+                  },
+                },
               ]}
             >
               <Routes>
@@ -175,6 +190,12 @@ function App() {
                     <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
+                  </Route>
+
+                  <Route path="setup">
+                    <Route index element={<ShowSetup />} />
+                    <Route path="create" element={<CreateSetup />} />
+                    <Route path="edit/:id" element={<EditSetup />} />
                   </Route>
                 </Route>
               </Routes>

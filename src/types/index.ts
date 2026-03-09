@@ -221,24 +221,6 @@ export type ClassEditRecord = {
   subjects: ClassSubjectRow[];
 };
 
-export type AcademicYearRecord = {
-  id: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-};
-
-export type TermRecord = {
-  id: number;
-  name: string;
-  sequenceNumber: number;
-  academicYearId: number;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-};
-
 export type StudentClassEnrollmentRecord = {
   id: number;
   studentId: number;
@@ -530,4 +512,30 @@ export type SignUpPayload = {
 export type WeekdayAttendancePoint = {
   date: string;
   present: boolean;
+};
+
+export type SchoolDetailsRecord = {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website?: string | null;
+  logo?: string | null;
+};
+
+export type AcademicYearRecord = {
+  id: number;
+  year: number;
+  startDate: string;
+  endDate: string;
+};
+
+export type TermRecord = {
+  id: number;
+  name: string;
+  sequenceNumber: number;
+  academicYearId: number;
+  startDate: string;
+  endDate: string;
 };
