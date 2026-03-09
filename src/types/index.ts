@@ -539,3 +539,26 @@ export type TermRecord = {
   startDate: string;
   endDate: string;
 };
+
+export type SchoolDetailsForm = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  logo: string;
+};
+
+export type AcademicYearForm = {
+  year: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type TermForm = {
+  name: string;
+  sequenceNumber: string;
+  academicYearId: string;
+  startDate: string;
+  endDate: string;
+};

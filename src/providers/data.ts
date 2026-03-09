@@ -11,9 +11,13 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   let message = "Request failed.";
 
   try {
-    const payload = (await response.json()) as { message?: string };
+    const payload = (await response.json()) as { message?: string; error?: string };
 
-    if (payload?.message) message = payload.message;
+    if (payload?.message) {
+      message = payload.message;
+    } else if (payload?.error) {
+      message = payload.error;
+    }
   } catch (e) {
     console.error("Failed to parse error response:", e);
     // Ignore errors

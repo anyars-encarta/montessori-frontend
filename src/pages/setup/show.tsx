@@ -93,9 +93,7 @@ const ShowSetup = () => {
           <Breadcrumb />
           <div className="flex items-center gap-2">
             {school ? (
-              <Button
-                onClick={() => navigate(`/setup/edit/${school.id}`)}
-              >
+              <Button onClick={() => navigate(`/setup/edit/${school.id}`)}>
                 Edit Setup
               </Button>
             ) : (
@@ -118,26 +116,33 @@ const ShowSetup = () => {
               Failed to load school details.
             </p>
           ) : school ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="font-medium">{school.name}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="font-medium">{school.phone}</p>
-              </div>
-              <div className="md:col-span-2">
-                <p className="text-sm text-muted-foreground">Address</p>
-                <p className="font-medium">{school.address}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="font-medium">{school.email}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Website</p>
-                <p className="font-medium">{school.website || "N/A"}</p>
+            <div className="flex flex-col items-start gap-6 md:flex-row">
+              <img
+                src={school.logo!}
+                alt={school?.name}
+                className="h-40 w-40 rounded-sm object-cover"
+              />
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{school.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium">{school.phone}</p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-sm text-muted-foreground">Address</p>
+                  <p className="font-medium">{school.address}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{school.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Website</p>
+                  <p className="font-medium">{school.website || "N/A"}</p>
+                </div>
               </div>
             </div>
           ) : (
@@ -198,7 +203,8 @@ const ShowSetup = () => {
                           {term.name} (Term {term.sequenceNumber})
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {formatDate(term.startDate)} - {formatDate(term.endDate)}
+                          {formatDate(term.startDate)} -{" "}
+                          {formatDate(term.endDate)}
                         </p>
                       </div>
                     ))

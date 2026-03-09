@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UploadWidgetValue } from "@/types";
+import { AcademicYearForm, AcademicYearRecord, SchoolDetailsForm, SchoolDetailsRecord, TermForm, TermRecord, UploadWidgetValue } from "@/types";
 import {
   useCreate,
   useDelete,
@@ -26,55 +26,6 @@ import {
   useNotification,
   useUpdate,
 } from "@refinedev/core";
-
-type SchoolDetailsRecord = {
-  id: number;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website?: string | null;
-  logo?: string | null;
-};
-
-type AcademicYearRecord = {
-  id: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-};
-
-type TermRecord = {
-  id: number;
-  name: string;
-  sequenceNumber: number;
-  academicYearId: number;
-  startDate: string;
-  endDate: string;
-};
-
-type SchoolDetailsForm = {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  logo: string;
-};
-
-type AcademicYearForm = {
-  year: string;
-  startDate: string;
-  endDate: string;
-};
-
-type TermForm = {
-  name: string;
-  sequenceNumber: string;
-  academicYearId: string;
-  startDate: string;
-  endDate: string;
-};
 
 const emptySchool: SchoolDetailsForm = {
   name: "",
@@ -227,10 +178,17 @@ const EditSetup = () => {
           resource: "academic-years",
           id: editingAcademicYearId,
           values: payload,
+          successNotification: false,
+          errorNotification: false,
         });
         open?.({ type: "success", message: "Academic year updated" });
       } else {
-        await createRecord({ resource: "academic-years", values: payload });
+        await createRecord({
+          resource: "academic-years",
+          values: payload,
+          successNotification: false,
+          errorNotification: false,
+        });
         open?.({ type: "success", message: "Academic year created" });
       }
 
