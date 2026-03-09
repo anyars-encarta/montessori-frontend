@@ -83,6 +83,12 @@ const ShowStudent = () => {
         header: () => <p className="column-title">Academic Year</p>,
       },
       {
+        id: "term",
+        accessorKey: "term",
+        size: 120,
+        header: () => <p className="column-title">Term</p>,
+      },
+      {
         id: "supervisor",
         accessorKey: "supervisor",
         size: 180,
@@ -97,6 +103,23 @@ const ShowStudent = () => {
           <span className="text-foreground">
             {formatDate(getValue<string>())}
           </span>
+        ),
+      },
+      {
+        id: "actions",
+        size: 120,
+        header: () => <p className="column-title">Actions</p>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <ShowButton
+              resource="continuous-assessments"
+              recordItemId={row.original.id}
+              variant="outline"
+              size="sm"
+            >
+              <ActionButton type="view" />
+            </ShowButton>
+          </div>
         ),
       },
     ],

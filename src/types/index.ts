@@ -255,6 +255,7 @@ export type StudentEnrollmentRow = {
   id: number;
   className: string;
   academicYear: string;
+  term: string;
   supervisor: string;
   enrollmentDate: string;
 };
