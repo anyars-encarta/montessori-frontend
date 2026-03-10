@@ -578,6 +578,8 @@ export type EnrollmentAssessmentRow = {
   exercise1: string;
   exercise2: string;
   classTest: string;
+  classMark: string;
+  examMark: string;
   totalMark: string;
 };
 
@@ -612,4 +614,6 @@ export type ScoreDraft = {
   exercise1: string;
   exercise2: string;
   classTest: string;
+  classMark: string;
+  examMark: string;
 };

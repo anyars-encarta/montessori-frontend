@@ -13,6 +13,7 @@ import {
   ScoreDraft,
 } from "@/types";
 import { useList, useNotification, useUpdate } from "@refinedev/core";
+import { Loader2 } from "lucide-react";
 
 const EnrollmentScoresEditPage = () => {
   const navigate = useNavigate();
@@ -20,8 +21,13 @@ const EnrollmentScoresEditPage = () => {
   const { open } = useNotification();
   const { mutateAsync: updateRecord } = useUpdate();
 
-  const [scoreDrafts, setScoreDrafts] = useState<Record<number, ScoreDraft>>({});
-  const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(null);
+  const [scoreDrafts, setScoreDrafts] = useState<Record<number, ScoreDraft>>(
+    {},
+  );
+  const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(
+    null,
+  );
+  const [subjectName, setSubjectName] = useState<string>("");
 
   const { query, result } = useList<ClassEnrollmentOverviewRow>({
     resource: "student-class-enrollments/overview",
@@ -39,7 +45,10 @@ const EnrollmentScoresEditPage = () => {
 
   const enrollment = result.data[0] ?? null;
 
-  const assessments = useMemo(() => enrollment?.assessments ?? [], [enrollment]);
+  const assessments = useMemo(
+    () => enrollment?.assessments ?? [],
+    [enrollment],
+  );
 
   const onScoreChange = (
     assessment: EnrollmentAssessmentRow,
@@ -54,6 +63,8 @@ const EnrollmentScoresEditPage = () => {
         exercise1: prev[assessment.id]?.exercise1 ?? assessment.exercise1,
         exercise2: prev[assessment.id]?.exercise2 ?? assessment.exercise2,
         classTest: prev[assessment.id]?.classTest ?? assessment.classTest,
+        classMark: prev[assessment.id]?.classMark ?? assessment.classMark,
+        examMark: prev[assessment.id]?.examMark ?? assessment.examMark,
         [field]: value,
       },
     }));
@@ -66,6 +77,8 @@ const EnrollmentScoresEditPage = () => {
       exercise1: assessment.exercise1,
       exercise2: assessment.exercise2,
       classTest: assessment.classTest,
+      classMark: assessment.classMark,
+      examMark: assessment.examMark,
     };
 
     setSavingAssessmentId(assessment.id);
@@ -80,13 +93,15 @@ const EnrollmentScoresEditPage = () => {
           exercise1: draft.exercise1,
           exercise2: draft.exercise2,
           classTest: draft.classTest,
+          examMark: draft.examMark,
         },
         successNotification: false,
         errorNotification: false,
       });
 
-      open?.({ type: "success", message: "Scores updated" });
+      open?.({ type: "success", message: `${subjectName} Scores updated` });
       await query.refetch();
+      setSavingAssessmentId(null);
     } catch (error) {
       const message =
         error && typeof error === "object" && "message" in error
@@ -95,7 +110,7 @@ const EnrollmentScoresEditPage = () => {
 
       open?.({
         type: "error",
-        message: "Score update failed",
+        message: `${subjectName} Score update failed`,
         description: message,
       });
     } finally {
@@ -118,8 +133,12 @@ const EnrollmentScoresEditPage = () => {
         <h1 className="page-title">Edit Subject Scores</h1>
         <Card>
           <CardContent className="py-6 space-y-4">
-            <p className="text-sm text-muted-foreground">Enrollment record not found.</p>
-            <Button onClick={() => navigate("/classes/enrollments")}>Back to Enrollments</Button>
+            <p className="text-sm text-muted-foreground">
+              Enrollment record not found.
+            </p>
+            <Button onClick={() => navigate("/classes/enrollments")}>
+              Back to Enrollments
+            </Button>
           </CardContent>
         </Card>
       </EditView>
@@ -134,11 +153,17 @@ const EnrollmentScoresEditPage = () => {
         <div>
           <h1 className="page-title">Edit Subject Scores</h1>
           <p className="text-sm text-muted-foreground">
-            {enrollment.student.fullName} • {enrollment.class.name} • {enrollment.academicYear.year} • {enrollment.term.name}
+            {enrollment.student.fullName} • {enrollment.class.name} •{" "}
+            {enrollment.academicYear.year} • {enrollment.term.name}
           </p>
         </div>
 
-        <Button variant="outline" onClick={() => navigate("/classes/enrollments")}>Back</Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate("/classes/enrollments")}
+        >
+          Back
+        </Button>
       </div>
 
       <Card>
@@ -147,7 +172,9 @@ const EnrollmentScoresEditPage = () => {
         </CardHeader>
         <CardContent>
           {assessments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assessments records for this enrollment.</p>
+            <p className="text-sm text-muted-foreground">
+              No assessments records for this enrollment.
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
@@ -159,7 +186,9 @@ const EnrollmentScoresEditPage = () => {
                     <th className="p-2 font-medium">Exercise 1</th>
                     <th className="p-2 font-medium">Exercise 2</th>
                     <th className="p-2 font-medium">Class Test</th>
-                    <th className="p-2 font-medium">Total Marks</th>
+                    <th className="p-2 font-medium">Class Score</th>
+                    <th className="p-2 font-medium">Exam Score</th>
+                    <th className="p-2 font-medium">Total Score</th>
                     <th className="p-2 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -171,6 +200,8 @@ const EnrollmentScoresEditPage = () => {
                       exercise1: assessment.exercise1,
                       exercise2: assessment.exercise2,
                       classTest: assessment.classTest,
+                      classMark: assessment.classMark,
+                      examMark: assessment.examMark,
                     };
 
                     const isSaving = savingAssessmentId === assessment.id;
@@ -185,7 +216,11 @@ const EnrollmentScoresEditPage = () => {
                             step="0.01"
                             value={draft.homeWork1}
                             onChange={(event) =>
-                              onScoreChange(assessment, "homeWork1", event.target.value)
+                              onScoreChange(
+                                assessment,
+                                "homeWork1",
+                                event.target.value,
+                              )
                             }
                           />
                         </td>
@@ -196,7 +231,11 @@ const EnrollmentScoresEditPage = () => {
                             step="0.01"
                             value={draft.homeWork2}
                             onChange={(event) =>
-                              onScoreChange(assessment, "homeWork2", event.target.value)
+                              onScoreChange(
+                                assessment,
+                                "homeWork2",
+                                event.target.value,
+                              )
                             }
                           />
                         </td>
@@ -207,7 +246,11 @@ const EnrollmentScoresEditPage = () => {
                             step="0.01"
                             value={draft.exercise1}
                             onChange={(event) =>
-                              onScoreChange(assessment, "exercise1", event.target.value)
+                              onScoreChange(
+                                assessment,
+                                "exercise1",
+                                event.target.value,
+                              )
                             }
                           />
                         </td>
@@ -218,7 +261,11 @@ const EnrollmentScoresEditPage = () => {
                             step="0.01"
                             value={draft.exercise2}
                             onChange={(event) =>
-                              onScoreChange(assessment, "exercise2", event.target.value)
+                              onScoreChange(
+                                assessment,
+                                "exercise2",
+                                event.target.value,
+                              )
                             }
                           />
                         </td>
@@ -229,19 +276,54 @@ const EnrollmentScoresEditPage = () => {
                             step="0.01"
                             value={draft.classTest}
                             onChange={(event) =>
-                              onScoreChange(assessment, "classTest", event.target.value)
+                              onScoreChange(
+                                assessment,
+                                "classTest",
+                                event.target.value,
+                              )
                             }
                           />
                         </td>
-                        <td className="p-2 font-medium">{assessment.totalMark}</td>
+                        <td className="p-2 font-medium">
+                          {assessment.classMark}
+                        </td>
+                        <td className="p-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            value={draft.examMark}
+                            onChange={(event) =>
+                              onScoreChange(
+                                assessment,
+                                "examMark",
+                                event.target.value,
+                              )
+                            }
+                          />
+                        </td>
+                        <td className="p-2 font-medium">
+                          {assessment.totalMark}
+                        </td>
                         <td className="p-2">
                           <Button
                             type="button"
                             size="sm"
-                            onClick={() => saveScores(assessment)}
+                            onClick={() => {
+                              setSubjectName(assessment.subjectName);
+                              saveScores(assessment);
+                              setSubjectName("");
+                            }}
                             disabled={isSaving}
                           >
-                            {isSaving ? "Saving..." : "Update"}
+                            {isSaving ? (
+                              <div className="flex gap-1 items-center">
+                                <span>Updating...</span>
+                                <Loader2 className="inline-block ml-2 animate-spin" />
+                              </div>
+                            ) : (
+                              "Update"
+                            )}
                           </Button>
                         </td>
                       </tr>
