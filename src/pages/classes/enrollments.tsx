@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
@@ -6,13 +7,6 @@ import { ListView } from "@/components/refine-ui/views/list-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -26,20 +20,11 @@ import {
   AcademicYearRecord,
   ClassEnrollmentOverviewRow,
   ClassRecord,
-  EnrollmentAssessmentRow,
   TermRecord,
 } from "@/types";
-import { useList, useNotification, useUpdate } from "@refinedev/core";
+import { useList } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
-
-type ScoreDraft = {
-  homeWork1: string;
-  homeWork2: string;
-  exercise1: string;
-  exercise2: string;
-  classTest: string;
-};
 
 const formatDate = (date: string) => {
   const parsed = new Date(date);
@@ -48,17 +33,12 @@ const formatDate = (date: string) => {
 };
 
 const EnrollmentsPage = () => {
-  const { open } = useNotification();
-  const { mutateAsync: updateRecord } = useUpdate();
+  const navigate = useNavigate();
 
   const [studentNameFilter, setStudentNameFilter] = useState("");
   const [classIdFilter, setClassIdFilter] = useState("");
   const [academicYearIdFilter, setAcademicYearIdFilter] = useState("");
   const [termIdFilter, setTermIdFilter] = useState("");
-  const [scoreDrafts, setScoreDrafts] = useState<Record<number, ScoreDraft>>({});
-  const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(null);
-  const [selectedEnrollment, setSelectedEnrollment] =
-    useState<ClassEnrollmentOverviewRow | null>(null);
 
   const { result: classesResult } = useList<ClassRecord>({
     resource: "classes",
@@ -205,14 +185,14 @@ const EnrollmentsPage = () => {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => setSelectedEnrollment(row.original)}
+              onClick={() => navigate(`/classes/enrollments/scores/${row.original.id}`)}
             >
               Edit Scores
             </Button>
           ),
         },
       ],
-      [],
+      [navigate],
     ),
     refineCoreProps: {
       resource: "student-class-enrollments/overview",
@@ -232,11 +212,6 @@ const EnrollmentsPage = () => {
   const selectedClass = classes.find((classRow) => String(classRow.id) === classIdFilter) ?? null;
   const selectedAcademicYear =
     academicYears.find((year) => String(year.id) === academicYearIdFilter) ?? null;
-  const enrollments = useMemo(
-    () => enrollmentsTable.refineCore.tableQuery.data?.data ?? [],
-    [enrollmentsTable.refineCore.tableQuery.data?.data],
-  );
-
   const filteredTerms = useMemo(() => {
     if (!academicYearIdFilter) return terms;
 
@@ -296,28 +271,6 @@ const EnrollmentsPage = () => {
   );
 
   useEffect(() => {
-    setScoreDrafts((prev) => {
-      const next = { ...prev };
-
-      for (const enrollment of enrollments) {
-        for (const assessment of enrollment.assessments) {
-          if (!next[assessment.id]) {
-            next[assessment.id] = {
-              homeWork1: assessment.homeWork1,
-              homeWork2: assessment.homeWork2,
-              exercise1: assessment.exercise1,
-              exercise2: assessment.exercise2,
-              classTest: assessment.classTest,
-            };
-          }
-        }
-      }
-
-      return next;
-    });
-  }, [enrollments]);
-
-  useEffect(() => {
     if (!academicYearIdFilter) return;
 
     const exists = terms.some(
@@ -330,68 +283,6 @@ const EnrollmentsPage = () => {
       setTermIdFilter("");
     }
   }, [academicYearIdFilter, termIdFilter, terms]);
-
-  const onScoreChange = (
-    assessmentId: number,
-    field: keyof ScoreDraft,
-    value: string,
-  ) => {
-    setScoreDrafts((prev) => ({
-      ...prev,
-      [assessmentId]: {
-        homeWork1: prev[assessmentId]?.homeWork1 ?? "",
-        homeWork2: prev[assessmentId]?.homeWork2 ?? "",
-        exercise1: prev[assessmentId]?.exercise1 ?? "",
-        exercise2: prev[assessmentId]?.exercise2 ?? "",
-        classTest: prev[assessmentId]?.classTest ?? "",
-        [field]: value,
-      },
-    }));
-  };
-
-  const saveScores = async (assessmentId: number) => {
-    const draft = scoreDrafts[assessmentId];
-
-    if (!draft) return;
-
-    setSavingAssessmentId(assessmentId);
-
-    try {
-      await updateRecord({
-        resource: "continuous-assessments",
-        id: assessmentId,
-        values: {
-          homeWork1: draft.homeWork1,
-          homeWork2: draft.homeWork2,
-          exercise1: draft.exercise1,
-          exercise2: draft.exercise2,
-          classTest: draft.classTest,
-        },
-        successNotification: false,
-        errorNotification: false,
-      });
-
-      open?.({
-        type: "success",
-        message: "Scores updated",
-      });
-
-      await enrollmentsTable.refineCore.tableQuery.refetch();
-    } catch (error) {
-      const message =
-        error && typeof error === "object" && "message" in error
-          ? String(error.message)
-          : "Failed to update scores";
-
-      open?.({
-        type: "error",
-        message: "Score update failed",
-        description: message,
-      });
-    } finally {
-      setSavingAssessmentId(null);
-    }
-  };
 
   return (
     <ListView className="space-y-6">
@@ -509,109 +400,6 @@ const EnrollmentsPage = () => {
       )}
 
       <DataTable table={enrollmentsTable} />
-
-      <Dialog open={Boolean(selectedEnrollment)} onOpenChange={(open) => !open && setSelectedEnrollment(null)}>
-        <DialogContent className="max-w-6xl">
-          <DialogHeader>
-            <DialogTitle>Edit Subject Scores</DialogTitle>
-            <DialogDescription>
-              {selectedEnrollment
-                ? `${selectedEnrollment.student.fullName} • ${selectedEnrollment.class.name} • ${selectedEnrollment.academicYear.year} • ${selectedEnrollment.term.name}`
-                : "Update class and exam scores for each subject."}
-            </DialogDescription>
-          </DialogHeader>
-
-          {!selectedEnrollment ? null : selectedEnrollment.assessments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assessments seeded for this enrollment.</p>
-          ) : (
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
-              {selectedEnrollment.assessments.map((assessment: EnrollmentAssessmentRow) => {
-                const draft = scoreDrafts[assessment.id] ?? {
-                  homeWork1: assessment.homeWork1,
-                  homeWork2: assessment.homeWork2,
-                  exercise1: assessment.exercise1,
-                  exercise2: assessment.exercise2,
-                  classTest: assessment.classTest,
-                };
-
-                const isSaving = savingAssessmentId === assessment.id;
-
-                return (
-                  <div key={assessment.id} className="grid gap-3 rounded-md border p-3 md:grid-cols-7">
-                    <div className="md:col-span-2">
-                      <p className="font-medium">{assessment.subjectName}</p>
-                      <p className="text-xs text-muted-foreground">Total: {assessment.totalMark}</p>
-                    </div>
-
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={draft.homeWork1}
-                      onChange={(event) =>
-                        onScoreChange(assessment.id, "homeWork1", event.target.value)
-                      }
-                      placeholder="HW 1"
-                    />
-
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={draft.homeWork2}
-                      onChange={(event) =>
-                        onScoreChange(assessment.id, "homeWork2", event.target.value)
-                      }
-                      placeholder="HW 2"
-                    />
-
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={draft.exercise1}
-                      onChange={(event) =>
-                        onScoreChange(assessment.id, "exercise1", event.target.value)
-                      }
-                      placeholder="Ex 1"
-                    />
-
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={draft.exercise2}
-                      onChange={(event) =>
-                        onScoreChange(assessment.id, "exercise2", event.target.value)
-                      }
-                      placeholder="Ex 2"
-                    />
-
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={draft.classTest}
-                      onChange={(event) =>
-                        onScoreChange(assessment.id, "classTest", event.target.value)
-                      }
-                      placeholder="Class Test"
-                    />
-
-                    <Button
-                      type="button"
-                      onClick={() => saveScores(assessment.id)}
-                      disabled={isSaving}
-                    >
-                      {isSaving ? "Saving..." : "Update"}
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </ListView>
   );
 };

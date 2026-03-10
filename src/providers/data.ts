@@ -91,6 +91,7 @@ const options: CreateDataProviderOptions = {
         }
 
         if (resource === "student-class-enrollments/overview") {
+          if (field === "enrollmentId") params.enrollmentId = value;
           if (field === "classId") params.classId = value;
           if (field === "className") params.className = value;
           if (field === "studentName") params.studentName = value;

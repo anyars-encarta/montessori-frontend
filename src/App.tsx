@@ -30,6 +30,7 @@ import ShowClass from "./pages/classes/show";
 import CreateClass from "./pages/classes/create";
 import EditClass from "./pages/classes/edit";
 import EnrollmentsPage from "./pages/classes/enrollments";
+import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
 // import SubjectsShow from "./pages/subjects/show";
 import Login from "./pages/login";
 import Register from "./pages/register";
@@ -177,6 +178,10 @@ function App() {
                     <Route index element={<ListClasses />} />
                     <Route path="create" element={<CreateClass />} />
                     <Route path="enrollments" element={<EnrollmentsPage />} />
+                    <Route
+                      path="enrollments/scores/:id"
+                      element={<EnrollmentScoresEditPage />}
+                    />
                     <Route path="show/:id" element={<ShowClass />} />
                     <Route path="edit/:id" element={<EditClass />} />
                   </Route>
