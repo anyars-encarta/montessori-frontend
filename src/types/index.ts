@@ -605,3 +605,11 @@ export type ClassEnrollmentOverviewRow = {
   enrollmentDate: string;
   assessments: EnrollmentAssessmentRow[];
 };
+
+export type ScoreDraft = {
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
+};

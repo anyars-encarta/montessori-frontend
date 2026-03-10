@@ -10,16 +10,9 @@ import { Input } from "@/components/ui/input";
 import {
   ClassEnrollmentOverviewRow,
   EnrollmentAssessmentRow,
+  ScoreDraft,
 } from "@/types";
 import { useList, useNotification, useUpdate } from "@refinedev/core";
-
-type ScoreDraft = {
-  homeWork1: string;
-  homeWork2: string;
-  exercise1: string;
-  exercise2: string;
-  classTest: string;
-};
 
 const EnrollmentScoresEditPage = () => {
   const navigate = useNavigate();
@@ -154,7 +147,7 @@ const EnrollmentScoresEditPage = () => {
         </CardHeader>
         <CardContent>
           {assessments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No assessments seeded for this enrollment.</p>
+            <p className="text-sm text-muted-foreground">No assessments records for this enrollment.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
