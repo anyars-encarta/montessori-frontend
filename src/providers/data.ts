@@ -89,6 +89,14 @@ const options: CreateDataProviderOptions = {
           if (field === "academicYearId") params.academicYearId = value;
           if (field === "parentId") params.parentId = value;
         }
+
+        if (resource === "student-class-enrollments/overview") {
+          if (field === "classId") params.classId = value;
+          if (field === "className") params.className = value;
+          if (field === "studentName") params.studentName = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "termId") params.termId = value;
+        }
       });
 
       return params;

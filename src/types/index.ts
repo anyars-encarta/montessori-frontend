@@ -303,6 +303,11 @@ export type ContinuousAssessmentRecord = {
   subjectId: number;
   academicYearId: number;
   termId: number;
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
   classMark: string;
   examMark: string;
   totalMark: string;
@@ -562,4 +567,41 @@ export type TermForm = {
   academicYearId: string;
   startDate: string;
   endDate: string;
+};
+
+export type EnrollmentAssessmentRow = {
+  id: number;
+  subjectId: number;
+  subjectName: string;
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
+  totalMark: string;
+};
+
+export type ClassEnrollmentOverviewRow = {
+  id: number;
+  student: {
+    id: number;
+    fullName: string;
+    registrationNumber: string | null;
+  };
+  class: {
+    id: number;
+    name: string;
+    level: string;
+  };
+  academicYear: {
+    id: number;
+    year: number;
+  };
+  term: {
+    id: number;
+    name: string;
+    sequenceNumber: number;
+  };
+  enrollmentDate: string;
+  assessments: EnrollmentAssessmentRow[];
 };

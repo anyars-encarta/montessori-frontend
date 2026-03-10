@@ -29,6 +29,7 @@ import ListClasses from "./pages/classes/list";
 import ShowClass from "./pages/classes/show";
 import CreateClass from "./pages/classes/create";
 import EditClass from "./pages/classes/edit";
+import EnrollmentsPage from "./pages/classes/enrollments";
 // import SubjectsShow from "./pages/subjects/show";
 import Login from "./pages/login";
 import Register from "./pages/register";
@@ -92,6 +93,14 @@ function App() {
                   edit: "/classes/edit/:id",
                   meta: {
                     label: "Classes",
+                    icon: <BookOpen />,
+                  },
+                },
+                {
+                  name: "class-enrollments",
+                  list: "/classes/enrollments",
+                  meta: {
+                    label: "Enrollments",
                     icon: <BookOpen />,
                   },
                 },
@@ -167,6 +176,7 @@ function App() {
                   <Route path="classes">
                     <Route index element={<ListClasses />} />
                     <Route path="create" element={<CreateClass />} />
+                    <Route path="enrollments" element={<EnrollmentsPage />} />
                     <Route path="show/:id" element={<ShowClass />} />
                     <Route path="edit/:id" element={<EditClass />} />
                   </Route>
