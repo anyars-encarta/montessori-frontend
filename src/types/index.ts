@@ -581,6 +581,8 @@ export type EnrollmentAssessmentRow = {
   classMark: string;
   examMark: string;
   totalMark: string;
+  subjectPosition: string;
+  remarks: string;
 };
 
 export type ClassEnrollmentOverviewRow = {
@@ -605,6 +607,8 @@ export type ClassEnrollmentOverviewRow = {
     sequenceNumber: number;
   };
   enrollmentDate: string;
+  classPosition: string;
+  remarks: string;
   assessments: EnrollmentAssessmentRow[];
 };
 

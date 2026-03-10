@@ -181,14 +181,16 @@ const EnrollmentScoresEditPage = () => {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="p-2 font-medium">Subject</th>
-                    <th className="p-2 font-medium">HomeWork 1</th>
-                    <th className="p-2 font-medium">HomeWork 2</th>
+                    <th className="p-2 font-medium">Home Work 1</th>
+                    <th className="p-2 font-medium">Home Work 2</th>
                     <th className="p-2 font-medium">Exercise 1</th>
                     <th className="p-2 font-medium">Exercise 2</th>
                     <th className="p-2 font-medium">Class Test</th>
                     <th className="p-2 font-medium">Class Score</th>
                     <th className="p-2 font-medium">Exam Score</th>
                     <th className="p-2 font-medium">Total Score</th>
+                    <th className="p-2 font-medium">Position</th>
+                    <th className="p-2 font-medium">Remarks</th>
                     <th className="p-2 font-medium">Actions</th>
                   </tr>
                 </thead>
@@ -304,6 +306,12 @@ const EnrollmentScoresEditPage = () => {
                         </td>
                         <td className="p-2 font-medium">
                           {assessment.totalMark}
+                        </td>
+                        <td className="p-2 font-medium">
+                          {assessment.subjectPosition}
+                        </td>
+                        <td className="p-2 font-medium">
+                          {assessment.remarks}
                         </td>
                         <td className="p-2">
                           <Button

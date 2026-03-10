@@ -151,7 +151,6 @@ const EnrollmentsPage = () => {
 
             const totals = assessments.reduce(
               (acc, current) => {
-                acc.classTest += Number.parseFloat(current.classTest || "0") || 0;
                 acc.totalMark += Number.parseFloat(current.totalMark || "0") || 0;
                 return acc;
               },
@@ -161,13 +160,32 @@ const EnrollmentsPage = () => {
             return (
               <div className="text-sm">
                 <p>Subjects: {subjectCount}</p>
-                <p>
-                  Avg Class Test: {(totals.classTest / subjectCount).toFixed(2)}
-                </p>
                 <p>Total Score: {totals.totalMark.toFixed(2)}</p>
               </div>
             );
           },
+        },
+         {
+          id: "classPosition",
+          accessorFn: (row) => row.classPosition,
+          header: () => <p className="column-title">Position</p>,
+          size: 150,
+          cell: ({ row }) => (
+            <span>
+              {row.original.classPosition}
+            </span>
+          ),
+        },
+        {
+          id: "remarks",
+          accessorFn: (row) => row.remarks,
+          header: () => <p className="column-title">Remarks</p>,
+          size: 150,
+          cell: ({ row }) => (
+            <span>
+              {row.original.remarks}
+            </span>
+          ),
         },
         {
           id: "enrollmentDate",
@@ -294,7 +312,7 @@ const EnrollmentsPage = () => {
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-4">
+        <CardContent className="grid gap-4 md:grid-cols-5">
           <div className="space-y-2">
             <Label htmlFor="student-search">Student Name</Label>
             <Input
@@ -363,6 +381,14 @@ const EnrollmentsPage = () => {
               </SelectContent>
             </Select>
           </div>
+
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => {console.log("gradeing students...")}}
+          >
+            Run Grade
+          </Button>
         </CardContent>
       </Card>
 
