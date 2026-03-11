@@ -532,7 +532,7 @@ export type SchoolDetailsRecord = {
 
 export type AcademicYearRecord = {
   id: number;
-  year: number;
+  year: string;
   startDate: string;
   endDate: string;
 };

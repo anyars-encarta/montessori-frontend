@@ -204,6 +204,7 @@ const EnrollmentsPage = () => {
             <Button
               type="button"
               size="sm"
+              className="cursor-pointer"
               variant="outline"
               onClick={() =>
                 navigate(`/classes/enrollments/scores/${row.original.id}`)
@@ -418,6 +419,7 @@ const generateScores = () => {
           <Button
             type="button"
             size="sm"
+            className="cursor-pointer"
             onClick={() => generateScores()}
             disabled={
               isGenerating ||
@@ -457,6 +459,7 @@ const generateScores = () => {
 
           <Button
             type="button"
+            className="cursor-pointer"
             variant="outline"
             size="sm"
             onClick={() => {

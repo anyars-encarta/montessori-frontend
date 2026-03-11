@@ -167,7 +167,7 @@ const EditSetup = () => {
     setIsSavingAcademicYear(true);
 
     const payload = {
-      year: Number.parseInt(academicYearForm.year, 10),
+      year: academicYearForm.year,
       startDate: academicYearForm.startDate,
       endDate: academicYearForm.endDate,
     };
@@ -297,7 +297,7 @@ const EditSetup = () => {
               No school details found. Create school setup first.
             </p>
             <div>
-              <Button onClick={() => navigate("/setup/create")}>Go to Create Setup</Button>
+              <Button className="cursor-pointer" onClick={() => navigate("/setup/create")}>Go to Create Setup</Button>
             </div>
           </CardContent>
         </Card>
@@ -388,7 +388,7 @@ const EditSetup = () => {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSavingSchool}>
+              <Button type="submit" className="cursor-pointer" disabled={isSavingSchool}>
                 {isSavingSchool ? "Saving..." : "Update School Information"}
               </Button>
             </div>
@@ -406,7 +406,7 @@ const EditSetup = () => {
               <Label htmlFor="year">Year</Label>
               <Input
                 id="year"
-                type="number"
+                type="text"
                 value={academicYearForm.year}
                 onChange={(event) =>
                   setAcademicYearForm((prev) => ({ ...prev, year: event.target.value }))
@@ -439,7 +439,7 @@ const EditSetup = () => {
               />
             </div>
             <div className="flex items-end gap-2">
-              <Button type="submit" disabled={isSavingAcademicYear}>
+              <Button type="submit" className="cursor-pointer" disabled={isSavingAcademicYear}>
                 {isSavingAcademicYear
                   ? "Saving..."
                   : editingAcademicYearId
@@ -450,6 +450,7 @@ const EditSetup = () => {
                 <Button
                   type="button"
                   variant="outline"
+                  className="cursor-pointer"
                   onClick={() => {
                     setEditingAcademicYearId(null);
                     setAcademicYearForm(emptyAcademicYear);
@@ -480,6 +481,7 @@ const EditSetup = () => {
                     <Button
                       type="button"
                       variant="outline"
+                      className="cursor-pointer"
                       onClick={() => {
                         setEditingAcademicYearId(year.id);
                         setAcademicYearForm({
@@ -494,6 +496,7 @@ const EditSetup = () => {
                     <Button
                       type="button"
                       variant="destructive"
+                      className="cursor-pointer"
                       onClick={() => onDeleteAcademicYear(year.id)}
                     >
                       Delete
@@ -583,6 +586,7 @@ const EditSetup = () => {
             <div className="flex items-end gap-2 md:col-span-2">
               <Button
                 type="submit"
+                className="cursor-pointer"
                 disabled={isSavingTerm || academicYears.length === 0}
               >
                 {isSavingTerm ? "Saving..." : editingTermId ? "Update" : "Add"}
@@ -591,6 +595,7 @@ const EditSetup = () => {
                 <Button
                   type="button"
                   variant="outline"
+                  className="cursor-pointer"
                   onClick={() => {
                     setEditingTermId(null);
                     setTermForm(emptyTerm);
@@ -623,6 +628,7 @@ const EditSetup = () => {
                     <Button
                       type="button"
                       variant="outline"
+                      className="cursor-pointer"
                       onClick={() => {
                         setEditingTermId(term.id);
                         setTermForm({
@@ -639,6 +645,7 @@ const EditSetup = () => {
                     <Button
                       type="button"
                       variant="destructive"
+                      className="cursor-pointer"
                       onClick={() => onDeleteTerm(term.id)}
                     >
                       Delete

@@ -43,13 +43,20 @@ const ShowSetup = () => {
 
   const sortedAcademicYears = useMemo(() => {
     return [...academicYears].sort((a, b) => {
-      const aIsCurrent = a.year === currentCalendarYear;
-      const bIsCurrent = b.year === currentCalendarYear;
+      const aIsCurrent = a.year === String(currentCalendarYear);
+      const bIsCurrent = b.year === String(currentCalendarYear);
 
       if (aIsCurrent && !bIsCurrent) return -1;
       if (!aIsCurrent && bIsCurrent) return 1;
 
-      return b.year - a.year;
+      const aYear = Number(a.year);
+      const bYear = Number(b.year);
+
+      if (Number.isFinite(aYear) && Number.isFinite(bYear)) {
+        return bYear - aYear;
+      }
+
+      return b.year.localeCompare(a.year);
     });
   }, [academicYears, currentCalendarYear]);
 
@@ -93,11 +100,11 @@ const ShowSetup = () => {
           <Breadcrumb />
           <div className="flex items-center gap-2">
             {school ? (
-              <Button onClick={() => navigate(`/setup/edit/${school.id}`)}>
+              <Button className="cursor-pointer" onClick={() => navigate(`/setup/edit/${school.id}`)}>
                 Edit Setup
               </Button>
             ) : (
-              <Button onClick={() => navigate("/setup/create")}>
+              <Button className="cursor-pointer" onClick={() => navigate("/setup/create")}>
                 Create Setup
               </Button>
             )}

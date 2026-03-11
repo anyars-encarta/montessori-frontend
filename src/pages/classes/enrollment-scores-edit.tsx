@@ -136,7 +136,7 @@ const EnrollmentScoresEditPage = () => {
             <p className="text-sm text-muted-foreground">
               Enrollment record not found.
             </p>
-            <Button onClick={() => navigate("/classes/enrollments")}>
+            <Button className="cursor-pointer" onClick={() => navigate("/classes/enrollments")}>
               Back to Enrollments
             </Button>
           </CardContent>
@@ -160,6 +160,7 @@ const EnrollmentScoresEditPage = () => {
 
         <Button
           variant="outline"
+          className="cursor-pointer"
           onClick={() => navigate("/classes/enrollments")}
         >
           Back
@@ -317,6 +318,7 @@ const EnrollmentScoresEditPage = () => {
                           <Button
                             type="button"
                             size="sm"
+                            className="cursor-pointer"
                             onClick={() => {
                               setSubjectName(assessment.subjectName);
                               saveScores(assessment);

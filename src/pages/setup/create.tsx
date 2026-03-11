@@ -170,7 +170,7 @@ const CreateSetup = () => {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={isSaving}>
+              <Button type="submit" className="cursor-pointer" disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save School Details"}
               </Button>
             </div>

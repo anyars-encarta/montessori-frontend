@@ -885,6 +885,7 @@ const EditStudent = () => {
             <div className="flex flex-wrap gap-3">
               <Button
                 type="button"
+                className="cursor-pointer"
                 onClick={() => runEnrollmentAction("admit")}
                 disabled={isSubmittingAdmission}
               >
@@ -899,6 +900,7 @@ const EditStudent = () => {
               </Button>
               <Button
                 type="button"
+                className="cursor-pointer"
                 variant="outline"
                 onClick={() => runEnrollmentAction("promote")}
                 disabled={isSubmittingPromotion}
@@ -942,6 +944,7 @@ const EditStudent = () => {
               />
               <Button
                 type="button"
+                className="cursor-pointer"
                 onClick={addParent}
                 disabled={isSavingRelation}
               >
@@ -964,6 +967,7 @@ const EditStudent = () => {
                   <Button
                     variant="outline"
                     type="button"
+                    className="cursor-pointer"
                     onClick={() => removeParent(relation.parentId)}
                     disabled={isSavingRelation}
                   >
@@ -996,6 +1000,7 @@ const EditStudent = () => {
               </Select>
               <Button
                 type="button"
+                className="cursor-pointer"
                 onClick={addSibling}
                 disabled={isSavingRelation}
               >
@@ -1023,6 +1028,7 @@ const EditStudent = () => {
                   <Button
                     variant="outline"
                     type="button"
+                    className="cursor-pointer"
                     onClick={() => removeSibling(relation.siblingId)}
                     disabled={isSavingRelation}
                   >
@@ -1094,6 +1100,7 @@ const EditStudent = () => {
 
             <Button
               type="button"
+              className="cursor-pointer"
               onClick={saveHealthDetails}
               disabled={isSavingHealth}
             >
@@ -1134,6 +1141,7 @@ const EditStudent = () => {
 
             <Button
               type="button"
+              className="cursor-pointer"
               onClick={saveOtherData}
               disabled={isSavingOtherData}
             >
@@ -1205,6 +1213,7 @@ const EditStudent = () => {
               type="button"
               onClick={addPreviousSchool}
               disabled={isSavingPreviousSchool}
+              className="cursor-pointer"
             >
               Add Previous School
             </Button>
@@ -1228,6 +1237,7 @@ const EditStudent = () => {
                   <Button
                     variant="outline"
                     type="button"
+                    className="cursor-pointer"
                     onClick={() => removePreviousSchool(school.id)}
                     disabled={isSavingPreviousSchool}
                   >
