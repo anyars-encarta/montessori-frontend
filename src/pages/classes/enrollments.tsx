@@ -25,6 +25,7 @@ import {
 import { useList } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { Loader2 } from "lucide-react";
 
 const formatDate = (date: string) => {
   const parsed = new Date(date);
@@ -39,6 +40,7 @@ const EnrollmentsPage = () => {
   const [classIdFilter, setClassIdFilter] = useState("");
   const [academicYearIdFilter, setAcademicYearIdFilter] = useState("");
   const [termIdFilter, setTermIdFilter] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { result: classesResult } = useList<ClassRecord>({
     resource: "classes",
@@ -108,7 +110,9 @@ const EnrollmentsPage = () => {
           size: 220,
           cell: ({ row }) => (
             <div className="flex flex-col">
-              <span className="font-medium">{row.original.student.fullName}</span>
+              <span className="font-medium">
+                {row.original.student.fullName}
+              </span>
               <span className="text-xs text-muted-foreground">
                 {row.original.student.registrationNumber ?? "N/A"}
               </span>
@@ -128,7 +132,8 @@ const EnrollmentsPage = () => {
         },
         {
           id: "yearTerm",
-          accessorFn: (row) => `${row.academicYear.year}-${row.term.sequenceNumber}`,
+          accessorFn: (row) =>
+            `${row.academicYear.year}-${row.term.sequenceNumber}`,
           header: () => <p className="column-title">Year / Term</p>,
           size: 150,
           cell: ({ row }) => (
@@ -146,12 +151,15 @@ const EnrollmentsPage = () => {
             const subjectCount = assessments.length;
 
             if (!subjectCount) {
-              return <span className="text-muted-foreground">No assessments</span>;
+              return (
+                <span className="text-muted-foreground">No assessments</span>
+              );
             }
 
             const totals = assessments.reduce(
               (acc, current) => {
-                acc.totalMark += Number.parseFloat(current.totalMark || "0") || 0;
+                acc.totalMark +=
+                  Number.parseFloat(current.totalMark || "0") || 0;
                 return acc;
               },
               { classTest: 0, totalMark: 0 },
@@ -165,34 +173,28 @@ const EnrollmentsPage = () => {
             );
           },
         },
-         {
+        {
           id: "classPosition",
           accessorFn: (row) => row.classPosition,
           header: () => <p className="column-title">Position</p>,
           size: 150,
-          cell: ({ row }) => (
-            <span>
-              {row.original.classPosition}
-            </span>
-          ),
+          cell: ({ row }) => <span>{row.original.classPosition}</span>,
         },
         {
           id: "remarks",
           accessorFn: (row) => row.remarks,
           header: () => <p className="column-title">Remarks</p>,
           size: 150,
-          cell: ({ row }) => (
-            <span>
-              {row.original.remarks}
-            </span>
-          ),
+          cell: ({ row }) => <span>{row.original.remarks}</span>,
         },
         {
           id: "enrollmentDate",
           accessorFn: (row) => row.enrollmentDate,
           header: () => <p className="column-title">Enrollment Date</p>,
           size: 140,
-          cell: ({ row }) => <span>{formatDate(row.original.enrollmentDate)}</span>,
+          cell: ({ row }) => (
+            <span>{formatDate(row.original.enrollmentDate)}</span>
+          ),
         },
         {
           id: "actions",
@@ -203,7 +205,9 @@ const EnrollmentsPage = () => {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => navigate(`/classes/enrollments/scores/${row.original.id}`)}
+              onClick={() =>
+                navigate(`/classes/enrollments/scores/${row.original.id}`)
+              }
             >
               Edit Scores
             </Button>
@@ -227,55 +231,60 @@ const EnrollmentsPage = () => {
   const classes = classesResult.data;
   const academicYears = yearsResult.data;
   const terms = termsResult.data;
-  const selectedClass = classes.find((classRow) => String(classRow.id) === classIdFilter) ?? null;
+  const selectedClass =
+    classes.find((classRow) => String(classRow.id) === classIdFilter) ?? null;
   const selectedAcademicYear =
-    academicYears.find((year) => String(year.id) === academicYearIdFilter) ?? null;
+    academicYears.find((year) => String(year.id) === academicYearIdFilter) ??
+    null;
   const filteredTerms = useMemo(() => {
     if (!academicYearIdFilter) return terms;
 
-    return terms.filter((term) => String(term.academicYearId) === academicYearIdFilter);
+    return terms.filter(
+      (term) => String(term.academicYearId) === academicYearIdFilter,
+    );
   }, [academicYearIdFilter, terms]);
 
-  const selectedTerm = filteredTerms.find((term) => String(term.id) === termIdFilter) ?? null;
+  const selectedTerm =
+    filteredTerms.find((term) => String(term.id) === termIdFilter) ?? null;
 
   const activeFilters = useMemo(
-    () => [
-      studentNameFilter.trim()
-        ? {
-            key: "student",
-            label: `Student: ${studentNameFilter.trim()}`,
-            clear: () => setStudentNameFilter(""),
-          }
-        : null,
-      selectedClass
-        ? {
-            key: "class",
-            label: `Class: ${selectedClass.name}`,
-            clear: () => setClassIdFilter(""),
-          }
-        : null,
-      selectedAcademicYear
-        ? {
-            key: "year",
-            label: `Year: ${selectedAcademicYear.year}`,
-            clear: () => {
-              setAcademicYearIdFilter("");
-              setTermIdFilter("");
-            },
-          }
-        : null,
-      selectedTerm
-        ? {
-            key: "term",
-            label: `Term: ${selectedTerm.name}`,
-            clear: () => setTermIdFilter(""),
-          }
-        : null,
-    ].filter(
-      (
-        value,
-      ): value is { key: string; label: string; clear: () => void } => Boolean(value),
-    ),
+    () =>
+      [
+        studentNameFilter.trim()
+          ? {
+              key: "student",
+              label: `Student: ${studentNameFilter.trim()}`,
+              clear: () => setStudentNameFilter(""),
+            }
+          : null,
+        selectedClass
+          ? {
+              key: "class",
+              label: `Class: ${selectedClass.name}`,
+              clear: () => setClassIdFilter(""),
+            }
+          : null,
+        selectedAcademicYear
+          ? {
+              key: "year",
+              label: `Year: ${selectedAcademicYear.year}`,
+              clear: () => {
+                setAcademicYearIdFilter("");
+                setTermIdFilter("");
+              },
+            }
+          : null,
+        selectedTerm
+          ? {
+              key: "term",
+              label: `Term: ${selectedTerm.name}`,
+              clear: () => setTermIdFilter(""),
+            }
+          : null,
+      ].filter(
+        (value): value is { key: string; label: string; clear: () => void } =>
+          Boolean(value),
+      ),
     [
       selectedAcademicYear,
       selectedClass,
@@ -302,6 +311,16 @@ const EnrollmentsPage = () => {
     }
   }, [academicYearIdFilter, termIdFilter, terms]);
 
+const generateScores = () => {
+    try {
+        setIsGenerating(true);
+        console.log("Generating Student grades...")
+    } catch (e) {
+    setIsGenerating(false);
+        console.error(e)
+    }
+};
+
   return (
     <ListView className="space-y-6">
       <Breadcrumb />
@@ -325,7 +344,12 @@ const EnrollmentsPage = () => {
 
           <div className="space-y-2">
             <Label>Class</Label>
-            <Select value={classIdFilter || "all"} onValueChange={(value) => setClassIdFilter(value === "all" ? "" : value)}>
+            <Select
+              value={classIdFilter || "all"}
+              onValueChange={(value) =>
+                setClassIdFilter(value === "all" ? "" : value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="All classes" />
               </SelectTrigger>
@@ -342,7 +366,12 @@ const EnrollmentsPage = () => {
 
           <div className="space-y-2">
             <Label>Academic Year</Label>
-            <Select value={academicYearIdFilter || "all"} onValueChange={(value) => setAcademicYearIdFilter(value === "all" ? "" : value)}>
+            <Select
+              value={academicYearIdFilter || "all"}
+              onValueChange={(value) =>
+                setAcademicYearIdFilter(value === "all" ? "" : value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="All years" />
               </SelectTrigger>
@@ -361,13 +390,17 @@ const EnrollmentsPage = () => {
             <Label>Term</Label>
             <Select
               value={termIdFilter || "all"}
-              onValueChange={(value) => setTermIdFilter(value === "all" ? "" : value)}
+              onValueChange={(value) =>
+                setTermIdFilter(value === "all" ? "" : value)
+              }
               disabled={!academicYearIdFilter}
             >
               <SelectTrigger>
                 <SelectValue
                   placeholder={
-                    academicYearIdFilter ? "All terms" : "Select academic year first"
+                    academicYearIdFilter
+                      ? "All terms"
+                      : "Select academic year first"
                   }
                 />
               </SelectTrigger>
@@ -385,9 +418,22 @@ const EnrollmentsPage = () => {
           <Button
             type="button"
             size="sm"
-            onClick={() => {console.log("gradeing students...")}}
+            onClick={() => generateScores()}
+            disabled={
+              isGenerating ||
+              !classIdFilter ||
+              !academicYearIdFilter ||
+              !termIdFilter
+            }
           >
-            Run Grade
+            {isGenerating ? (
+              <div className="flex gap-1 items-center">
+                <span>Grading...</span>
+                <Loader2 className="inline-block ml-2 animate-spin" />
+              </div>
+            ) : (
+              "Run Grades"
+            )}
           </Button>
         </CardContent>
       </Card>
