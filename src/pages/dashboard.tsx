@@ -10,7 +10,6 @@ import type {
   Student,
   Staff,
   StudentAttendance,
-  ClassRecord,
   StudentFeeRecord,
   PaymentRecord,
 } from "@/types";
@@ -19,81 +18,99 @@ import FinanceChart from "@/components/FinanceChart";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
+type DashboardSummary = {
+  totalStudents: number;
+  totalActiveStudents: number;
+  totalTeachers: number;
+  totalNonTeachingStaff: number;
+  totalClasses: number;
+  maleStudents: number;
+  femaleStudents: number;
+  otherStudents: number;
+};
+
 const Dashboard = () => {
   const Link = useLink();
-  const { query: studentsQuery } = useList<Student>({
+  const { result: studentsResult } = useList<Student>({
     resource: "students",
-    pagination: { mode: "off" },
+    pagination: { mode: "server", currentPage: 1, pageSize: 100 },
   });
 
-  const { query: staffQuery } = useList<Staff>({
+  const { result: staffResult } = useList<Staff>({
     resource: "staff",
-    pagination: { mode: "off" },
+    pagination: { mode: "server", currentPage: 1, pageSize: 100 },
   });
   //   resource: "subjects",
   //   pagination: { mode: "off" },
   // });
 
-  const { query: classesQuery } = useList<ClassRecord>({
-    resource: "classes",
-    pagination: { mode: "off" },
-  });
-
-  const { query: studentAttendanceQuery } = useList<StudentAttendance>({
+  const { result: studentAttendanceResult } = useList<StudentAttendance>({
     resource: "student-attendances",
     pagination: { mode: "off" },
   });
 
-  const { query: studentFeesQuery } = useList<StudentFeeRecord>({
+  const { result: studentFeesResult } = useList<StudentFeeRecord>({
     resource: "student-fees/yearly-summary",
     pagination: { mode: "off" },
   });
 
-  const { query: studentPaymentsQuery } = useList<PaymentRecord>({
+  const { result: studentPaymentsResult } = useList<PaymentRecord>({
     resource: "payments/yearly-summary",
     pagination: { mode: "off" },
   });
 
+  const { result: dashboardSummaryResult } = useList<DashboardSummary>({
+    resource: "dashboard/summary",
+    pagination: { mode: "off" },
+  });
+
   const students = useMemo(
-    () => studentsQuery.data?.data ?? [],
-    [studentsQuery.data?.data],
-  );
-  const staff = useMemo(
-    () => staffQuery.data?.data ?? [],
-    [staffQuery.data?.data],
+    () => studentsResult.data ?? [],
+    [studentsResult.data],
   );
 
-  const classes = useMemo(
-    () => classesQuery.data?.data ?? [],
-    [classesQuery.data?.data],
+  const activeStudents = useMemo(
+    () => students.filter((student) => student.isActive),
+    [students],
   );
+
+  const staff = useMemo(() => staffResult.data ?? [], [staffResult.data]);
 
   const studentsAttendances = useMemo(
-    () => studentAttendanceQuery.data?.data ?? [],
-    [studentAttendanceQuery.data?.data],
+    () => studentAttendanceResult.data ?? [],
+    [studentAttendanceResult.data],
   );
 
-  const studentsByGender = useMemo(() => {
-    const counts = students.reduce<Record<string, number>>((acc, student) => {
-      const gender = student.gender ?? "unknown";
-      const active = student.isActive ?? false;
-      if (active) {
-        acc[gender] = (acc[gender] || 0) + 1;
-      }
-      return acc;
-    }, {});
-
-    return Object.entries(counts).map(([gender, total]) => ({ gender, total }));
-  }, [students]);
-
-  const boys = useMemo(
-    () => studentsByGender.find((item) => item.gender === "male")?.total ?? 0,
-    [studentsByGender],
+  const dashboardSummary = useMemo(
+    () => dashboardSummaryResult.data?.[0] ?? null,
+    [dashboardSummaryResult.data],
   );
 
-  const girls = useMemo(
-    () => studentsByGender.find((item) => item.gender === "female")?.total ?? 0,
-    [studentsByGender],
+  const totalStudentsCount =
+    dashboardSummary?.totalActiveStudents ??
+    studentsResult.total ??
+    activeStudents.length;
+  const totalTeachersCount =
+    dashboardSummary?.totalTeachers ??
+    staff.filter((staffMember) => staffMember.staffType === "teacher").length;
+  const totalNonTeachingCount =
+    dashboardSummary?.totalNonTeachingStaff ??
+    staff.filter((staffMember) => staffMember.staffType === "non_teaching").length;
+  const totalClassesCount = dashboardSummary?.totalClasses ?? 0;
+
+  const boys = dashboardSummary?.maleStudents ?? 0;
+  const girls = dashboardSummary?.femaleStudents ?? 0;
+
+  const studentsByGender = useMemo(
+    () => [
+      { gender: "male", total: boys },
+      { gender: "female", total: girls },
+      {
+        gender: "other",
+        total: dashboardSummary?.otherStudents ?? 0,
+      },
+    ],
+    [boys, dashboardSummary?.otherStudents, girls],
   );
 
   const newestStudents = useMemo(() => {
@@ -119,29 +136,26 @@ const Dashboard = () => {
 
   const kpis = [
     {
-      label: "Total Students",
-      value: students.filter((student) => student.isActive).length,
+      label: "Total Active Students",
+      value: totalStudentsCount,
       icon: Users,
       accent: "text-blue-600",
     },
     {
       label: "Teachers",
-      value: staff.filter((staffMember) => staffMember.staffType === "teacher")
-        .length,
+      value: totalTeachersCount,
       icon: GraduationCap,
       accent: "text-emerald-600",
     },
     {
       label: "Other Staff",
-      value: staff.filter(
-        (staffMember) => staffMember.staffType === "non_teaching",
-      ).length,
+      value: totalNonTeachingCount,
       icon: ShieldCheck,
       accent: "text-amber-600",
     },
     {
       label: "Classes",
-      value: classes.length,
+      value: totalClassesCount,
       icon: Layers,
       accent: "text-rose-600",
     },
@@ -172,12 +186,12 @@ const Dashboard = () => {
   );
 
   const studentFees = useMemo(
-    () => studentFeesQuery.data?.data ?? [],
-    [studentFeesQuery.data?.data],
+    () => studentFeesResult.data ?? [],
+    [studentFeesResult.data],
   );
   const studentPayments = useMemo(
-    () => studentPaymentsQuery.data?.data ?? [],
-    [studentPaymentsQuery.data?.data],
+    () => studentPaymentsResult.data ?? [],
+    [studentPaymentsResult.data],
   );
 
   const user = localStorage.getItem("user");
