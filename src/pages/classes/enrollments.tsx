@@ -441,8 +441,11 @@ const EnrollmentsPage = () => {
       <h1 className="page-title">Class Enrollments</h1>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Filters</CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            Selected students: {selectedEnrollmentIds.length}
+          </Badge>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-5">
           <div className="space-y-2">
