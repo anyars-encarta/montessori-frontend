@@ -16,6 +16,14 @@ const formatDate = (date: string) => {
   return parsed.toLocaleDateString();
 };
 
+const formatDiscount = (type: "value" | "percentage", amount: string) => {
+  if (type === "percentage") {
+    return `${amount}%`;
+  }
+
+  return `$${amount}`;
+};
+
 const ShowSetup = () => {
   const navigate = useNavigate();
   const currentCalendarYear = new Date().getFullYear();
@@ -149,6 +157,16 @@ const ShowSetup = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Website</p>
                   <p className="font-medium">{school.website || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Discount Type</p>
+                  <p className="font-medium">{school.discountType}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Discount Amount</p>
+                  <p className="font-medium">
+                    {formatDiscount(school.discountType, school.discountAmount)}
+                  </p>
                 </div>
               </div>
             </div>

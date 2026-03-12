@@ -5,6 +5,7 @@ import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { EditView } from "@/components/refine-ui/views/edit-view";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -123,6 +124,8 @@ const EditStudent = () => {
       cloudinaryImageUrl: "",
       imageCldPubId: "",
       isActive: true,
+      onScholarship: false,
+      getDiscount: false,
     },
   });
 
@@ -202,6 +205,8 @@ const EditStudent = () => {
       cloudinaryImageUrl: student.cloudinaryImageUrl ?? "",
       imageCldPubId: student.imageCldPubId ?? "",
       isActive: student.isActive ?? true,
+      onScholarship: student.onScholarship ?? false,
+      getDiscount: student.getDiscount ?? false,
     });
 
     setHealthValues({
@@ -301,6 +306,8 @@ const EditStudent = () => {
       cloudinaryImageUrl: values.cloudinaryImageUrl.trim(),
       imageCldPubId: values.imageCldPubId.trim(),
       isActive: values.isActive,
+      onScholarship: values.onScholarship,
+      getDiscount: values.getDiscount,
     });
 
     notifySuccess("Student updated", "Basic profile details were saved.");
@@ -553,11 +560,13 @@ const EditStudent = () => {
       );
 
       const feeNames = response?.data?.feeNamesApplied ?? [];
-      const feesDescription = feeNames.length
-        ? `Fees applied: ${feeNames.join(
-            ", ",
-          )}. Enrollment, fees, and assessments were applied automatically.`
-        : "Enrollment, fees, and assessments were applied automatically.";
+      const feesDescription = response?.data?.feesSkippedByScholarship
+        ? "Enrollment and assessments were applied. Fees were skipped because the student is on scholarship."
+        : feeNames.length
+          ? `Fees applied: ${feeNames.join(
+              ", ",
+            )}.${response?.data?.discountAppliedOnPromotionFees ? " Promotion discount was applied." : ""} Enrollment and assessments were applied automatically.`
+          : "Enrollment, fees, and assessments were applied automatically.";
 
       notifySuccess(
         mode === "admit" ? "Student admitted" : "Student promoted",
@@ -794,6 +803,60 @@ const EditStudent = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="onScholarship"
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) =>
+                                field.onChange(
+                                  checked === "indeterminate" ? false : checked,
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel>On Scholarship</FormLabel>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          During promotions, no fees will be assigned to this student.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="getDiscount"
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) =>
+                                field.onChange(
+                                  checked === "indeterminate" ? false : checked,
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel>Apply Discount</FormLabel>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          During promotions, recurring fees will be discounted using school discount policy.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <Separator />
 

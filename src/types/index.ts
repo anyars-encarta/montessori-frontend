@@ -82,6 +82,9 @@ export type StudentBasic = {
   imageCldPubId: string | null;
   cloudinaryImageUrl: string | null;
   registrationNumber: string | null;
+  onScholarship: boolean;
+  getDiscount: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -240,6 +243,8 @@ export type EnrollmentWorkflowResponse = {
     feesApplied: number;
     feeNamesApplied?: string[];
     subjectsApplied: number;
+    feesSkippedByScholarship?: boolean;
+    discountAppliedOnPromotionFees?: boolean;
   };
   error?: string;
 };
@@ -472,7 +477,6 @@ export type Student = StudentBasic & {
   payments: StudentPayment[];
   attendances: StudentAttendance[];
   gender?: string | null;
-  isActive?: boolean;
 };
 
 export type Staff = {
@@ -528,6 +532,8 @@ export type SchoolDetailsRecord = {
   email: string;
   website?: string | null;
   logo?: string | null;
+  discountType: "value" | "percentage";
+  discountAmount: string;
 };
 
 export type AcademicYearRecord = {
@@ -553,6 +559,8 @@ export type SchoolDetailsForm = {
   email: string;
   website: string;
   logo: string;
+  discountType: "value" | "percentage";
+  discountAmount: string;
 };
 
 export type AcademicYearForm = {

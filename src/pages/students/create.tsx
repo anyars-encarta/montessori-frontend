@@ -2,6 +2,7 @@ import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { CreateView } from "@/components/refine-ui/views/create-view";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -47,6 +48,8 @@ const CreateStudent = () => {
       cloudinaryImageUrl: "",
       imageCldPubId: "",
       isActive: true,
+      onScholarship: false,
+      getDiscount: false,
     },
   });
 
@@ -73,6 +76,8 @@ const CreateStudent = () => {
       cloudinaryImageUrl: values.cloudinaryImageUrl.trim(),
       imageCldPubId: values.imageCldPubId.trim(),
       isActive: values.isActive,
+      onScholarship: values.onScholarship,
+      getDiscount: values.getDiscount,
     });
   };
 
@@ -306,6 +311,60 @@ const CreateStudent = () => {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="onScholarship"
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) =>
+                                field.onChange(
+                                  checked === "indeterminate" ? false : checked,
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel>On Scholarship</FormLabel>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          During promotions, no fees will be assigned to this student.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="getDiscount"
+                    render={({ field }) => (
+                      <FormItem className="rounded-md border p-3 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={(checked) =>
+                                field.onChange(
+                                  checked === "indeterminate" ? false : checked,
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel>Apply Discount</FormLabel>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          During promotions, recurring fees will be discounted using school setup.
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <Separator />
 

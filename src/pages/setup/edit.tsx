@@ -34,6 +34,8 @@ const emptySchool: SchoolDetailsForm = {
   email: "",
   website: "",
   logo: "",
+  discountType: "value",
+  discountAmount: "0",
 };
 
 const emptyAcademicYear: AcademicYearForm = {
@@ -48,6 +50,21 @@ const emptyTerm: TermForm = {
   academicYearId: "",
   startDate: "",
   endDate: "",
+};
+
+const CURRENCY_SYMBOL = "$";
+
+const normalizeDiscountAmount = (
+  value: string,
+  discountType: "value" | "percentage",
+) => {
+  if (!value.trim()) return "";
+
+  const parsedValue = Number.parseFloat(value);
+  if (Number.isNaN(parsedValue)) return value;
+
+  const bounded = discountType === "percentage" ? Math.min(parsedValue, 100) : parsedValue;
+  return String(Math.max(0, bounded));
 };
 
 const formatDate = (date: string) => {
@@ -123,6 +140,8 @@ const EditSetup = () => {
       email: selectedSchool.email,
       website: selectedSchool.website ?? "",
       logo: selectedSchool.logo ?? "",
+      discountType: selectedSchool.discountType,
+      discountAmount: String(selectedSchool.discountAmount ?? "0"),
     });
   }, [selectedSchool]);
 
@@ -147,6 +166,7 @@ const EditSetup = () => {
           ...schoolForm,
           website: schoolForm.website.trim() || null,
           logo: schoolForm.logo.trim() || null,
+          discountAmount: schoolForm.discountAmount.trim() || "0",
         },
       });
 
@@ -370,6 +390,61 @@ const EditSetup = () => {
                     setSchoolForm((prev) => ({ ...prev, website: event.target.value }))
                   }
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Discount Type</Label>
+                <Select
+                  value={schoolForm.discountType}
+                  onValueChange={(value: "value" | "percentage") => {
+                    setSchoolForm((prev) => ({
+                      ...prev,
+                      discountType: value,
+                      discountAmount: normalizeDiscountAmount(prev.discountAmount, value),
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select discount type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="value">Value</SelectItem>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="school-discount-amount">Discount Amount</Label>
+                <div className="relative">
+                  {schoolForm.discountType === "value" && (
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {CURRENCY_SYMBOL}
+                    </span>
+                  )}
+                  <Input
+                    id="school-discount-amount"
+                    type="number"
+                    min={0}
+                    max={schoolForm.discountType === "percentage" ? 100 : undefined}
+                    step="0.01"
+                    className={schoolForm.discountType === "value" ? "pl-7" : ""}
+                    value={schoolForm.discountAmount}
+                    onChange={(event) =>
+                      setSchoolForm((prev) => ({
+                        ...prev,
+                        discountAmount: normalizeDiscountAmount(
+                          event.target.value,
+                          prev.discountType,
+                        ),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {schoolForm.discountType === "percentage"
+                    ? "Enter 0 to 100 for percentage discounts."
+                    : `Enter the fixed amount in ${CURRENCY_SYMBOL}.`}
+                </p>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label>School Logo</Label>

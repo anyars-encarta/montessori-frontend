@@ -395,6 +395,12 @@ const ShowStudent = () => {
               <Badge variant={student.isActive ? "default" : "secondary"}>
                 {student.isActive ? "Active" : "Inactive"}
               </Badge>
+              <Badge variant={student.onScholarship ? "default" : "secondary"}>
+                {student.onScholarship ? "On Scholarship" : "No Scholarship"}
+              </Badge>
+              <Badge variant={student.getDiscount ? "default" : "secondary"}>
+                {student.getDiscount ? "Discount Enabled" : "No Discount"}
+              </Badge>
               {student.gender && (
                 <Badge variant="outline">
                   {student.gender.split("")[0].toUpperCase() +
@@ -439,6 +445,18 @@ const ShowStudent = () => {
                 </p>
                 <p className="font-semibold text-sm">
                   {latestEnrollment?.academicYear?.year ?? "N/A"}
+                </p>
+              </div>
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Scholarship</p>
+                <p className="font-semibold text-sm">
+                  {student.onScholarship ? "Enabled" : "Disabled"}
+                </p>
+              </div>
+              <div className="p-3 border rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">Discount</p>
+                <p className="font-semibold text-sm">
+                  {student.getDiscount ? "Enabled" : "Disabled"}
                 </p>
               </div>
             </div>

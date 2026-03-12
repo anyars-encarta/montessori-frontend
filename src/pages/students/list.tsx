@@ -110,6 +110,21 @@ const ListStudents = () => {
           },
         },
         {
+          id: "billingFlags",
+          size: 220,
+          header: () => <p className="column-title">Billing Flags</p>,
+          cell: ({ row }) => (
+            <div className="flex flex-wrap gap-1">
+              <Badge variant={row.original.onScholarship ? "default" : "secondary"}>
+                {row.original.onScholarship ? "Scholarship" : "No Scholarship"}
+              </Badge>
+              <Badge variant={row.original.getDiscount ? "default" : "secondary"}>
+                {row.original.getDiscount ? "Discount" : "No Discount"}
+              </Badge>
+            </div>
+          ),
+        },
+        {
           id: "actions",
           size: 120,
           header: () => <p className="column-title">Actions</p>,

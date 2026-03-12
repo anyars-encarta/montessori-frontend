@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UploadWidgetValue } from "@/types";
 import { useCreate, useNotification } from "@refinedev/core";
 
@@ -17,6 +24,8 @@ type SchoolDetailsForm = {
   email: string;
   website: string;
   logo: string;
+  discountType: "value" | "percentage";
+  discountAmount: string;
 };
 
 const initialValues: SchoolDetailsForm = {
@@ -26,6 +35,23 @@ const initialValues: SchoolDetailsForm = {
   email: "",
   website: "",
   logo: "",
+  discountType: "value",
+  discountAmount: "0",
+};
+
+const CURRENCY_SYMBOL = "$";
+
+const normalizeDiscountAmount = (
+  value: string,
+  discountType: "value" | "percentage",
+) => {
+  if (!value.trim()) return "";
+
+  const parsedValue = Number.parseFloat(value);
+  if (Number.isNaN(parsedValue)) return value;
+
+  const bounded = discountType === "percentage" ? Math.min(parsedValue, 100) : parsedValue;
+  return String(Math.max(0, bounded));
 };
 
 const CreateSetup = () => {
@@ -51,6 +77,7 @@ const CreateSetup = () => {
         ...formValues,
         website: formValues.website.trim() || null,
         logo: formValues.logo.trim() || null,
+        discountAmount: formValues.discountAmount.trim() || "0",
       };
 
       const response = await mutateAsync({
@@ -151,6 +178,63 @@ const CreateSetup = () => {
                   }
                   placeholder="https://example.com"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Discount Type</Label>
+                <Select
+                  value={formValues.discountType}
+                  onValueChange={(value: "value" | "percentage") => {
+                    setFormValues((prev) => ({
+                      ...prev,
+                      discountType: value,
+                      discountAmount: normalizeDiscountAmount(prev.discountAmount, value),
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select discount type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="value">Value</SelectItem>
+                    <SelectItem value="percentage">Percentage</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="discount-amount">Discount Amount</Label>
+                <div className="relative">
+                  {formValues.discountType === "value" && (
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {CURRENCY_SYMBOL}
+                    </span>
+                  )}
+                  <Input
+                    id="discount-amount"
+                    type="number"
+                    min={0}
+                    max={formValues.discountType === "percentage" ? 100 : undefined}
+                    step="0.01"
+                    className={formValues.discountType === "value" ? "pl-7" : ""}
+                    value={formValues.discountAmount}
+                    onChange={(event) =>
+                      setFormValues((prev) => ({
+                        ...prev,
+                        discountAmount: normalizeDiscountAmount(
+                          event.target.value,
+                          prev.discountType,
+                        ),
+                      }))
+                    }
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {formValues.discountType === "percentage"
+                    ? "Enter 0 to 100 for percentage discounts."
+                    : `Enter the fixed amount in ${CURRENCY_SYMBOL}.`}
+                </p>
               </div>
 
               <div className="space-y-2 md:col-span-2">

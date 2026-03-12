@@ -33,6 +33,8 @@ export const createStudentSchema = z.object({
   cloudinaryImageUrl: z.string(),
   imageCldPubId: z.string(),
   isActive: z.boolean(),
+  onScholarship: z.boolean(),
+  getDiscount: z.boolean(),
 });
 
 export type CreateStudentValues = z.infer<typeof createStudentSchema>;
