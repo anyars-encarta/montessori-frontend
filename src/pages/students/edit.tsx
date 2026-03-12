@@ -55,6 +55,7 @@ import { SubmitHandler } from "react-hook-form";
 
 import PageLoader from "@/components/PageLoader";
 import { createStudentSchema, CreateStudentValues } from "@/validations";
+import { Label } from "@/components/ui/label";
 
 const initialHealthValues: HealthFormValues = {
   diphtheria: false,
@@ -563,10 +564,12 @@ const EditStudent = () => {
       const feesDescription = response?.data?.feesSkippedByScholarship
         ? "Enrollment and assessments were applied. Fees were skipped because the student is on scholarship."
         : feeNames.length
-          ? `Fees applied: ${feeNames.join(
-              ", ",
-            )}.${response?.data?.discountAppliedOnPromotionFees ? " Promotion discount was applied." : ""} Enrollment and assessments were applied automatically.`
-          : "Enrollment, fees, and assessments were applied automatically.";
+        ? `Fees applied: ${feeNames.join(", ")}.${
+            response?.data?.discountAppliedOnPromotionFees
+              ? " Promotion discount was applied."
+              : ""
+          } Enrollment and assessments were applied automatically.`
+        : "Enrollment, fees, and assessments were applied automatically.";
 
       notifySuccess(
         mode === "admit" ? "Student admitted" : "Student promoted",
@@ -824,7 +827,8 @@ const EditStudent = () => {
                           <FormLabel>On Scholarship</FormLabel>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          During promotions, no fees will be assigned to this student.
+                          During promotions, no fees will be assigned to this
+                          student.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -850,7 +854,8 @@ const EditStudent = () => {
                           <FormLabel>Apply Discount</FormLabel>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          During promotions, recurring fees will be discounted using school discount policy.
+                          During promotions, recurring fees will be discounted
+                          using school discount policy.
                         </p>
                         <FormMessage />
                       </FormItem>
@@ -889,60 +894,72 @@ const EditStudent = () => {
           <Separator />
           <CardContent className="space-y-4 mt-6">
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <Select
-                value={selectedClassId}
-                onValueChange={setSelectedClassId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select class" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableClasses.map((klass) => (
-                    <SelectItem key={klass.id} value={String(klass.id)}>
-                      {klass.name} ({klass.level})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Select Class</Label>
+                <Select
+                  value={selectedClassId}
+                  onValueChange={setSelectedClassId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClasses.map((klass) => (
+                      <SelectItem key={klass.id} value={String(klass.id)}>
+                        {klass.name} ({klass.level})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select
-                value={selectedAcademicYearId}
-                onValueChange={setSelectedAcademicYearId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableAcademicYears.map((year) => (
-                    <SelectItem key={year.id} value={String(year.id)}>
-                      {year.year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Select Year</Label>
+                <Select
+                  value={selectedAcademicYearId}
+                  onValueChange={setSelectedAcademicYearId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableAcademicYears.map((year) => (
+                      <SelectItem key={year.id} value={String(year.id)}>
+                        {year.year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Select
-                value={selectedTermId}
-                onValueChange={setSelectedTermId}
-                disabled={!selectedAcademicYearId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select term" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredTerms.map((term) => (
-                    <SelectItem key={term.id} value={String(term.id)}>
-                      {term.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Select Term</Label>
+                <Select
+                  value={selectedTermId}
+                  onValueChange={setSelectedTermId}
+                  disabled={!selectedAcademicYearId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select term" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredTerms.map((term) => (
+                      <SelectItem key={term.id} value={String(term.id)}>
+                        {term.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <Input
-                type="date"
-                value={enrollmentDate}
-                onChange={(event) => setEnrollmentDate(event.target.value)}
-              />
+              <div className="space-y-2">
+                <Label>Enrollment Date</Label>
+                <Input
+                  type="date"
+                  value={enrollmentDate}
+                  onChange={(event) => setEnrollmentDate(event.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -988,31 +1005,42 @@ const EditStudent = () => {
           <Separator />
           <CardContent className="space-y-4 mt-6">
             <div className="grid sm:grid-cols-3 gap-3">
-              <Select value={parentIdToAdd} onValueChange={setParentIdToAdd}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select parent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableParents.map((parent) => (
-                    <SelectItem key={parent.id} value={String(parent.id)}>
-                      {parent.firstName} {parent.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                placeholder="Relationship (e.g. mother)"
-                value={relationshipToAdd}
-                onChange={(event) => setRelationshipToAdd(event.target.value)}
-              />
-              <Button
-                type="button"
-                className="cursor-pointer"
-                onClick={addParent}
-                disabled={isSavingRelation}
-              >
-                Add Parent
-              </Button>
+              <div className="space-y-2">
+                <Label>Select Parent</Label>
+                <Select value={parentIdToAdd} onValueChange={setParentIdToAdd}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableParents.map((parent) => (
+                      <SelectItem key={parent.id} value={String(parent.id)}>
+                        {parent.firstName} {parent.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Relationship</Label>
+                <Input
+                  placeholder="Relationship (e.g. mother)"
+                  value={relationshipToAdd}
+                  onChange={(event) => setRelationshipToAdd(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Action</Label>
+                <Button
+                  type="button"
+                  className="cursor-pointer"
+                  onClick={addParent}
+                  disabled={isSavingRelation}
+                >
+                  Add Parent
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -1049,26 +1077,36 @@ const EditStudent = () => {
           <Separator />
           <CardContent className="space-y-4 mt-6">
             <div className="grid sm:grid-cols-2 gap-3">
-              <Select value={siblingIdToAdd} onValueChange={setSiblingIdToAdd}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select sibling" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableSiblings.map((sibling) => (
-                    <SelectItem key={sibling.id} value={String(sibling.id)}>
-                      {sibling.firstName} {sibling.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                type="button"
-                className="cursor-pointer"
-                onClick={addSibling}
-                disabled={isSavingRelation}
-              >
-                Add Sibling
-              </Button>
+              <div className="space-y-2">
+                <Label>Select Sibling</Label>
+                <Select
+                  value={siblingIdToAdd}
+                  onValueChange={setSiblingIdToAdd}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select sibling" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSiblings.map((sibling) => (
+                      <SelectItem key={sibling.id} value={String(sibling.id)}>
+                        {sibling.firstName} {sibling.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Action</Label>
+                <Button
+                  type="button"
+                  className="cursor-pointer"
+                  onClick={addSibling}
+                  disabled={isSavingRelation}
+                >
+                  Add Sibling
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -1222,30 +1260,38 @@ const EditStudent = () => {
           <Separator />
           <CardContent className="space-y-4 mt-6">
             <div className="grid sm:grid-cols-2 gap-3">
-              <Input
-                placeholder="School name"
-                value={previousSchoolForm.schoolName}
-                onChange={(event) =>
-                  setPreviousSchoolForm((prev) => ({
-                    ...prev,
-                    schoolName: event.target.value,
-                  }))
-                }
-              />
-              <Input
-                placeholder="Age at admission"
-                type="number"
-                min={0}
-                value={previousSchoolForm.ageAtAdmission}
-                onChange={(event) =>
-                  setPreviousSchoolForm((prev) => ({
-                    ...prev,
-                    ageAtAdmission: event.target.value,
-                  }))
-                }
-              />
               <div className="space-y-2">
-                {/* <FormLabel>Date of Admission</FormLabel> */}
+                <Label>School Name</Label>
+                <Input
+                  placeholder="School name"
+                  value={previousSchoolForm.schoolName}
+                  onChange={(event) =>
+                    setPreviousSchoolForm((prev) => ({
+                      ...prev,
+                      schoolName: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Age at Admission</Label>
+                <Input
+                  placeholder="Age at admission"
+                  type="number"
+                  min={0}
+                  value={previousSchoolForm.ageAtAdmission}
+                  onChange={(event) =>
+                    setPreviousSchoolForm((prev) => ({
+                      ...prev,
+                      ageAtAdmission: event.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Date of Admission</Label>
                 <Input
                   type="date"
                   value={previousSchoolForm.dateOfAdmission}
@@ -1257,8 +1303,9 @@ const EditStudent = () => {
                   }
                 />
               </div>
+
               <div className="space-y-2">
-                {/* <FormLabel>Date Last Attended</FormLabel> */}
+                <Label>Date Last Attended</Label>
                 <Input
                   type="date"
                   value={previousSchoolForm.dateLastAttended}
@@ -1292,7 +1339,7 @@ const EditStudent = () => {
                     {school.ageAtAdmission !== null
                       ? ` • Age at admission ${school.ageAtAdmission}`
                       : ""}{" "}
-                    • Admiited on {school.dateOfAdmission}
+                    • Admitted on {school.dateOfAdmission}
                     {school.dateLastAttended
                       ? ` • Last attended on ${school.dateLastAttended}`
                       : ""}
