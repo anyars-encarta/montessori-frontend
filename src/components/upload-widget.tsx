@@ -116,7 +116,6 @@ const UploadWidget = ({
           <img
             src={preview.url}
             alt="Uploaded file"
-            className="uploaded-image"
           />
           {!isRemoving && (
             <button
