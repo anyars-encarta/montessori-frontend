@@ -27,7 +27,6 @@ const EnrollmentScoresEditPage = () => {
   const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(
     null,
   );
-  const [subjectName, setSubjectName] = useState<string>("");
 
   const { query, result } = useList<ClassEnrollmentOverviewRow>({
     resource: "student-class-enrollments/overview",
@@ -70,7 +69,10 @@ const EnrollmentScoresEditPage = () => {
     }));
   };
 
-  const saveScores = async (assessment: EnrollmentAssessmentRow) => {
+  const saveScores = async (
+    assessment: EnrollmentAssessmentRow,
+    subjectName: string,
+  ) => {
     const draft = scoreDrafts[assessment.id] ?? {
       homeWork1: assessment.homeWork1,
       homeWork2: assessment.homeWork2,
@@ -319,11 +321,7 @@ const EnrollmentScoresEditPage = () => {
                             type="button"
                             size="sm"
                             className="cursor-pointer"
-                            onClick={() => {
-                              setSubjectName(assessment.subjectName);
-                              saveScores(assessment);
-                              setSubjectName("");
-                            }}
+                            onClick={() => saveScores(assessment, assessment.subjectName)}
                             disabled={isSaving}
                           >
                             {isSaving ? (
