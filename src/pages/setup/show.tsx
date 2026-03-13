@@ -108,11 +108,17 @@ const ShowSetup = () => {
           <Breadcrumb />
           <div className="flex items-center gap-2">
             {school ? (
-              <Button className="cursor-pointer" onClick={() => navigate(`/setup/edit/${school.id}`)}>
+              <Button
+                className="cursor-pointer"
+                onClick={() => navigate(`/setup/edit/${school.id}`)}
+              >
                 Edit Setup
               </Button>
             ) : (
-              <Button className="cursor-pointer" onClick={() => navigate("/setup/create")}>
+              <Button
+                className="cursor-pointer"
+                onClick={() => navigate("/setup/create")}
+              >
                 Create Setup
               </Button>
             )}
@@ -163,7 +169,9 @@ const ShowSetup = () => {
                   <p className="font-medium">{school.discountType}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Discount Amount</p>
+                  <p className="text-sm text-muted-foreground">
+                    Discount Amount
+                  </p>
                   <p className="font-medium">
                     {formatDiscount(school.discountType, school.discountAmount)}
                   </p>
@@ -188,9 +196,10 @@ const ShowSetup = () => {
               No academic years configured.
             </p>
           ) : (
-            sortedAcademicYears.map((year) => (
+            sortedAcademicYears.map((year, i) => (
               <div key={year.id} className="rounded-md border p-3">
-                <p className="font-medium">{year.year}</p>
+                <p className="font-medium">{year.year} {i === 0 && <span className="text-xs text-primary">Current</span>}</p>
+                
                 <p className="text-sm text-muted-foreground">
                   {formatDate(year.startDate)} - {formatDate(year.endDate)}
                 </p>
@@ -210,12 +219,12 @@ const ShowSetup = () => {
               No terms configured.
             </p>
           ) : (
-            sortedAcademicYears.map((year) => {
+            sortedAcademicYears.map((year, i) => {
               const yearTerms = termsByAcademicYearId.get(year.id) ?? [];
 
               return (
                 <div key={year.id} className="rounded-md border p-3 space-y-2">
-                  <p className="font-semibold">Academic Year {year.year}</p>
+                  <p className="font-semibold">Academic Year {year.year} {i === 0 && <span className="text-xs text-primary">Current</span>}</p>
 
                   {yearTerms.length === 0 ? (
                     <p className="text-sm text-muted-foreground">

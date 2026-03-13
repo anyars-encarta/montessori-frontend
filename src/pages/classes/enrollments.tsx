@@ -19,8 +19,10 @@ import {
 } from "@/components/ui/select";
 import {
   AcademicYearRecord,
+  BulkEnrollmentTransitionResponse,
   ClassEnrollmentOverviewRow,
   ClassRecord,
+  RunGradesResponse,
   TermRecord,
 } from "@/types";
 import { BACKEND_BASE_URL } from "@/constants";
@@ -51,24 +53,6 @@ const extractErrorMessage = async (response: Response) => {
   } catch {
     return "Request failed";
   }
-};
-
-type BulkEnrollmentTransitionResponse = {
-  success: boolean;
-  data?: {
-    action: "promote" | "repeat";
-    requestedCount: number;
-    processedCount: number;
-    successCount: number;
-    failedCount: number;
-    successfulEnrollmentIds: number[];
-    failures: Array<{
-      enrollmentId: number;
-      studentId: number;
-      error: string;
-    }>;
-  };
-  error?: string;
 };
 
 const EnrollmentsPage = () => {
@@ -453,13 +437,71 @@ const EnrollmentsPage = () => {
     }
   }, [targetAcademicYearId, targetTermId, terms]);
 
-  const generateScores = () => {
+  const generateScores = async () => {
+    const parsedClassId = Number(classIdFilter);
+    const parsedAcademicYearId = Number(academicYearIdFilter);
+    const parsedTermId = Number(termIdFilter);
+
+    if (!Number.isFinite(parsedClassId) || parsedClassId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select a class",
+        description: "Choose a class before running grades.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(parsedAcademicYearId) || parsedAcademicYearId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select an academic year",
+        description: "Choose an academic year before running grades.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(parsedTermId) || parsedTermId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select a term",
+        description: "Choose a term before running grades.",
+      });
+      return;
+    }
+
     try {
       setIsGenerating(true);
-      console.log("Generating Student grades...");
+
+      const response = await request<RunGradesResponse>(
+        "/student-class-enrollments/run-grades",
+        "POST",
+        {
+          classId: parsedClassId,
+          academicYearId: parsedAcademicYearId,
+          termId: parsedTermId,
+        },
+      );
+
+      const gradedStudents = response?.data?.gradedStudents ?? 0;
+      const gradedAssessments = response?.data?.gradedAssessments ?? 0;
+      const classLevel = response?.data?.classLevel ?? "N/A";
+
+      open?.({
+        type: "success",
+        message: "Grades generated",
+        description: `Class level: ${classLevel}. Students graded: ${gradedStudents}. Assessments processed: ${gradedAssessments}.`,
+      });
     } catch (e) {
+      open?.({
+        type: "error",
+        message: "Failed to run grades",
+        description: e instanceof Error ? e.message : "Request failed",
+      });
       setIsGenerating(false);
       console.error(e);
+      return;
+    } finally {
+      setIsGenerating(false);
     }
   };
 

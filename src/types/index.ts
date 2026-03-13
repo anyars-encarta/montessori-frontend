@@ -629,3 +629,32 @@ export type ScoreDraft = {
   classMark: string;
   examMark: string;
 };
+
+export type BulkEnrollmentTransitionResponse = {
+  success: boolean;
+  data?: {
+    action: "promote" | "repeat";
+    requestedCount: number;
+    processedCount: number;
+    successCount: number;
+    failedCount: number;
+    successfulEnrollmentIds: number[];
+    failures: Array<{
+      enrollmentId: number;
+      studentId: number;
+      error: string;
+    }>;
+  };
+  error?: string;
+};
+
+export type RunGradesResponse = {
+  success: boolean;
+  data?: {
+    gradedStudents: number;
+    gradedAssessments: number;
+    classLevel: string;
+    mode: "upper" | "lower";
+  };
+  error?: string;
+};
