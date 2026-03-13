@@ -23,7 +23,8 @@ import {
   ClassRecord,
   TermRecord,
 } from "@/types";
-import { useList } from "@refinedev/core";
+import { BACKEND_BASE_URL } from "@/constants";
+import { useList, useNotification } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
@@ -34,8 +35,45 @@ const formatDate = (date: string) => {
   return parsed.toLocaleDateString();
 };
 
+const buildApiUrl = (path: string) => {
+  const normalizedBase = BACKEND_BASE_URL.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+};
+
+const extractErrorMessage = async (response: Response) => {
+  try {
+    const payload = (await response.json()) as {
+      error?: string;
+      message?: string;
+    };
+    return payload.error ?? payload.message ?? "Request failed";
+  } catch {
+    return "Request failed";
+  }
+};
+
+type BulkEnrollmentTransitionResponse = {
+  success: boolean;
+  data?: {
+    action: "promote" | "repeat";
+    requestedCount: number;
+    processedCount: number;
+    successCount: number;
+    failedCount: number;
+    successfulEnrollmentIds: number[];
+    failures: Array<{
+      enrollmentId: number;
+      studentId: number;
+      error: string;
+    }>;
+  };
+  error?: string;
+};
+
 const EnrollmentsPage = () => {
   const navigate = useNavigate();
+  const { open } = useNotification();
 
   const [studentNameFilter, setStudentNameFilter] = useState("");
   const [classIdFilter, setClassIdFilter] = useState("");
@@ -123,9 +161,11 @@ const EnrollmentsPage = () => {
             ).length;
 
             const allVisibleSelected =
-              visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+              visibleIds.length > 0 &&
+              selectedVisibleCount === visibleIds.length;
             const partiallySelected =
-              selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+              selectedVisibleCount > 0 &&
+              selectedVisibleCount < visibleIds.length;
 
             return (
               <Checkbox
@@ -242,7 +282,12 @@ const EnrollmentsPage = () => {
             return (
               <div className="text-sm">
                 <p>Subjects: {subjectCount}</p>
-                <p>Total Score: {totals.totalMark.toFixed(2)}</p>
+                <p>
+                  Average Score:{" "}
+                  <span className="text-primary">
+                    {(totals.totalMark / subjectCount).toFixed(2)}
+                  </span>
+                </p>
               </div>
             );
           },
@@ -418,19 +463,143 @@ const EnrollmentsPage = () => {
     }
   };
 
-  const promoteRepeat = (type: string) => {
+  const request = async <TResponse = unknown,>(
+    path: string,
+    method: "POST" | "PUT" | "DELETE",
+    body?: object,
+  ): Promise<TResponse | undefined> => {
+    const response = await fetch(buildApiUrl(path), {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new Error(await extractErrorMessage(response));
+    }
+
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("application/json")) {
+      return undefined;
+    }
+
+    return (await response.json()) as TResponse;
+  };
+
+  const promoteRepeat = async (type: "promote" | "repeat") => {
+    const parsedClassId = Number(targetClassId);
+    const parsedAcademicYearId = Number(targetAcademicYearId);
+    const parsedTermId = Number(targetTermId);
+
+    if (!selectedEnrollmentIds.length) {
+      open?.({
+        type: "error",
+        message: "Select students",
+        description: "Choose at least one student enrollment first.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(parsedClassId) || parsedClassId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select a class",
+        description: "Choose a new class before continuing.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(parsedAcademicYearId) || parsedAcademicYearId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select an academic year",
+        description: "Choose an academic year before continuing.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(parsedTermId) || parsedTermId <= 0) {
+      open?.({
+        type: "error",
+        message: "Select a term",
+        description: "Choose a term before continuing.",
+      });
+      return;
+    }
+
     try {
       if (type === "promote") {
         setIsPromoting(true);
-        console.log("Promoting students...");
       } else {
         setIsRepeating(true);
-        console.log("Marking students for repeat...");
+      }
+
+      const enrollmentDate = new Date().toISOString().slice(0, 10);
+
+      const response = await request<BulkEnrollmentTransitionResponse>(
+        "/student-class-enrollments/bulk-transition",
+        "POST",
+        {
+          action: type,
+          enrollmentIds: selectedEnrollmentIds,
+          classId: parsedClassId,
+          academicYearId: parsedAcademicYearId,
+          termId: parsedTermId,
+          enrollmentDate,
+        },
+      );
+
+      const successfulIds = response?.data?.successfulEnrollmentIds ?? [];
+      const successCount = response?.data?.successCount ?? 0;
+      const failedCount = response?.data?.failedCount ?? 0;
+      const firstFailure = response?.data?.failures?.[0]?.error;
+
+      if (successCount > 0) {
+        setSelectedEnrollmentIds((prev) =>
+          prev.filter((id) => !successfulIds.includes(id)),
+        );
+      }
+
+      if (failedCount > 0) {
+        open?.({
+          type: "error",
+          message:
+            type === "promote"
+              ? "Some students were not promoted"
+              : "Some students were not marked for repeat",
+          description: `Successful: ${successCount}, Failed: ${failedCount}.${
+            firstFailure ? ` First error: ${firstFailure}` : ""
+          }`,
+        });
+      } else {
+        open?.({
+          type: "success",
+          message:
+            type === "promote"
+              ? "Students promoted"
+              : "Students marked for repeat",
+          description: `${successCount} student(s) updated successfully.`,
+        });
       }
     } catch (e) {
+      open?.({
+        type: "error",
+        message:
+          type === "promote"
+            ? "Failed to promote students"
+            : "Failed to mark students for repeat",
+        description: e instanceof Error ? e.message : "Request failed",
+      });
       setIsPromoting(false);
       setIsRepeating(false);
       console.error(e);
+      return;
+    } finally {
+      setIsPromoting(false);
+      setIsRepeating(false);
     }
   };
 
@@ -599,8 +768,8 @@ const EnrollmentsPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Select students with checkboxes in the table, then choose destination
-            class/year/term and run Promote or Repeat.
+            Select students with checkboxes in the table, then choose
+            destination class/year/term and run Promote or Repeat.
           </p>
 
           <div className="grid gap-4 md:grid-cols-5">
@@ -652,7 +821,9 @@ const EnrollmentsPage = () => {
               <Label>Term</Label>
               <Select
                 value={targetTermId || "all"}
-                onValueChange={(value) => setTargetTermId(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setTargetTermId(value === "all" ? "" : value)
+                }
                 disabled={!targetAcademicYearId}
               >
                 <SelectTrigger>
@@ -678,52 +849,52 @@ const EnrollmentsPage = () => {
             <div className="space-y-2 md:col-span-2">
               <Label>Actions</Label>
               <div className="grid grid-cols-2 gap-2">
-              <Button
-                type="button"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => promoteRepeat("promote")}
-                disabled={
-                  isPromoting ||
-                  selectedEnrollmentIds.length === 0 ||
-                  !targetClassId ||
-                  !targetAcademicYearId ||
-                  !targetTermId
-                }
-              >
-                {isPromoting ? (
-                  <div className="flex gap-1 items-center">
-                    <span>Promoting...</span>
-                    <Loader2 className="inline-block ml-2 animate-spin" />
-                  </div>
-                ) : (
-                  "Promote"
-                )}
-              </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="cursor-pointer"
+                  onClick={() => promoteRepeat("promote")}
+                  disabled={
+                    isPromoting ||
+                    selectedEnrollmentIds.length === 0 ||
+                    !targetClassId ||
+                    !targetAcademicYearId ||
+                    !targetTermId
+                  }
+                >
+                  {isPromoting ? (
+                    <div className="flex gap-1 items-center">
+                      <span>Promoting...</span>
+                      <Loader2 className="inline-block ml-2 animate-spin" />
+                    </div>
+                  ) : (
+                    "Promote"
+                  )}
+                </Button>
 
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => promoteRepeat("repeat")}
-                disabled={
-                  isRepeating ||
-                  selectedEnrollmentIds.length === 0 ||
-                  !targetClassId ||
-                  !targetAcademicYearId ||
-                  !targetTermId
-                }
-              >
-                {isRepeating ? (
-                  <div className="flex gap-1 items-center">
-                    <span>Repeating...</span>
-                    <Loader2 className="inline-block ml-2 animate-spin" />
-                  </div>
-                ) : (
-                  "Repeat"
-                )}
-              </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => promoteRepeat("repeat")}
+                  disabled={
+                    isRepeating ||
+                    selectedEnrollmentIds.length === 0 ||
+                    !targetClassId ||
+                    !targetAcademicYearId ||
+                    !targetTermId
+                  }
+                >
+                  {isRepeating ? (
+                    <div className="flex gap-1 items-center">
+                      <span>Repeating...</span>
+                      <Loader2 className="inline-block ml-2 animate-spin" />
+                    </div>
+                  ) : (
+                    "Repeat"
+                  )}
+                </Button>
               </div>
             </div>
           </div>

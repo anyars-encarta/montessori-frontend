@@ -326,7 +326,6 @@ const EnrollmentScoresEditPage = () => {
                           >
                             {isSaving ? (
                               <div className="flex gap-1 items-center">
-                                <span>Updating...</span>
                                 <Loader2 className="inline-block ml-2 animate-spin" />
                               </div>
                             ) : (
