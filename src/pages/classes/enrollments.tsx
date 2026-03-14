@@ -205,7 +205,7 @@ const EnrollmentsPage = () => {
           id: "student",
           accessorFn: (row) => row.student.fullName,
           header: () => <p className="column-title">Student</p>,
-          size: 220,
+          size: 200,
           cell: ({ row }) => (
             <div className="flex flex-col">
               <span className="font-medium">
@@ -221,7 +221,7 @@ const EnrollmentsPage = () => {
           id: "className",
           accessorFn: (row) => row.class.name,
           header: () => <p className="column-title">Class</p>,
-          size: 150,
+          size: 130,
           cell: ({ row }) => (
             <span>
               {row.original.class.name} ({row.original.class.level})
@@ -233,7 +233,7 @@ const EnrollmentsPage = () => {
           accessorFn: (row) =>
             `${row.academicYear.year}-${row.term.sequenceNumber}`,
           header: () => <p className="column-title">Year / Term</p>,
-          size: 150,
+          size: 180,
           cell: ({ row }) => (
             <span>
               {row.original.academicYear.year} / {row.original.term.name}
@@ -243,7 +243,7 @@ const EnrollmentsPage = () => {
         {
           id: "scoresSummary",
           header: () => <p className="column-title">Scores Summary</p>,
-          size: 280,
+          size: 180,
           cell: ({ row }) => {
             const assessments = row.original.assessments;
             const subjectCount = assessments.length;
@@ -280,8 +280,15 @@ const EnrollmentsPage = () => {
           id: "classPosition",
           accessorFn: (row) => row.classPosition,
           header: () => <p className="column-title">Position</p>,
-          size: 150,
+          size: 100,
           cell: ({ row }) => <span>{row.original.classPosition}</span>,
+        },
+        {
+          id: "aggregate",
+          accessorFn: (row) => row.aggregate,
+          header: () => <p className="column-title">Aggregate</p>,
+          size: 100,
+          cell: ({ row }) => <span>{row.original.aggregate}</span>,
         },
         {
           id: "remarks",

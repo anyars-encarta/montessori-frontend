@@ -616,6 +616,7 @@ export type ClassEnrollmentOverviewRow = {
   };
   enrollmentDate: string;
   classPosition: string;
+  aggregate: string;
   remarks: string;
   assessments: EnrollmentAssessmentRow[];
 };
