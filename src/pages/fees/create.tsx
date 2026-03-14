@@ -26,29 +26,9 @@ import { useForm } from "@refinedev/react-hook-form";
 import { Loader2 } from "lucide-react";
 import { SubmitHandler } from "react-hook-form";
 import { useMemo } from "react";
-import { z } from "zod";
+import { createFeeSchema, CreateFeeValues } from "@/validations";
 
 const feeTypeOptions: FeeType[] = ["admission", "tuition", "feeding", "other"];
-
-const createFeeSchema = z.object({
-  name: z.string().trim().min(1, "Fee name is required"),
-  description: z.string(),
-  amount: z
-    .string()
-    .trim()
-    .min(1, "Amount is required")
-    .refine((value) => {
-      const parsed = Number.parseFloat(value);
-      return Number.isFinite(parsed) && parsed >= 0;
-    }, "Amount must be a non-negative number"),
-  feeType: z.enum(["admission", "tuition", "feeding", "other"], {
-    required_error: "Fee type is required",
-  }),
-  academicYearId: z.string().trim().min(1, "Academic year is required"),
-  applicableToLevel: z.string(),
-});
-
-type CreateFeeValues = z.infer<typeof createFeeSchema>;
 
 const CreateFees = () => {
   const back = useBack();

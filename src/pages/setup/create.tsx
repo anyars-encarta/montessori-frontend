@@ -14,19 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UploadWidgetValue } from "@/types";
+import { SchoolDetailsForm, UploadWidgetValue } from "@/types";
 import { useCreate, useNotification } from "@refinedev/core";
-
-type SchoolDetailsForm = {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  logo: string;
-  discountType: "value" | "percentage";
-  discountAmount: string;
-};
 
 const initialValues: SchoolDetailsForm = {
   name: "",

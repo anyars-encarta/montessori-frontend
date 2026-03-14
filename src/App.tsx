@@ -66,10 +66,10 @@ import ListFees from "./pages/fees/list";
 import CreateFees from "./pages/fees/create";
 import EditFees from "./pages/fees/edit";
 import ShowFees from "./pages/fees/show";
-import ListSubjects from "./subjects/list";
-import CreateSubject from "./subjects/create";
-import ShowSubject from "./subjects/show";
-import EditSubject from "./subjects/edit";
+import ListSubjects from "./pages/subjects/list";
+import CreateSubject from "./pages/subjects/create";
+import ShowSubject from "./pages/subjects/show";
+import EditSubject from "./pages/subjects/edit";
 // import UpdateSubject from "./pages/subjects/edit";
 
 function App() {

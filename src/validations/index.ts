@@ -38,3 +38,63 @@ export const createStudentSchema = z.object({
 });
 
 export type CreateStudentValues = z.infer<typeof createStudentSchema>;
+
+export const createFeeSchema = z.object({
+  name: z.string().trim().min(1, "Fee name is required"),
+  description: z.string(),
+  amount: z
+    .string()
+    .trim()
+    .min(1, "Amount is required")
+    .refine((value) => {
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) && parsed >= 0;
+    }, "Amount must be a non-negative number"),
+  feeType: z.enum(["admission", "tuition", "feeding", "other"], {
+    required_error: "Fee type is required",
+  }),
+  academicYearId: z.string().trim().min(1, "Academic year is required"),
+  applicableToLevel: z.string(),
+});
+
+export type CreateFeeValues = z.infer<typeof createFeeSchema>;
+
+export const editFeeSchema = z.object({
+  name: z.string().trim().min(1, "Fee name is required"),
+  description: z.string(),
+  amount: z
+    .string()
+    .trim()
+    .min(1, "Amount is required")
+    .refine((value) => {
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) && parsed >= 0;
+    }, "Amount must be a non-negative number"),
+  feeType: z.enum(["admission", "tuition", "feeding", "other"], {
+    required_error: "Fee type is required",
+  }),
+  academicYearId: z.string().trim().min(1, "Academic year is required"),
+  applicableToLevel: z.string(),
+});
+
+export type EditFeeValues = z.infer<typeof editFeeSchema>;
+
+export const createSubjectSchema = z.object({
+  name: z.string().trim().min(1, "Subject name is required"),
+  code: z.string(),
+  description: z.string(),
+  cloudinaryImageUrl: z.string().nullable(),
+  imageCldPubId: z.string().nullable(),
+});
+
+export type CreateSubjectValues = z.infer<typeof createSubjectSchema>;
+
+export const editSubjectSchema = z.object({
+  name: z.string().trim().min(1, "Subject name is required"),
+  code: z.string(),
+  description: z.string(),
+  cloudinaryImageUrl: z.string().nullable(),
+  imageCldPubId: z.string().nullable(),
+});
+
+export type EditSubjectValues = z.infer<typeof editSubjectSchema>;

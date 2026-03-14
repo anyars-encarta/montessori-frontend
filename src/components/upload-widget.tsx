@@ -4,7 +4,7 @@ import {
   CLOUDINARY_UPLOAD_PRESET,
 } from "@/constants";
 import { UploadWidgetValue } from "@/types";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const UploadWidget = ({
@@ -25,7 +25,8 @@ const UploadWidget = ({
 
   useEffect(() => {
     setPreview(value);
-    if (!value) setPublicId(null);
+    const normalizedPublicId = value?.publicId?.trim() ?? "";
+    setPublicId(normalizedPublicId || null);
   }, [value]);
 
   useEffect(() => {
@@ -82,7 +83,19 @@ const UploadWidget = ({
   };
 
   const removeFromCloudinary = async () => {
-    if (publicId && !isRemoving) {
+    if (disabled || isRemoving || !preview) {
+      return;
+    }
+
+    // Some existing records may not have a stored Cloudinary public id.
+    // In that case, still clear the form value so users can remove the image.
+    if (!publicId) {
+      setPreview(null);
+      onChangeRef.current?.(null);
+      return;
+    }
+
+    if (publicId) {
       try {
         setIsRemoving(true);
 
@@ -122,9 +135,10 @@ const UploadWidget = ({
               type="button"
               onClick={removeFromCloudinary}
               aria-label="Remove uploaded image"
-              disabled={isRemoving}
+              disabled={isRemoving || disabled}
             >
-              x
+              <X className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Remove image</span>
             </button>
           )}
         

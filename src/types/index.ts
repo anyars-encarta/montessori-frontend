@@ -3,10 +3,12 @@ import { CreateClassValues } from "@/validations";
 export type Subject = {
   id: number;
   name: string;
-  code: string;
-  description: string;
-  department: string;
-  createdAt?: string;
+  code: string | null;
+  description: string | null;
+  cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ListResponse<T = unknown> = {
@@ -298,6 +300,7 @@ export type SubjectRecord = {
   code: string | null;
   description: string | null;
   cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -552,17 +555,6 @@ export type TermRecord = {
   endDate: string;
 };
 
-export type SchoolDetailsForm = {
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  logo: string;
-  discountType: "value" | "percentage";
-  discountAmount: string;
-};
-
 export type AcademicYearForm = {
   year: string;
   startDate: string;
@@ -658,4 +650,15 @@ export type RunGradesResponse = {
     mode: "upper" | "lower";
   };
   error?: string;
+};
+
+export type SchoolDetailsForm = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  logo: string;
+  discountType: "value" | "percentage";
+  discountAmount: string;
 };
