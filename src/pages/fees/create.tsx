@@ -41,7 +41,7 @@ const createFeeSchema = z.object({
       const parsed = Number.parseFloat(value);
       return Number.isFinite(parsed) && parsed >= 0;
     }, "Amount must be a non-negative number"),
-  feeType: z.enum(["admission", "promotion", "tuition", "other"], {
+  feeType: z.enum(["admission", "tuition", "feeding", "other"], {
     required_error: "Fee type is required",
   }),
   academicYearId: z.string().trim().min(1, "Academic year is required"),
