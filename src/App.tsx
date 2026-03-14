@@ -91,6 +91,17 @@ function App() {
                     icon: <Home />,
                   },
                 },
+                 {
+                  name: "fees",
+                  list: "/fees",
+                  create: "/fees/create",
+                  show: "/fees/show/:id",
+                  edit: "/fees/edit/:id",
+                  meta: {
+                    label: "Fees",
+                    icon: <CircleDollarSign />,
+                  },
+                },
                 {
                   name: "classes",
                   list: "/classes",
@@ -152,17 +163,6 @@ function App() {
                   meta: {
                     label: "Setup",
                     icon: <Settings />,
-                  },
-                },
-                {
-                  name: "fees",
-                  list: "/fees",
-                  create: "/fees/create",
-                  show: "/fees/show/:id",
-                  edit: "/fees/edit/:id",
-                  meta: {
-                    label: "Fees",
-                    icon: <CircleDollarSign />,
                   },
                 },
               ]}
