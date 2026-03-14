@@ -66,6 +66,7 @@ const EnrollmentsPage = () => {
   const [targetClassId, setTargetClassId] = useState("");
   const [targetAcademicYearId, setTargetAcademicYearId] = useState("");
   const [targetTermId, setTargetTermId] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [selectedEnrollmentIds, setSelectedEnrollmentIds] = useState<number[]>(
     [],
   );
@@ -128,8 +129,22 @@ const EnrollmentsPage = () => {
       });
     }
 
+    if (refreshKey > 0) {
+      values.push({
+        field: "_refresh",
+        operator: "eq",
+        value: String(refreshKey),
+      });
+    }
+
     return values;
-  }, [academicYearIdFilter, classIdFilter, studentNameFilter, termIdFilter]);
+  }, [
+    academicYearIdFilter,
+    classIdFilter,
+    refreshKey,
+    studentNameFilter,
+    termIdFilter,
+  ]);
 
   const enrollmentsTable = useTable<ClassEnrollmentOverviewRow>({
     columns: useMemo<ColumnDef<ClassEnrollmentOverviewRow>[]>(
@@ -498,6 +513,9 @@ const EnrollmentsPage = () => {
         message: "Grades generated",
         description: `Class level: ${classLevel}. Students graded: ${gradedStudents}. Assessments processed: ${gradedAssessments}.`,
       });
+
+      // Force immediate list query refresh so position/remarks reflect latest grading.
+      setRefreshKey((prev) => prev + 1);
     } catch (e) {
       open?.({
         type: "error",
@@ -610,6 +628,9 @@ const EnrollmentsPage = () => {
         setSelectedEnrollmentIds((prev) =>
           prev.filter((id) => !successfulIds.includes(id)),
         );
+
+        // Refresh table data immediately so latest class position/remarks are visible.
+        setRefreshKey((prev) => prev + 1);
       }
 
       if (failedCount > 0) {
