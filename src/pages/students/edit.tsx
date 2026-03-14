@@ -75,6 +75,15 @@ const initialPreviousSchoolValues: PreviousSchoolFormValues = {
   dateLastAttended: "",
 };
 
+const initialParentFormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  occupation: "",
+  address: "",
+};
+
 const buildApiUrl = (path: string) => {
   const normalizedBase = BACKEND_BASE_URL.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -169,6 +178,11 @@ const EditStudent = () => {
 
   const [parentIdToAdd, setParentIdToAdd] = useState("");
   const [relationshipToAdd, setRelationshipToAdd] = useState("");
+  const [newParentRelationship, setNewParentRelationship] = useState("");
+  const [newParentForm, setNewParentForm] = useState(initialParentFormValues);
+  const [editingParentId, setEditingParentId] = useState<number | null>(null);
+  const [editingParentRelationship, setEditingParentRelationship] = useState("");
+  const [editingParentForm, setEditingParentForm] = useState(initialParentFormValues);
   const [siblingIdToAdd, setSiblingIdToAdd] = useState("");
   const [healthValues, setHealthValues] =
     useState<HealthFormValues>(initialHealthValues);
@@ -177,6 +191,7 @@ const EditStudent = () => {
   const [previousSchoolForm, setPreviousSchoolForm] =
     useState<PreviousSchoolFormValues>(initialPreviousSchoolValues);
   const [isSavingRelation, setIsSavingRelation] = useState(false);
+  const [isSavingParentProfile, setIsSavingParentProfile] = useState(false);
   const [isSavingHealth, setIsSavingHealth] = useState(false);
   const [isSavingOtherData, setIsSavingOtherData] = useState(false);
   const [isSavingPreviousSchool, setIsSavingPreviousSchool] = useState(false);
@@ -384,6 +399,126 @@ const EditStudent = () => {
       );
     } finally {
       setIsSavingRelation(false);
+    }
+  };
+
+  const createParentAndAttach = async () => {
+    const firstName = newParentForm.firstName.trim();
+    const lastName = newParentForm.lastName.trim();
+
+    if (!firstName) {
+      notifyError("First name is required");
+      return;
+    }
+
+    if (!lastName) {
+      notifyError("Last name is required");
+      return;
+    }
+
+    try {
+      setIsSavingParentProfile(true);
+
+      const createdParent = await request<{ data?: ParentRecord }>(
+        "/parents",
+        "POST",
+        {
+          firstName,
+          lastName,
+          email: newParentForm.email.trim() || undefined,
+          phone: newParentForm.phone.trim() || undefined,
+          occupation: newParentForm.occupation.trim() || undefined,
+          address: newParentForm.address.trim() || undefined,
+        },
+      );
+
+      const parentId = createdParent?.data?.id;
+      if (!parentId) {
+        throw new Error("Parent creation did not return an id");
+      }
+
+      await request(`/students/${studentId}/parents`, "POST", {
+        parentId,
+        relationship: newParentRelationship.trim() || undefined,
+      });
+
+      setNewParentForm(initialParentFormValues);
+      setNewParentRelationship("");
+      await Promise.all([refreshStudent(), parentsQuery.refetch()]);
+      notifySuccess("Parent created and linked", "Parent profile was added and linked.");
+    } catch (error) {
+      notifyError(
+        "Failed to create and link parent",
+        error instanceof Error ? error.message : undefined,
+      );
+    } finally {
+      setIsSavingParentProfile(false);
+    }
+  };
+
+  const startEditingParent = (relation: {
+    parentId: number;
+    relationship: string | null;
+    parent: ParentRecord;
+  }) => {
+    setEditingParentId(relation.parentId);
+    setEditingParentRelationship(relation.relationship ?? "");
+    setEditingParentForm({
+      firstName: relation.parent.firstName ?? "",
+      lastName: relation.parent.lastName ?? "",
+      email: relation.parent.email ?? "",
+      phone: relation.parent.phone ?? "",
+      occupation: relation.parent.occupation ?? "",
+      address: relation.parent.address ?? "",
+    });
+  };
+
+  const cancelEditingParent = () => {
+    setEditingParentId(null);
+    setEditingParentRelationship("");
+    setEditingParentForm(initialParentFormValues);
+  };
+
+  const saveParentProfileAndRelationship = async (parentId: number) => {
+    const firstName = editingParentForm.firstName.trim();
+    const lastName = editingParentForm.lastName.trim();
+
+    if (!firstName) {
+      notifyError("First name is required");
+      return;
+    }
+
+    if (!lastName) {
+      notifyError("Last name is required");
+      return;
+    }
+
+    try {
+      setIsSavingParentProfile(true);
+
+      await request(`/parents/${parentId}`, "PUT", {
+        firstName,
+        lastName,
+        email: editingParentForm.email.trim() || undefined,
+        phone: editingParentForm.phone.trim() || undefined,
+        occupation: editingParentForm.occupation.trim() || undefined,
+        address: editingParentForm.address.trim() || undefined,
+      });
+
+      await request(`/students/${studentId}/parents/${parentId}`, "PUT", {
+        relationship: editingParentRelationship.trim() || undefined,
+      });
+
+      cancelEditingParent();
+      await Promise.all([refreshStudent(), parentsQuery.refetch()]);
+      notifySuccess("Parent details updated");
+    } catch (error) {
+      notifyError(
+        "Failed to update parent",
+        error instanceof Error ? error.message : undefined,
+      );
+    } finally {
+      setIsSavingParentProfile(false);
     }
   };
 
@@ -1036,34 +1171,266 @@ const EditStudent = () => {
                   type="button"
                   className="cursor-pointer"
                   onClick={addParent}
-                  disabled={isSavingRelation}
+                  disabled={isSavingRelation || isSavingParentProfile}
                 >
                   Add Parent
                 </Button>
               </div>
             </div>
 
+            <div className="rounded-md border p-4 space-y-4">
+              <h3 className="text-sm font-semibold">Create and Link Parent</h3>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input
+                    value={newParentForm.firstName}
+                    onChange={(event) =>
+                      setNewParentForm((prev) => ({
+                        ...prev,
+                        firstName: event.target.value,
+                      }))
+                    }
+                    placeholder="First name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input
+                    value={newParentForm.lastName}
+                    onChange={(event) =>
+                      setNewParentForm((prev) => ({
+                        ...prev,
+                        lastName: event.target.value,
+                      }))
+                    }
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={newParentForm.email}
+                    onChange={(event) =>
+                      setNewParentForm((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    placeholder="Email"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input
+                    value={newParentForm.phone}
+                    onChange={(event) =>
+                      setNewParentForm((prev) => ({
+                        ...prev,
+                        phone: event.target.value,
+                      }))
+                    }
+                    placeholder="Phone"
+                  />
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Occupation</Label>
+                  <Input
+                    value={newParentForm.occupation}
+                    onChange={(event) =>
+                      setNewParentForm((prev) => ({
+                        ...prev,
+                        occupation: event.target.value,
+                      }))
+                    }
+                    placeholder="Occupation"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Relationship</Label>
+                  <Input
+                    value={newParentRelationship}
+                    onChange={(event) => setNewParentRelationship(event.target.value)}
+                    placeholder="Relationship (e.g. mother)"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <Textarea
+                  value={newParentForm.address}
+                  onChange={(event) =>
+                    setNewParentForm((prev) => ({
+                      ...prev,
+                      address: event.target.value,
+                    }))
+                  }
+                  placeholder="Address"
+                />
+              </div>
+
+              <Button
+                type="button"
+                className="cursor-pointer"
+                onClick={createParentAndAttach}
+                disabled={isSavingParentProfile || isSavingRelation}
+              >
+                Create and Link Parent
+              </Button>
+            </div>
+
             <div className="space-y-2">
               {(student.parentRelations ?? []).map((relation) => (
                 <div
                   key={relation.parentId}
-                  className="flex items-center justify-between border rounded-md p-3"
+                  className="border rounded-md p-3 space-y-3"
                 >
-                  <span>
-                    {relation.parent.firstName} {relation.parent.lastName}
-                    {relation.relationship ? ` (${relation.relationship})` : ""}
-                  </span>
-                  <span>{relation.parent.phone}</span>
-                  <span>{relation.parent.email}</span>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    className="cursor-pointer"
-                    onClick={() => removeParent(relation.parentId)}
-                    disabled={isSavingRelation}
-                  >
-                    Remove
-                  </Button>
+                  {editingParentId === relation.parentId ? (
+                    <div className="space-y-3">
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <Input
+                          value={editingParentForm.firstName}
+                          onChange={(event) =>
+                            setEditingParentForm((prev) => ({
+                              ...prev,
+                              firstName: event.target.value,
+                            }))
+                          }
+                          placeholder="First name"
+                        />
+                        <Input
+                          value={editingParentForm.lastName}
+                          onChange={(event) =>
+                            setEditingParentForm((prev) => ({
+                              ...prev,
+                              lastName: event.target.value,
+                            }))
+                          }
+                          placeholder="Last name"
+                        />
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <Input
+                          type="email"
+                          value={editingParentForm.email}
+                          onChange={(event) =>
+                            setEditingParentForm((prev) => ({
+                              ...prev,
+                              email: event.target.value,
+                            }))
+                          }
+                          placeholder="Email"
+                        />
+                        <Input
+                          value={editingParentForm.phone}
+                          onChange={(event) =>
+                            setEditingParentForm((prev) => ({
+                              ...prev,
+                              phone: event.target.value,
+                            }))
+                          }
+                          placeholder="Phone"
+                        />
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <Input
+                          value={editingParentForm.occupation}
+                          onChange={(event) =>
+                            setEditingParentForm((prev) => ({
+                              ...prev,
+                              occupation: event.target.value,
+                            }))
+                          }
+                          placeholder="Occupation"
+                        />
+                        <Input
+                          value={editingParentRelationship}
+                          onChange={(event) =>
+                            setEditingParentRelationship(event.target.value)
+                          }
+                          placeholder="Relationship"
+                        />
+                      </div>
+                      <Textarea
+                        value={editingParentForm.address}
+                        onChange={(event) =>
+                          setEditingParentForm((prev) => ({
+                            ...prev,
+                            address: event.target.value,
+                          }))
+                        }
+                        placeholder="Address"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          className="cursor-pointer"
+                          onClick={() =>
+                            saveParentProfileAndRelationship(relation.parentId)
+                          }
+                          disabled={isSavingParentProfile || isSavingRelation}
+                        >
+                          Save Changes
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="cursor-pointer"
+                          onClick={cancelEditingParent}
+                          disabled={isSavingParentProfile || isSavingRelation}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {relation.parent.firstName} {relation.parent.lastName}
+                          {relation.relationship ? ` (${relation.relationship})` : ""}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {relation.parent.phone || "No phone"} • {relation.parent.email || "No email"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {relation.parent.occupation || "No occupation"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {relation.parent.address || "No address"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          type="button"
+                          className="cursor-pointer"
+                          onClick={() => startEditingParent(relation)}
+                          disabled={isSavingParentProfile || isSavingRelation}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          type="button"
+                          className="cursor-pointer"
+                          onClick={() => removeParent(relation.parentId)}
+                          disabled={isSavingRelation || isSavingParentProfile}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
