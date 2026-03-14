@@ -32,6 +32,14 @@ import { Check, Download, Loader2, Save } from "lucide-react";
 
 const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
 
+const isWeekdayIsoDate = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) return false;
+  const day = parsed.getUTCDay();
+  return day >= 1 && day <= 5;
+};
+
 const buildApiUrl = (path: string) => {
   const base = BACKEND_BASE_URL.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -118,6 +126,15 @@ const StudentAttendancePage = () => {
       return;
     }
 
+    if (!isWeekdayIsoDate(attendanceDate)) {
+      open?.({
+        type: "error",
+        message: "Invalid attendance date",
+        description: "Attendance can only be marked for Monday to Friday.",
+      });
+      return;
+    }
+
     setIsLoadingRegister(true);
 
     try {
@@ -183,6 +200,15 @@ const StudentAttendancePage = () => {
         type: "error",
         message: "Nothing to save",
         description: "Load a class register first.",
+      });
+      return;
+    }
+
+    if (!isWeekdayIsoDate(attendanceDate)) {
+      open?.({
+        type: "error",
+        message: "Invalid attendance date",
+        description: "Attendance can only be marked for Monday to Friday.",
       });
       return;
     }
@@ -408,7 +434,19 @@ const StudentAttendancePage = () => {
               <Input
                 type="date"
                 value={attendanceDate}
-                onChange={(event) => setAttendanceDate(event.target.value)}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setAttendanceDate(value);
+
+                  if (value && !isWeekdayIsoDate(value)) {
+                    open?.({
+                      type: "error",
+                      message: "Weekend not allowed",
+                      description:
+                        "Please pick a Monday to Friday date for attendance.",
+                    });
+                  }
+                }}
               />
             </div>
           </div>
