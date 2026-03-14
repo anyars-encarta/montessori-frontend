@@ -24,6 +24,7 @@ import {
   Users2Icon,
   Dock,
   Subscript,
+  ClipboardCheck,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -34,6 +35,7 @@ import CreateClass from "./pages/classes/create";
 import EditClass from "./pages/classes/edit";
 import EnrollmentsPage from "./pages/classes/enrollments";
 import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
+import StudentAttendancePage from "./pages/classes/student-attendance";
 // import SubjectsShow from "./pages/subjects/show";
 import Login from "./pages/login";
 import Register from "./pages/register";
@@ -139,6 +141,14 @@ function App() {
                   },
                 },
                 {
+                  name: "student-attendance",
+                  list: "/classes/student-attendance",
+                  meta: {
+                    label: "Student Attendance",
+                    icon: <ClipboardCheck />,
+                  },
+                },
+                {
                   name: "students",
                   list: "/students",
                   create: "/students/create",
@@ -211,6 +221,7 @@ function App() {
                     <Route index element={<ListClasses />} />
                     <Route path="create" element={<CreateClass />} />
                     <Route path="enrollments" element={<EnrollmentsPage />} />
+                    <Route path="student-attendance" element={<StudentAttendancePage />} />
                     <Route
                       path="enrollments/scores/:id"
                       element={<EnrollmentScoresEditPage />}

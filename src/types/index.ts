@@ -662,3 +662,60 @@ export type SchoolDetailsForm = {
   discountType: "value" | "percentage";
   discountAmount: string;
 };
+
+export type DailyAttendanceRow = {
+  studentId: number;
+  studentName: string;
+  registrationNumber: string | null;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+};
+
+export type DailyRegisterResponse = {
+  success: boolean;
+  data?: DailyAttendanceRow[];
+  summary?: {
+    total: number;
+    present: number;
+    absent: number;
+    unmarked: number;
+  };
+  error?: string;
+};
+
+export type BulkMarkResponse = {
+  success: boolean;
+  data?: {
+    totalProcessed: number;
+    inserted: number;
+    updated: number;
+  };
+  error?: string;
+};
+
+export type AttendanceHistoryRow = {
+  id: number;
+  studentId: number;
+  studentName: string;
+  registrationNumber: string | null;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  remarks: string | null;
+  class: {
+    id: number;
+    name: string;
+    level: string;
+  } | null;
+};
+
+export type AttendanceHistoryResponse = {
+  success: boolean;
+  data?: AttendanceHistoryRow[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
+};
