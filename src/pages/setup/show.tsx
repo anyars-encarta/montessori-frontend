@@ -199,8 +199,10 @@ const ShowSetup = () => {
           ) : (
             sortedAcademicYears.map((year, i) => (
               <div key={year.id} className="rounded-md border p-3">
-                <p className="font-medium">{year.year} {i === 0 && <Badge>Current</Badge>}</p>
-                
+                <p className="font-medium">
+                  {year.year} {i === 0 && <Badge>Current</Badge>}
+                </p>
+
                 <p className="text-sm text-muted-foreground">
                   {formatDate(year.startDate)} - {formatDate(year.endDate)}
                 </p>
@@ -225,7 +227,10 @@ const ShowSetup = () => {
 
               return (
                 <div key={year.id} className="rounded-md border p-3 space-y-2">
-                  <p className="font-semibold">Academic Year {year.year} {i === 0 && <Badge>Current</Badge>}</p>
+                  <p className="font-semibold">
+                    Academic Year {year.year}{" "}
+                    {i === 0 && <Badge>Current</Badge>}
+                  </p>
 
                   {yearTerms.length === 0 ? (
                     <p className="text-sm text-muted-foreground">

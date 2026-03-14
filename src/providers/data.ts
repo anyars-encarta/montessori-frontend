@@ -98,6 +98,13 @@ const options: CreateDataProviderOptions = {
           if (field === "academicYearId") params.academicYearId = value;
           if (field === "termId") params.termId = value;
         }
+
+        if (resource === "fees") {
+          if (field === "search" || field === "name") params.search = value;
+          if (field === "feeType") params.feeType = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "applicableToLevel") params.applicableToLevel = value;
+        }
       });
 
       return params;

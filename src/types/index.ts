@@ -347,7 +347,7 @@ export type StudentPosition = {
   term: TermRecord | null;
 };
 
-export type FeeType = "admission" | "promotion" | "tuition" | "other";
+export type FeeType = "admission" | "tuition" | "feeding" | "other";
 export type PaymentStatus = "pending" | "partial" | "paid";
 
 export type FeeRecord = {

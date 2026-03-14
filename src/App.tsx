@@ -15,6 +15,7 @@ import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import { dataProvider } from "./providers/data";
 
 import {
+  CircleDollarSign,
   BookOpen,
   GraduationCap,
   Home,
@@ -59,6 +60,10 @@ import ListUsers from "./pages/users/list";
 import ShowSetup from "./pages/setup/show";
 import CreateSetup from "./pages/setup/create";
 import EditSetup from "./pages/setup/edit";
+import ListFees from "./pages/fees/list";
+import CreateFees from "./pages/fees/create";
+import EditFees from "./pages/fees/edit";
+import ShowFees from "./pages/fees/show";
 // import UpdateSubject from "./pages/subjects/edit";
 
 function App() {
@@ -149,6 +154,17 @@ function App() {
                     icon: <Settings />,
                   },
                 },
+                {
+                  name: "fees",
+                  list: "/fees",
+                  create: "/fees/create",
+                  show: "/fees/show/:id",
+                  edit: "/fees/edit/:id",
+                  meta: {
+                    label: "Fees",
+                    icon: <CircleDollarSign />,
+                  },
+                },
               ]}
             >
               <Routes>
@@ -211,6 +227,13 @@ function App() {
                     <Route index element={<ShowSetup />} />
                     <Route path="create" element={<CreateSetup />} />
                     <Route path="edit/:id" element={<EditSetup />} />
+                  </Route>
+
+                   <Route path="fees">
+                    <Route index element={<ListFees />} />
+                    <Route path="create" element={<CreateFees />} />
+                    <Route path="edit/:id" element={<EditFees />} />
+                    <Route path="show/:id" element={<ShowFees />} />
                   </Route>
                 </Route>
               </Routes>
