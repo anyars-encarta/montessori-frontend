@@ -98,3 +98,44 @@ export const editSubjectSchema = z.object({
 });
 
 export type EditSubjectValues = z.infer<typeof editSubjectSchema>;
+
+export const staffGenderSchema = z.enum(["male", "female", "other"], {
+  required_error: "Gender is required",
+});
+
+export const staffTypeSchema = z.enum(["teacher", "non_teaching"], {
+  required_error: "Staff type is required",
+});
+
+export const createStaffSchema = z
+  .object({
+    firstName: z.string().trim().min(1, "First name is required"),
+    lastName: z.string().trim().min(1, "Last name is required"),
+    email: z.string().trim().email("Invalid email").or(z.literal("")).nullable(),
+    phone: z.string().nullable(),
+    address: z.string().nullable(),
+    dateOfBirth: z.string().nullable(),
+    gender: staffGenderSchema,
+    staffType: staffTypeSchema,
+    cloudinaryImageUrl: z.string().nullable(),
+    imageCldPubId: z.string().nullable(),
+    hireDate: z.string().trim().min(1, "Hire date is required"),
+    registrationNumber: z.string().nullable(),
+    isActive: z.boolean(),
+    subjectIds: z.array(z.number().int().positive()).nullable(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.staffType !== "teacher" && (value.subjectIds?.length ?? 0) > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Only teachers can be assigned subjects",
+        path: ["subjectIds"],
+      });
+    }
+  });
+
+export type CreateStaffValues = z.infer<typeof createStaffSchema>;
+
+export const editStaffSchema = createStaffSchema;
+
+export type EditStaffValues = z.infer<typeof editStaffSchema>;

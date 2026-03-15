@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AcademicYearRecord, FeeRecord, FeeType } from "@/types";
-import { useList } from "@refinedev/core";
+import { useList, useBack } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
@@ -27,6 +27,7 @@ import { Search } from "lucide-react";
 const feeTypeOptions: FeeType[] = ["admission", "tuition", "feeding", "other"];
 
 const ListFees = () => {
+  const back = useBack();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeeType, setSelectedFeeType] = useState("");
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
@@ -180,7 +181,13 @@ const ListFees = () => {
     <ListView>
       <Breadcrumb />
 
-      <h1 className="page-title">Fees</h1>
+      <div className="intro-row">
+        <h1 className="page-title">Fees</h1>
+
+        <Button onClick={back} className="cursor-pointer" type="button">
+          Go Back
+        </Button>
+      </div>
 
       <div className="intro-row">
         <p>Manage fee structures for each academic year and class level.</p>

@@ -110,6 +110,22 @@ const options: CreateDataProviderOptions = {
           if (field === "search" || field === "name") params.search = value;
           if (field === "code") params.code = value;
         }
+
+        if (resource === "staff") {
+          if (
+            field === "search" ||
+            field === "name" ||
+            field === "firstName" ||
+            field === "lastName" ||
+            field === "email" ||
+            field === "phone"
+          ) {
+            params.search = value;
+          }
+          if (field === "staffType") params.staffType = value;
+          if (field === "isActive") params.isActive = value;
+          if (field === "subjectId") params.subjectId = value;
+        }
       });
 
       return params;

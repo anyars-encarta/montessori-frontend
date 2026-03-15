@@ -128,6 +128,15 @@ const ShowSetup = () => {
         <Separator />
       </div>
 
+      <div className="flex flex-row gap-4 flex-wrap">
+        <Button
+          className="cursor-pointer"
+          onClick={() => navigate('/fees')}
+        >
+          Manage Fees
+        </Button>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>School Information</CardTitle>

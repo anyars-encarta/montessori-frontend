@@ -482,22 +482,51 @@ export type Student = StudentBasic & {
   gender?: string | null;
 };
 
+export type StaffGender = "male" | "female" | "other";
+export type StaffType = "teacher" | "non_teaching";
+
 export type Staff = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  dateOfBirth: string | null;
+  gender: StaffGender;
+  staffType: StaffType;
+  cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
+  hireDate: string;
+  registrationNumber: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StaffSubjectAssignment = {
+  staffId: number;
+  subjectId: number;
+  subject: SubjectRecord | null;
+};
+
+export type StaffListRecord = Staff & {
+  subjects: StaffSubjectAssignment[];
+  supervisedClasses: ClassRecord[];
+  attendances: Array<{
     id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    dateOfBirth: string;
-    gender: string;
-    staffType: string;
-    cloudinaryImageUrl?: string;
-    imageCldPubId?: string;
-    hireDate: string;
-    registrationNumber?: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    attendanceDate: string;
+    status: AttendanceStatus;
+    remarks: string | null;
+  }>;
+  expenses: Array<{
+    expense: {
+      id: number;
+      amount: string;
+      description: string;
+      expenseDate: string;
+    };
+  }>;
 };
 
 export type Schedule = {

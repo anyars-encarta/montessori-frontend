@@ -15,8 +15,6 @@ import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import { dataProvider } from "./providers/data";
 
 import {
-  CircleDollarSign,
-  BookOpen,
   GraduationCap,
   Home,
   Settings,
@@ -25,6 +23,7 @@ import {
   Dock,
   Subscript,
   ClipboardCheck,
+  BookOpen,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -97,17 +96,6 @@ function App() {
                   meta: {
                     label: "Home",
                     icon: <Home />,
-                  },
-                },
-                {
-                  name: "fees",
-                  list: "/fees",
-                  create: "/fees/create",
-                  show: "/fees/show/:id",
-                  edit: "/fees/edit/:id",
-                  meta: {
-                    label: "Fees",
-                    icon: <CircleDollarSign />,
                   },
                 },
                 {
