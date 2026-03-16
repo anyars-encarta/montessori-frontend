@@ -207,7 +207,21 @@ const ShowSetup = () => {
           <CardTitle>Academic Years</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {sortedAcademicYears.length === 0 ? (
+          {yearsQuery.isError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">
+                Failed to load academic years.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => void yearsQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : sortedAcademicYears.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No academic years configured.
             </p>
@@ -232,7 +246,21 @@ const ShowSetup = () => {
           <CardTitle>Terms</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {terms.length === 0 ? (
+          {termsQuery.isError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">
+                Failed to load terms.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="cursor-pointer"
+                onClick={() => void termsQuery.refetch()}
+              >
+                Retry
+              </Button>
+            </div>
+          ) : terms.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No terms configured.
             </p>

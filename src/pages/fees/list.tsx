@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BACKEND_BASE_URL } from "@/constants";
 import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType, TermRecord } from "@/types";
 import { useList, useBack } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
@@ -26,6 +27,16 @@ import { Search } from "lucide-react";
 
 const feeTypeOptions: FeeType[] = ["admission", "tuition", "feeding", "other"];
 
+type PaginatedListResponse<T> = {
+  data?: T[];
+  pagination?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+  };
+};
+
 const ListFees = () => {
   const back = useBack();
   const [searchQuery, setSearchQuery] = useState("");
@@ -33,24 +44,67 @@ const ListFees = () => {
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
   const [selectedApplicableTermId, setSelectedApplicableTermId] = useState("");
   const [selectedClassLevel, setSelectedClassLevel] = useState("");
+  const [classes, setClasses] = useState<ClassRecord[]>([]);
 
   const { result: yearsResult } = useList<AcademicYearRecord>({
     resource: "academic-years",
-    pagination: { pageSize: 200 },
-  });
-
-  const { result: classesResult } = useList<ClassRecord>({
-    resource: "classes",
-    pagination: { pageSize: 500 },
+    pagination: { mode: "off" },
   });
 
   const { result: termsResult } = useList<TermRecord>({
     resource: "terms",
-    pagination: { pageSize: 500 },
+    pagination: { mode: "off" },
   });
 
+  useEffect(() => {
+    let isDisposed = false;
+
+    const fetchAllClasses = async () => {
+      const pageSize = 100;
+      let currentPage = 1;
+      let totalPages = 1;
+      const allRows: ClassRecord[] = [];
+
+      while (currentPage <= totalPages) {
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/classes?page=${currentPage}&limit=${pageSize}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch classes page ${currentPage}`);
+        }
+
+        const payload = (await response.json()) as PaginatedListResponse<ClassRecord>;
+        allRows.push(...(payload.data ?? []));
+
+        const nextTotalPages = payload.pagination?.totalPages;
+        totalPages =
+          typeof nextTotalPages === "number" && nextTotalPages > 0
+            ? nextTotalPages
+            : currentPage;
+        currentPage += 1;
+      }
+
+      if (!isDisposed) {
+        const uniqueById = Array.from(
+          new Map(allRows.map((row) => [row.id, row])).values(),
+        );
+        setClasses(uniqueById);
+      }
+    };
+
+    void fetchAllClasses().catch(() => {
+      if (!isDisposed) {
+        setClasses([]);
+      }
+    });
+
+    return () => {
+      isDisposed = true;
+    };
+  }, []);
+
   const academicYears = yearsResult.data;
-  const classes = classesResult.data;
   const terms = termsResult.data;
   const classLevels = useMemo(() => {
     return Array.from(new Set(classes.map((classRow) => classRow.level))).sort(

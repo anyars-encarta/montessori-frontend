@@ -181,8 +181,11 @@ const EditStudent = () => {
   const [newParentRelationship, setNewParentRelationship] = useState("");
   const [newParentForm, setNewParentForm] = useState(initialParentFormValues);
   const [editingParentId, setEditingParentId] = useState<number | null>(null);
-  const [editingParentRelationship, setEditingParentRelationship] = useState("");
-  const [editingParentForm, setEditingParentForm] = useState(initialParentFormValues);
+  const [editingParentRelationship, setEditingParentRelationship] =
+    useState("");
+  const [editingParentForm, setEditingParentForm] = useState(
+    initialParentFormValues,
+  );
   const [siblingIdToAdd, setSiblingIdToAdd] = useState("");
   const [healthValues, setHealthValues] =
     useState<HealthFormValues>(initialHealthValues);
@@ -290,14 +293,18 @@ const EditStudent = () => {
     method: "POST" | "PUT" | "DELETE",
     body?: object,
   ): Promise<TResponse | undefined> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     const response = await fetch(buildApiUrl(path), {
       method,
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
+      signal: controller.signal,
       body: body ? JSON.stringify(body) : undefined,
     });
+    clearTimeout(timeout);
 
     if (!response.ok) {
       throw new Error(await extractErrorMessage(response));
@@ -311,16 +318,21 @@ const EditStudent = () => {
     return (await response.json()) as TResponse;
   };
 
+  const toNullableTrimmed = (value: string | null | undefined) => {
+    const trimmed = value?.trim();
+    return trimmed ? trimmed : null;
+  };
+
   const onSubmit: SubmitHandler<CreateStudentValues> = async (values) => {
     await onFinish({
       firstName: values.firstName.trim(),
       lastName: values.lastName.trim(),
       gender: values.gender,
       admissionDate: values.admissionDate,
-      dateOfBirth: values.dateOfBirth?.trim() ?? null,
-      registrationNumber: values.registrationNumber?.trim() ?? null,
-      cloudinaryImageUrl: values.cloudinaryImageUrl?.trim() ?? null,
-      imageCldPubId: values.imageCldPubId?.trim() ?? null,
+      dateOfBirth: toNullableTrimmed(values.dateOfBirth),
+      registrationNumber: toNullableTrimmed(values.registrationNumber),
+      cloudinaryImageUrl: toNullableTrimmed(values.cloudinaryImageUrl),
+      imageCldPubId: toNullableTrimmed(values.imageCldPubId),
       isActive: values.isActive,
       onScholarship: values.onScholarship,
       getDiscount: values.getDiscount,
@@ -419,8 +431,8 @@ const EditStudent = () => {
     try {
       setIsSavingParentProfile(true);
 
-      const createdParent = await request<{ data?: ParentRecord }>(
-        "/parents",
+      await request(
+        `/students/${studentId}/parents/create-attach`,
         "POST",
         {
           firstName,
@@ -429,23 +441,17 @@ const EditStudent = () => {
           phone: newParentForm.phone.trim() || undefined,
           occupation: newParentForm.occupation.trim() || undefined,
           address: newParentForm.address.trim() || undefined,
+          relationship: newParentRelationship.trim() || undefined,
         },
       );
-
-      const parentId = createdParent?.data?.id;
-      if (!parentId) {
-        throw new Error("Parent creation did not return an id");
-      }
-
-      await request(`/students/${studentId}/parents`, "POST", {
-        parentId,
-        relationship: newParentRelationship.trim() || undefined,
-      });
 
       setNewParentForm(initialParentFormValues);
       setNewParentRelationship("");
       await Promise.all([refreshStudent(), parentsQuery.refetch()]);
-      notifySuccess("Parent created and linked", "Parent profile was added and linked.");
+      notifySuccess(
+        "Parent created and linked",
+        "Parent profile was added and linked.",
+      );
     } catch (error) {
       notifyError(
         "Failed to create and link parent",
@@ -650,6 +656,10 @@ const EditStudent = () => {
   };
 
   const runEnrollmentAction = async (mode: "admit" | "promote") => {
+    if (isSubmittingAdmission || isSubmittingPromotion) {
+      return;
+    }
+
     const parsedClassId = Number(selectedClassId);
     const parsedAcademicYearId = Number(selectedAcademicYearId);
     const parsedTermId = Number(selectedTermId);
@@ -1102,7 +1112,7 @@ const EditStudent = () => {
                 type="button"
                 className="cursor-pointer"
                 onClick={() => runEnrollmentAction("admit")}
-                disabled={isSubmittingAdmission}
+                disabled={isSubmittingAdmission || isSubmittingPromotion}
               >
                 {isSubmittingAdmission ? (
                   <div className="flex gap-1 items-center">
@@ -1118,7 +1128,7 @@ const EditStudent = () => {
                 className="cursor-pointer"
                 variant="outline"
                 onClick={() => runEnrollmentAction("promote")}
-                disabled={isSubmittingPromotion}
+                disabled={isSubmittingAdmission || isSubmittingPromotion}
               >
                 {isSubmittingPromotion ? (
                   <div className="flex gap-1 items-center">
@@ -1258,7 +1268,9 @@ const EditStudent = () => {
                   <Label>Relationship</Label>
                   <Input
                     value={newParentRelationship}
-                    onChange={(event) => setNewParentRelationship(event.target.value)}
+                    onChange={(event) =>
+                      setNewParentRelationship(event.target.value)
+                    }
                     placeholder="Relationship (e.g. mother)"
                   />
                 </div>
@@ -1397,10 +1409,13 @@ const EditStudent = () => {
                       <div className="space-y-1">
                         <p className="font-medium">
                           {relation.parent.firstName} {relation.parent.lastName}
-                          {relation.relationship ? ` (${relation.relationship})` : ""}
+                          {relation.relationship
+                            ? ` (${relation.relationship})`
+                            : ""}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {relation.parent.phone || "No phone"} • {relation.parent.email || "No email"}
+                          {relation.parent.phone || "No phone"} •{" "}
+                          {relation.parent.email || "No email"}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {relation.parent.occupation || "No occupation"}

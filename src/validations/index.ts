@@ -1,5 +1,8 @@
 import * as z from "zod";
 
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+const isIsoDate = (value: string) => isoDatePattern.test(value);
+
 export const createClassSchema = z.object({
   name: z.string().trim().min(1, "Class name is required"),
   level: z.string().trim().min(1, "Level is required"),
@@ -27,7 +30,11 @@ export const createStudentSchema = z.object({
   gender: z.enum(["male", "female", "other"], {
     required_error: "Gender is required",
   }),
-  admissionDate: z.string().trim().min(1, "Admission date is required"),
+  admissionDate: z
+    .string()
+    .trim()
+    .min(1, "Admission date is required")
+    .refine(isIsoDate, "Admission date must be a valid date (YYYY-MM-DD)"),
   dateOfBirth: z.string().nullable(),
   registrationNumber: z.string().nullable(),
   cloudinaryImageUrl: z.string().nullable(),
@@ -52,7 +59,7 @@ export const createFeeSchema = z.object({
     .string()
     .trim()
     .min(1, "Amount is required")
-     .refine(isNonNegativeDecimalString, "Amount must be a non-negative number"),
+    .refine(isNonNegativeDecimalString, "Amount must be a non-negative number"),
   feeType: z.enum(["admission", "tuition", "feeding", "other"], {
     required_error: "Fee type is required",
   }),
@@ -91,7 +98,11 @@ export const createPaymentSchema = z.object({
     .trim()
     .min(1, "Amount is required")
     .refine(isPositiveDecimalString, "Amount must be greater than 0"),
-  paymentDate: z.string().trim().min(1, "Payment date is required"),
+  paymentDate: z
+    .string()
+    .trim()
+    .min(1, "Payment date is required")
+    .refine(isIsoDate, "Payment date must be a valid date (YYYY-MM-DD)"),
   paymentMethod: z.string().nullable(),
   reference: z.string().nullable(),
   notes: z.string().nullable(),
@@ -148,7 +159,11 @@ export const createStaffSchema = z
     staffType: staffTypeSchema,
     cloudinaryImageUrl: z.string().nullable(),
     imageCldPubId: z.string().nullable(),
-    hireDate: z.string().trim().min(1, "Hire date is required"),
+    hireDate: z
+      .string()
+      .trim()
+      .min(1, "Hire date is required")
+      .refine(isIsoDate, "Hire date must be a valid date (YYYY-MM-DD)"),
     registrationNumber: z.string().nullable(),
     isActive: z.boolean(),
     subjectIds: z.array(z.number().int().positive()).nullable(),
