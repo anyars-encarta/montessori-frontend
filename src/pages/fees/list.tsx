@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import ActionButton from "@/components/actionButton";
 import { CreateButton } from "@/components/refine-ui/buttons/create";
@@ -31,6 +31,7 @@ const ListFees = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeeType, setSelectedFeeType] = useState("");
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
+  const [selectedApplicableTermId, setSelectedApplicableTermId] = useState("");
   const [selectedClassLevel, setSelectedClassLevel] = useState("");
 
   const { result: yearsResult } = useList<AcademicYearRecord>({
@@ -56,6 +57,33 @@ const ListFees = () => {
       (a, b) => a.localeCompare(b),
     );
   }, [classes]);
+
+  const filteredTerms = useMemo(() => {
+    if (!selectedAcademicYearId) {
+      return terms;
+    }
+
+    const selectedYearId = Number.parseInt(selectedAcademicYearId, 10);
+    if (!Number.isFinite(selectedYearId)) {
+      return terms;
+    }
+
+    return terms.filter((term) => term.academicYearId === selectedYearId);
+  }, [selectedAcademicYearId, terms]);
+
+  useEffect(() => {
+    if (!selectedApplicableTermId) {
+      return;
+    }
+
+    const selectedTermStillVisible = filteredTerms.some(
+      (term) => String(term.id) === selectedApplicableTermId,
+    );
+
+    if (!selectedTermStillVisible) {
+      setSelectedApplicableTermId("");
+    }
+  }, [filteredTerms, selectedApplicableTermId]);
 
   const filters = useMemo(() => {
     const values: Array<{
@@ -89,6 +117,14 @@ const ListFees = () => {
       });
     }
 
+    if (selectedApplicableTermId) {
+      values.push({
+        field: "applicableTermId",
+        operator: "eq",
+        value: selectedApplicableTermId,
+      });
+    }
+
     if (selectedClassLevel) {
       values.push({
         field: "applicableToLevel",
@@ -98,12 +134,19 @@ const ListFees = () => {
     }
 
     return values;
-  }, [searchQuery, selectedAcademicYearId, selectedFeeType, selectedClassLevel]);
+  }, [
+    searchQuery,
+    selectedAcademicYearId,
+    selectedApplicableTermId,
+    selectedFeeType,
+    selectedClassLevel,
+  ]);
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     selectedFeeType.length > 0 ||
     selectedAcademicYearId.length > 0 ||
+    selectedApplicableTermId.length > 0 ||
     selectedClassLevel.length > 0;
 
   const feeTable = useTable<FeeRecord>({
@@ -239,7 +282,7 @@ const ListFees = () => {
       </div>
 
       <div className="intro-row">
-        <p>Manage fee structures for each academic year and class level.</p>
+        <p>Manage fees for each academic year and class level.</p>
 
         <div className="actions-row">
           <div className="search-field">
@@ -277,9 +320,10 @@ const ListFees = () => {
           <div className="w-full sm:w-[180px]">
             <Select
               value={selectedAcademicYearId || "all"}
-              onValueChange={(value) =>
-                setSelectedAcademicYearId(value === "all" ? "" : value)
-              }
+              onValueChange={(value) => {
+                const nextYearId = value === "all" ? "" : value;
+                setSelectedAcademicYearId(nextYearId);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All Years" />
@@ -289,6 +333,27 @@ const ListFees = () => {
                 {academicYears.map((year) => (
                   <SelectItem key={year.id} value={String(year.id)}>
                     {year.year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-full sm:w-[180px]">
+            <Select
+              value={selectedApplicableTermId || "all"}
+              onValueChange={(value) =>
+                setSelectedApplicableTermId(value === "all" ? "" : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Terms" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Terms</SelectItem>
+                {filteredTerms.map((term) => (
+                  <SelectItem key={term.id} value={String(term.id)}>
+                    {term.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -327,6 +392,7 @@ const ListFees = () => {
                 setSearchQuery("");
                 setSelectedFeeType("");
                 setSelectedAcademicYearId("");
+                setSelectedApplicableTermId("");
                 setSelectedClassLevel("");
               }}
             >
