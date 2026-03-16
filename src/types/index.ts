@@ -1,4 +1,5 @@
-import { CreateClassValues } from "@/validations";
+import { CreateClassValues, CreatePaymentValues } from "@/validations";
+import { UseFormReturn } from "react-hook-form";
 
 export type Subject = {
   id: number;
@@ -750,4 +751,30 @@ export type AttendanceHistoryResponse = {
     totalPages: number;
   };
   error?: string;
+};
+
+export type PaymentFeeOption = {
+  studentFeeId: number;
+  feeName: string;
+  academicYearLabel: string;
+  termLabel: string;
+  totalAmount: number;
+  amountPaid: number;
+  remainingAmount: number;
+  status: StudentFeeRecord["status"];
+  label: string;
+};
+
+export type PaymentFormProps = {
+  form: UseFormReturn<CreatePaymentValues>;
+  onSubmit: (values: CreatePaymentValues) => Promise<void>;
+  students: StudentBasic[];
+  studentFees: StudentFeeRecord[];
+  fees: FeeRecord[];
+  academicYears: AcademicYearRecord[];
+  terms: TermRecord[];
+  isSubmitting: boolean;
+  submitLabel: string;
+  submittingLabel: string;
+  currentPayment?: PaymentRecord | null;
 };

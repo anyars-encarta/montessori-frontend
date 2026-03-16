@@ -20,7 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseRecord, HttpError, useBack, useList, useNotification, useOne } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 
-import PaymentForm, { buildPaymentFeeOptions } from "./payment-form";
+import PaymentForm, { buildPaymentFeeOptions } from "../../components/payment-form";
 
 const EditPayment = () => {
   const back = useBack();

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,26 +23,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   AcademicYearRecord,
   FeeRecord,
-  PaymentRecord,
+  PaymentFeeOption,
+  PaymentFormProps,
   StudentBasic,
   StudentFeeRecord,
   TermRecord,
 } from "@/types";
-import { CreatePaymentValues } from "@/validations";
-import { UseFormReturn } from "react-hook-form";
 import { Loader2 } from "lucide-react";
-
-export type PaymentFeeOption = {
-  studentFeeId: number;
-  feeName: string;
-  academicYearLabel: string;
-  termLabel: string;
-  totalAmount: number;
-  amountPaid: number;
-  remainingAmount: number;
-  status: StudentFeeRecord["status"];
-  label: string;
-};
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
@@ -124,20 +111,6 @@ export const buildPaymentFeeOptions = ({
     .sort((a, b) => a.feeName.localeCompare(b.feeName));
 };
 
-type PaymentFormProps = {
-  form: UseFormReturn<CreatePaymentValues>;
-  onSubmit: (values: CreatePaymentValues) => Promise<void>;
-  students: StudentBasic[];
-  studentFees: StudentFeeRecord[];
-  fees: FeeRecord[];
-  academicYears: AcademicYearRecord[];
-  terms: TermRecord[];
-  isSubmitting: boolean;
-  submitLabel: string;
-  submittingLabel: string;
-  currentPayment?: PaymentRecord | null;
-};
-
 const PaymentForm = ({
   form,
   onSubmit,
@@ -152,9 +125,41 @@ const PaymentForm = ({
   currentPayment,
 }: PaymentFormProps) => {
   const { control, handleSubmit, setValue, watch } = form;
+  const [studentQuery, setStudentQuery] = useState("");
 
   const selectedStudentId = watch("studentId");
   const selectedStudentFeeId = watch("studentFeeId");
+
+  const filteredStudents = useMemo(() => {
+    const query = studentQuery.trim().toLowerCase();
+
+    if (!query) {
+      return students;
+    }
+
+    return students.filter((student) => {
+      const fullName = `${student.firstName} ${student.lastName}`.toLowerCase();
+      const registration = (student.registrationNumber ?? "").toLowerCase();
+
+      return fullName.includes(query) || registration.includes(query);
+    });
+  }, [studentQuery, students]);
+
+  const studentOptions = useMemo(() => {
+    const selected = students.find(
+      (student) => String(student.id) === (selectedStudentId ?? ""),
+    );
+
+    if (!selected) {
+      return filteredStudents;
+    }
+
+    const selectedInFiltered = filteredStudents.some(
+      (student) => student.id === selected.id,
+    );
+
+    return selectedInFiltered ? filteredStudents : [selected, ...filteredStudents];
+  }, [filteredStudents, selectedStudentId, students]);
 
   const feeOptions = useMemo(
     () =>
@@ -211,6 +216,12 @@ const PaymentForm = ({
                 <FormLabel>
                   Student <span className="text-orange-600">*</span>
                 </FormLabel>
+                <Input
+                  type="text"
+                  placeholder="Search student by name or registration number"
+                  value={studentQuery}
+                  onChange={(event) => setStudentQuery(event.target.value)}
+                />
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -218,7 +229,7 @@ const PaymentForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {students.map((student) => (
+                    {studentOptions.map((student) => (
                       <SelectItem key={student.id} value={String(student.id)}>
                         {formatStudentLabel(student)}
                       </SelectItem>
