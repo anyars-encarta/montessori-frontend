@@ -25,6 +25,7 @@ import {
   ClipboardCheck,
   BookOpen,
   Banknote,
+  HandCoins,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -72,7 +73,11 @@ import ListSubjects from "./pages/subjects/list";
 import CreateSubject from "./pages/subjects/create";
 import ShowSubject from "./pages/subjects/show";
 import EditSubject from "./pages/subjects/edit";
-// import UpdateSubject from "./pages/subjects/edit";
+import ListPayments from "./pages/payments/list";
+import CreatePayment from "./pages/payments/create";
+import ShowPayment from "./pages/payments/show";
+import EditPayment from "./pages/payments/edit";
+
 
 function App() {
   return (
@@ -122,6 +127,17 @@ function App() {
                   },
                 },
                 {
+                  name: "students",
+                  list: "/students",
+                  create: "/students/create",
+                  show: "/students/show/:id",
+                  edit: "/students/edit/:id",
+                  meta: {
+                    label: "Students",
+                    icon: <GraduationCap />,
+                  },
+                },
+                {
                   name: "class-enrollments",
                   list: "/classes/enrollments",
                   meta: {
@@ -138,17 +154,6 @@ function App() {
                   },
                 },
                 {
-                  name: "students",
-                  list: "/students",
-                  create: "/students/create",
-                  show: "/students/show/:id",
-                  edit: "/students/edit/:id",
-                  meta: {
-                    label: "Students",
-                    icon: <GraduationCap />,
-                  },
-                },
-                {
                   name: "staff",
                   list: "/staff",
                   create: "/staff/create",
@@ -157,6 +162,17 @@ function App() {
                   meta: {
                     label: "Staff",
                     icon: <Users2Icon />,
+                  },
+                },
+                {
+                  name: "payments",
+                  list: "/payments",
+                  create: "/payments/create",
+                  show: "/payments/show/:id",
+                  edit: "/payments/edit/:id",
+                  meta: {
+                    label: "Payments",
+                    icon: <HandCoins />,
                   },
                 },
                 {
@@ -250,6 +266,13 @@ function App() {
                     <Route path="create" element={<CreateStaff />} />
                     <Route path="show/:id" element={<ShowStaff />} />
                     <Route path="edit/:id" element={<EditStaff />} />
+                  </Route>
+
+                  <Route path="payments">
+                    <Route index element={<ListPayments />} />
+                    <Route path="create" element={<CreatePayment />} />
+                    <Route path="show/:id" element={<ShowPayment />} />
+                    <Route path="edit/:id" element={<EditPayment />} />
                   </Route>
 
                   <Route path="users">

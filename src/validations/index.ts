@@ -83,6 +83,29 @@ export const editFeeSchema = z.object({
 
 export type EditFeeValues = z.infer<typeof editFeeSchema>;
 
+export const createPaymentSchema = z.object({
+  studentId: z.string().trim().min(1, "Student is required"),
+  studentFeeId: z.string().nullable(),
+  amount: z
+    .string()
+    .trim()
+    .min(1, "Amount is required")
+    .refine((value) => {
+      const parsed = Number.parseFloat(value);
+      return Number.isFinite(parsed) && parsed > 0;
+    }, "Amount must be greater than 0"),
+  paymentDate: z.string().trim().min(1, "Payment date is required"),
+  paymentMethod: z.string().nullable(),
+  reference: z.string().nullable(),
+  notes: z.string().nullable(),
+});
+
+export type CreatePaymentValues = z.infer<typeof createPaymentSchema>;
+
+export const editPaymentSchema = createPaymentSchema;
+
+export type EditPaymentValues = z.infer<typeof editPaymentSchema>;
+
 export const createSubjectSchema = z.object({
   name: z.string().trim().min(1, "Subject name is required"),
   code: z.string(),

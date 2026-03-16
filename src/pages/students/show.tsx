@@ -2,7 +2,7 @@ import { useShow } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useMemo } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import {
@@ -23,6 +23,7 @@ import {
 import PageLoader from "@/components/PageLoader";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
 import ActionButton from "@/components/actionButton";
+import { Button } from "@/components/ui/button";
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -38,6 +39,8 @@ const formatDate = (value?: string | null) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
 };
+
+const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
 const healthIndicators: Array<{
   key:
@@ -60,6 +63,7 @@ const healthIndicators: Array<{
 const ShowStudent = () => {
   const { id } = useParams();
   const studentId = id ?? "";
+  const navigate = useNavigate();
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -160,11 +164,31 @@ const ShowStudent = () => {
       {
         id: "amount",
         accessorKey: "amount",
-        size: 110,
+        size: 170,
         header: () => <p className="column-title">Amount</p>,
-        cell: ({ getValue }) => (
-          <span className="text-foreground">{getValue<string>()}</span>
-        ),
+        cell: ({ row }) => {
+          const amount = Number.parseFloat(row.original.amount ?? "0");
+          const amountPaid = Number.parseFloat(row.original.amountPaid ?? "0");
+          const remaining = Math.max(amount - amountPaid, 0);
+
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-foreground">{row.original.amount}</span>
+              <Badge
+                variant="outline"
+                className={`w-fit text-[10px] ${
+                  remaining > 0
+                    ? "border-amber-300 bg-amber-100 text-amber-800"
+                    : "border-green-300 bg-green-100 text-green-800"
+                }`}
+              >
+                {remaining > 0
+                  ? `Remaining: ${formatCurrency(remaining)}`
+                  : "Fully paid"}
+              </Badge>
+            </div>
+          );
+        },
       },
       {
         id: "status",
@@ -179,8 +203,36 @@ const ShowStudent = () => {
           </Badge>
         ),
       },
+      {
+        id: "actions",
+        size: 130,
+        header: () => <p className="column-title">Actions</p>,
+        cell: ({ row }) => {
+          const isPaid = row.original.status === "paid";
+
+          if (isPaid) {
+            return <span className="text-xs text-muted-foreground">No action</span>;
+          }
+
+          return (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() =>
+                navigate(
+                  `/payments/create?studentId=${studentId}&studentFeeId=${row.original.id}`,
+                )
+              }
+            >
+              Pay Fee
+            </Button>
+          );
+        },
+      },
     ],
-    [],
+    [navigate, studentId],
   );
 
   const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(

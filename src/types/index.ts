@@ -271,6 +271,7 @@ export type StudentFeeRow = {
   id: number;
   feeName: string;
   amount: string;
+  amountPaid: string;
   dueDate: string;
   academicYear: string;
   term: string;

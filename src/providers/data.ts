@@ -126,6 +126,14 @@ const options: CreateDataProviderOptions = {
           if (field === "isActive") params.isActive = value;
           if (field === "subjectId") params.subjectId = value;
         }
+
+        if (resource === "payments") {
+          if (field === "search") params.search = value;
+          if (field === "studentId") params.studentId = value;
+          if (field === "studentFeeId") params.studentFeeId = value;
+          if (field === "startDate") params.startDate = value;
+          if (field === "endDate") params.endDate = value;
+        }
       });
 
       return params;
