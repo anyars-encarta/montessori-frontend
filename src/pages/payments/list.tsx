@@ -200,7 +200,7 @@ const ListPayments = () => {
     ),
     refineCoreProps: {
       resource: "payments",
-      pagination: { current: 1, pageSize: 10, mode: "server" },
+      pagination: { currentPage: 1, pageSize: 10, mode: "server" },
       filters: {
         permanent: [...filters],
       },
