@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLink, useList } from "@refinedev/core";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
+import { BACKEND_BASE_URL } from "@/constants";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import type {
   Student,
   Staff,
+  AttendanceHistoryResponse,
   StudentAttendance,
   StudentFeeRecord,
   PaymentRecord,
@@ -29,8 +31,30 @@ type DashboardSummary = {
   otherStudents: number;
 };
 
+const toLocalIsoDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getCurrentWeekRange = () => {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const daySinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - daySinceMonday);
+
+  return {
+    fromDate: toLocalIsoDate(monday),
+    toDate: toLocalIsoDate(today),
+  };
+};
+
 const Dashboard = () => {
   const Link = useLink();
+  const [studentsAttendances, setStudentsAttendances] = useState<StudentAttendance[]>([]);
   const { result: studentsResult } = useList<Student>({
     resource: "students",
     pagination: { mode: "server", currentPage: 1, pageSize: 100 },
@@ -43,11 +67,6 @@ const Dashboard = () => {
   //   resource: "subjects",
   //   pagination: { mode: "off" },
   // });
-
-  const { result: studentAttendanceResult } = useList<StudentAttendance>({
-    resource: "student-attendances",
-    pagination: { mode: "off" },
-  });
 
   const { result: studentFeesResult } = useList<StudentFeeRecord>({
     resource: "student-fees/yearly-summary",
@@ -76,10 +95,62 @@ const Dashboard = () => {
 
   const staff = useMemo(() => staffResult.data ?? [], [staffResult.data]);
 
-  const studentsAttendances = useMemo(
-    () => studentAttendanceResult.data ?? [],
-    [studentAttendanceResult.data],
-  );
+  useEffect(() => {
+    let isDisposed = false;
+
+    const loadWeeklyAttendance = async () => {
+      const { fromDate, toDate } = getCurrentWeekRange();
+      const limit = 100;
+      let page = 1;
+      let totalPages = 1;
+      const allRows: StudentAttendance[] = [];
+
+      while (page <= totalPages) {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+          fromDate,
+          toDate,
+        });
+
+        const response = await fetch(
+          `${BACKEND_BASE_URL.replace(/\/+$/, "")}/student-attendances?${params.toString()}`,
+        );
+
+        const payload = (await response.json()) as AttendanceHistoryResponse;
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Failed to load attendance data");
+        }
+
+        const mappedRows: StudentAttendance[] = (payload.data ?? []).map((row) => ({
+          id: row.id,
+          studentId: row.studentId,
+          attendanceDate: row.attendanceDate,
+          status: row.status,
+          remarks: row.remarks,
+        }));
+
+        allRows.push(...mappedRows);
+
+        totalPages = payload.pagination?.totalPages ?? page;
+        page += 1;
+      }
+
+      if (!isDisposed) {
+        setStudentsAttendances(allRows);
+      }
+    };
+
+    void loadWeeklyAttendance().catch(() => {
+      if (!isDisposed) {
+        setStudentsAttendances([]);
+      }
+    });
+
+    return () => {
+      isDisposed = true;
+    };
+  }, []);
 
   const dashboardSummary = useMemo(
     () => dashboardSummaryResult.data?.[0] ?? null,

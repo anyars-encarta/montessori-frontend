@@ -16,6 +16,8 @@ const AttendanceChart = ({
   data: { name: string; present: number; absent: number }[];
   colors: string[];
 }) => {
+  const presentColor = colors[2] ?? "#22c55e";
+  const absentColor = "#ef4444";
 
   return (
       <ResponsiveContainer width="100%" height="90%">
@@ -42,17 +44,21 @@ const AttendanceChart = ({
             wrapperStyle={{ paddingTop: "20px", paddingBottom: "40px" }}
           />
           <Bar
+            name="Present"
             dataKey="present"
-            fill={colors[2]}
+            fill={presentColor}
             activeBar={<Rectangle fill={colors[0]} stroke={colors[1]} />}
             legendType="circle"
+            minPointSize={2}
             radius={[10, 10, 0, 0]}
           />
           <Bar
+            name="Absent"
             dataKey="absent"
-            fill={colors[3]}
+            fill={absentColor}
             activeBar={<Rectangle fill={colors[1]} stroke={colors[0]} />}
             legendType="circle"
+            minPointSize={2}
             radius={[10, 10, 0, 0]}
           />
         </BarChart>

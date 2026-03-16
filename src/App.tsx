@@ -58,6 +58,7 @@ import ListStaff from "./pages/staff/list";
 import EditStaff from "./pages/staff/edit";
 import CreateStaff from "./pages/staff/create";
 import ShowStaff from "./pages/staff/show";
+import StaffAttendancePage from "./pages/staff/staff-attendance";
 import CreateUser from "./pages/users/create";
 import EditUser from "./pages/users/edit";
 import ShowUser from "./pages/users/show";
@@ -165,6 +166,14 @@ function App() {
                   },
                 },
                 {
+                  name: "staff-attendance",
+                  list: "/staff/staff-attendance",
+                  meta: {
+                    label: "Staff Attendance",
+                    icon: <ClipboardCheck />,
+                  },
+                },
+                {
                   name: "payments",
                   list: "/payments",
                   create: "/payments/create",
@@ -263,6 +272,7 @@ function App() {
                   <Route path="staff">
                     <Route index element={<ListStaff />} />
                     <Route path="create" element={<CreateStaff />} />
+                    <Route path="staff-attendance" element={<StaffAttendancePage />} />
                     <Route path="show/:id" element={<ShowStaff />} />
                     <Route path="edit/:id" element={<EditStaff />} />
                   </Route>
