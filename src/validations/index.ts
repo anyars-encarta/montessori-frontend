@@ -54,7 +54,9 @@ export const createFeeSchema = z.object({
     required_error: "Fee type is required",
   }),
   academicYearId: z.string().trim().min(1, "Academic year is required"),
+  applicableTermId: z.string().nullable(),
   applicableToLevel: z.string().nullable(),
+  applyOnce: z.boolean(),
 });
 
 export type CreateFeeValues = z.infer<typeof createFeeSchema>;
@@ -74,7 +76,9 @@ export const editFeeSchema = z.object({
     required_error: "Fee type is required",
   }),
   academicYearId: z.string().trim().min(1, "Academic year is required"),
+  applicableTermId: z.string().nullable(),
   applicableToLevel: z.string().nullable(),
+  applyOnce: z.boolean(),
 });
 
 export type EditFeeValues = z.infer<typeof editFeeSchema>;

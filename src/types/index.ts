@@ -360,7 +360,9 @@ export type FeeRecord = {
   amount: string;
   feeType: FeeType;
   academicYearId: number;
+  applicableTermId: number | null;
   applicableToLevel: string | null;
+  applyOnce: boolean;
   createdAt: string;
   updatedAt: string;
 };

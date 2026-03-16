@@ -7,7 +7,7 @@ import { ShowView } from "@/components/refine-ui/views/show-view";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { AcademicYearRecord, FeeRecord } from "@/types";
+import { AcademicYearRecord, FeeRecord, TermRecord } from "@/types";
 import { useBack, useList, useOne } from "@refinedev/core";
 import { Button } from "@/components/ui/button";
 
@@ -29,13 +29,24 @@ const ShowFees = () => {
     pagination: { pageSize: 200 },
   });
 
+  const { result: termsResult } = useList<TermRecord>({
+    resource: "terms",
+    pagination: { pageSize: 500 },
+  });
+
   const fee = feeQuery.data?.data ?? null;
   const academicYears = yearsResult.data;
+  const terms = termsResult.data;
 
   const academicYear = useMemo(() => {
     if (!fee) return null;
     return academicYears.find((year) => year.id === fee.academicYearId) ?? null;
   }, [academicYears, fee]);
+
+  const applicableTerm = useMemo(() => {
+    if (!fee || fee.applicableTermId === null) return null;
+    return terms.find((term) => term.id === fee.applicableTermId) ?? null;
+  }, [fee, terms]);
 
   if (feeQuery.isLoading) {
     return (
@@ -94,6 +105,16 @@ const ShowFees = () => {
             <p className="font-medium">
               {fee.applicableToLevel ?? "All Levels"}
             </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Applicable Term</p>
+            <p className="font-medium">{applicableTerm?.name ?? "All Terms"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Billing Frequency</p>
+            <p className="font-medium">{fee.applyOnce ? "One-time" : "Recurring"}</p>
           </div>
 
           <div className="md:col-span-2">

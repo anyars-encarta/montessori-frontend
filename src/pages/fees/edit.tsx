@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType } from "@/types";
+import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType, TermRecord } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BaseRecord, HttpError, useBack, useList, useOne } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
@@ -60,7 +60,9 @@ const EditFees = () => {
       amount: "",
       feeType: "tuition",
       academicYearId: "",
+      applicableTermId: "",
       applicableToLevel: "",
+      applyOnce: false,
     },
   });
 
@@ -70,6 +72,7 @@ const EditFees = () => {
     formState: { isSubmitting },
     control,
     reset,
+    watch,
   } = form;
 
   const { result: yearsResult } = useList<AcademicYearRecord>({
@@ -82,13 +85,29 @@ const EditFees = () => {
     pagination: { pageSize: 500 },
   });
 
+  const { result: termsResult } = useList<TermRecord>({
+    resource: "terms",
+    pagination: { pageSize: 500 },
+  });
+
   const academicYears = yearsResult.data;
   const classes = classesResult.data;
+  const terms = termsResult.data;
+  const selectedAcademicYearId = watch("academicYearId");
   const classLevels = useMemo(() => {
     return Array.from(new Set(classes.map((classRow) => classRow.level))).sort(
       (a, b) => a.localeCompare(b),
     );
   }, [classes]);
+
+  const academicYearTerms = useMemo(() => {
+    const selectedYearId = Number.parseInt(selectedAcademicYearId, 10);
+    if (!Number.isFinite(selectedYearId)) return [];
+
+    return terms
+      .filter((term) => term.academicYearId === selectedYearId)
+      .sort((a, b) => a.sequenceNumber - b.sequenceNumber);
+  }, [selectedAcademicYearId, terms]);
 
   useEffect(() => {
     const record = feeQuery.data?.data;
@@ -100,7 +119,9 @@ const EditFees = () => {
       amount: record.amount,
       feeType: record.feeType,
       academicYearId: String(record.academicYearId),
+      applicableTermId: record.applicableTermId ? String(record.applicableTermId) : "",
       applicableToLevel: record.applicableToLevel ?? "",
+      applyOnce: record.applyOnce,
     });
   }, [feeQuery.data?.data, reset]);
 
@@ -111,7 +132,9 @@ const EditFees = () => {
       amount: Number.parseFloat(values.amount).toFixed(2),
       feeType: values.feeType,
       academicYearId: values.academicYearId,
+      applicableTermId: values.applicableTermId?.trim() || null,
       applicableToLevel: values.applicableToLevel?.trim() || "",
+      applyOnce: values.applyOnce,
     });
   };
 
@@ -288,6 +311,64 @@ const EditFees = () => {
                                 {level}
                               </SelectItem>
                             ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="applicableTermId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Applicable Term</FormLabel>
+                        <Select
+                          onValueChange={(value) =>
+                            field.onChange(value === "all_terms" ? "" : value)
+                          }
+                          value={field.value || "all_terms"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="All Terms" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="all_terms">All Terms</SelectItem>
+                            {academicYearTerms.map((term) => (
+                              <SelectItem key={term.id} value={String(term.id)}>
+                                {term.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="applyOnce"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Billing Frequency</FormLabel>
+                        <Select
+                          onValueChange={(value) => field.onChange(value === "once")}
+                          value={field.value ? "once" : "recurring"}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select frequency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="recurring">Recurring (every applicable term)</SelectItem>
+                            <SelectItem value="once">One-time (apply once only)</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

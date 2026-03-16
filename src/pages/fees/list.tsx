@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType } from "@/types";
+import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType, TermRecord } from "@/types";
 import { useList, useBack } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -43,8 +43,14 @@ const ListFees = () => {
     pagination: { pageSize: 500 },
   });
 
+  const { result: termsResult } = useList<TermRecord>({
+    resource: "terms",
+    pagination: { pageSize: 500 },
+  });
+
   const academicYears = yearsResult.data;
   const classes = classesResult.data;
+  const terms = termsResult.data;
   const classLevels = useMemo(() => {
     return Array.from(new Set(classes.map((classRow) => classRow.level))).sort(
       (a, b) => a.localeCompare(b),
@@ -150,6 +156,28 @@ const ListFees = () => {
           cell: ({ getValue }) => <span>{getValue<string>() ?? "All"}</span>,
         },
         {
+          id: "applicableTermId",
+          accessorKey: "applicableTermId",
+          size: 150,
+          header: () => <p className="column-title">Applicable Term</p>,
+          cell: ({ row }) => {
+            const term = terms.find((termRow) => termRow.id === row.original.applicableTermId);
+            return <span>{term?.name ?? "All Terms"}</span>;
+          },
+        },
+        {
+          id: "applyOnce",
+          accessorKey: "applyOnce",
+          size: 140,
+          header: () => <p className="column-title">Billing</p>,
+          cell: ({ row }) =>
+            row.original.applyOnce ? (
+              <Badge variant="secondary">One-time</Badge>
+            ) : (
+              <Badge variant="outline">Recurring</Badge>
+            ),
+        },
+        {
           id: "actions",
           size: 160,
           header: () => <p className="column-title">Actions</p>,
@@ -184,7 +212,7 @@ const ListFees = () => {
           ),
         },
       ],
-      [academicYears],
+      [academicYears, terms],
     ),
     refineCoreProps: {
       resource: "fees",
