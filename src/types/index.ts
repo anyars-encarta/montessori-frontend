@@ -1,12 +1,15 @@
-import { CreateClassValues } from "@/validations";
+import { CreateClassValues, CreatePaymentValues } from "@/validations";
+import { UseFormReturn } from "react-hook-form";
 
 export type Subject = {
   id: number;
   name: string;
-  code: string;
-  description: string;
-  department: string;
-  createdAt?: string;
+  code: string | null;
+  description: string | null;
+  cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type ListResponse<T = unknown> = {
@@ -79,8 +82,12 @@ export type StudentBasic = {
   lastName: string;
   dateOfBirth: string | null;
   admissionDate: string;
+  imageCldPubId: string | null;
   cloudinaryImageUrl: string | null;
   registrationNumber: string | null;
+  onScholarship: boolean;
+  getDiscount: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -108,6 +115,11 @@ export type StudentSiblingRelation = {
   studentId: number;
   siblingId: number;
   sibling: StudentBasic | null;
+  currentClass?: {
+    class: ClassRecord | null;
+    academicYear: AcademicYearRecord | null;
+    enrollmentDate: string;
+  } | null;
 };
 
 export type HealthDetails = {
@@ -123,6 +135,31 @@ export type HealthDetails = {
   lastCheckupDate: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type LivingWithValue =
+  | "both_parents"
+  | "mother_only"
+  | "father_only"
+  | "guardian"
+  | "other_person";
+
+export type HealthFormValues = {
+  diphtheria: boolean;
+  polio: boolean;
+  whoopingCough: boolean;
+  tetanus: boolean;
+  measles: boolean;
+  tuberculosis: boolean;
+  otherConditions: string;
+  lastCheckupDate: string;
+};
+
+export type PreviousSchoolFormValues = {
+  schoolName: string;
+  dateOfAdmission: string;
+  ageAtAdmission: string;
+  dateLastAttended: string;
 };
 
 export type LivingWith =
@@ -190,24 +227,6 @@ export type ClassEditRecord = {
   subjects: ClassSubjectRow[];
 };
 
-export type AcademicYearRecord = {
-  id: number;
-  year: number;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-};
-
-export type TermRecord = {
-  id: number;
-  name: string;
-  sequenceNumber: number;
-  academicYearId: number;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-};
-
 export type StudentClassEnrollmentRecord = {
   id: number;
   studentId: number;
@@ -218,11 +237,63 @@ export type StudentClassEnrollmentRecord = {
   createdAt: string;
 };
 
+export type EnrollmentWorkflowResponse = {
+  success: boolean;
+  data?: {
+    enrollment: {
+      id: number;
+    };
+    feesApplied: number;
+    feeNamesApplied?: string[];
+    subjectsApplied: number;
+    feesSkippedByScholarship?: boolean;
+    discountAppliedOnPromotionFees?: boolean;
+  };
+  error?: string;
+};
+
 export type StudentEnrollment = {
   enrollment: StudentClassEnrollmentRecord;
   class: ClassRecord | null;
   supervisor: Staff | null;
   academicYear: AcademicYearRecord | null;
+};
+
+export type StudentEnrollmentRow = {
+  id: number;
+  className: string;
+  academicYear: string;
+  term: string;
+  supervisor: string;
+  enrollmentDate: string;
+};
+
+export type StudentFeeRow = {
+  id: number;
+  feeName: string;
+  amount: string;
+  amountPaid: string;
+  dueDate: string;
+  academicYear: string;
+  term: string;
+  status: string;
+};
+
+export type StudentPaymentRow = {
+  id: number;
+  amount: string;
+  paymentDate: string;
+  paymentMethod: string;
+  reference: string;
+  feeName: string;
+  status: string;
+};
+
+export type StudentSiblingRow = {
+  id: number;
+  name: string;
+  admissionDate: string;
+  currentClass: string;
 };
 
 export type SubjectRecord = {
@@ -231,6 +302,7 @@ export type SubjectRecord = {
   code: string | null;
   description: string | null;
   cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -241,6 +313,11 @@ export type ContinuousAssessmentRecord = {
   subjectId: number;
   academicYearId: number;
   termId: number;
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
   classMark: string;
   examMark: string;
   totalMark: string;
@@ -275,7 +352,7 @@ export type StudentPosition = {
   term: TermRecord | null;
 };
 
-export type FeeType = "admission" | "promotion" | "tuition" | "other";
+export type FeeType = "admission" | "tuition" | "feeding" | "other";
 export type PaymentStatus = "pending" | "partial" | "paid";
 
 export type FeeRecord = {
@@ -285,7 +362,9 @@ export type FeeRecord = {
   amount: string;
   feeType: FeeType;
   academicYearId: number;
+  applicableTermId: number | null;
   applicableToLevel: string | null;
+  applyOnce: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -405,25 +484,53 @@ export type Student = StudentBasic & {
   payments: StudentPayment[];
   attendances: StudentAttendance[];
   gender?: string | null;
-  isActive?: boolean;
 };
 
+export type StaffGender = "male" | "female" | "other";
+export type StaffType = "teacher" | "non_teaching";
+
 export type Staff = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  dateOfBirth: string | null;
+  gender: StaffGender;
+  staffType: StaffType;
+  cloudinaryImageUrl: string | null;
+  imageCldPubId: string | null;
+  hireDate: string;
+  registrationNumber: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StaffSubjectAssignment = {
+  staffId: number;
+  subjectId: number;
+  subject: SubjectRecord | null;
+};
+
+export type StaffListRecord = Staff & {
+  subjects: StaffSubjectAssignment[];
+  supervisedClasses: ClassRecord[];
+  attendances: Array<{
     id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    dateOfBirth: string;
-    gender: string;
-    staffType: string;
-    cloudinaryImageUrl?: string;
-    imageCldPubId?: string;
-    hireDate: string;
-    registrationNumber?: string;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    attendanceDate: string;
+    status: AttendanceStatus;
+    remarks: string | null;
+  }>;
+  expenses: Array<{
+    expense: {
+      id: number;
+      amount: string;
+      description: string;
+      expenseDate: string;
+    };
+  }>;
 };
 
 export type Schedule = {
@@ -451,4 +558,223 @@ export type SignUpPayload = {
 export type WeekdayAttendancePoint = {
   date: string;
   present: boolean;
+};
+
+export type SchoolDetailsRecord = {
+  id: number;
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website?: string | null;
+  logo?: string | null;
+  discountType: "value" | "percentage";
+  discountAmount: string;
+};
+
+export type AcademicYearRecord = {
+  id: number;
+  year: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type TermRecord = {
+  id: number;
+  name: string;
+  sequenceNumber: number;
+  academicYearId: number;
+  startDate: string;
+  endDate: string;
+};
+
+export type AcademicYearForm = {
+  year: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type TermForm = {
+  name: string;
+  sequenceNumber: string;
+  academicYearId: string;
+  startDate: string;
+  endDate: string;
+};
+
+export type EnrollmentAssessmentRow = {
+  id: number;
+  subjectId: number;
+  subjectName: string;
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
+  classMark: string;
+  examMark: string;
+  totalMark: string;
+  subjectPosition: string;
+  remarks: string;
+};
+
+export type ClassEnrollmentOverviewRow = {
+  id: number;
+  student: {
+    id: number;
+    fullName: string;
+    registrationNumber: string | null;
+  };
+  class: {
+    id: number;
+    name: string;
+    level: string;
+  };
+  academicYear: {
+    id: number;
+    year: number;
+  };
+  term: {
+    id: number;
+    name: string;
+    sequenceNumber: number;
+  };
+  enrollmentDate: string;
+  classPosition: string;
+  aggregate: string;
+  remarks: string;
+  assessments: EnrollmentAssessmentRow[];
+};
+
+export type ScoreDraft = {
+  homeWork1: string;
+  homeWork2: string;
+  exercise1: string;
+  exercise2: string;
+  classTest: string;
+  classMark: string;
+  examMark: string;
+};
+
+export type BulkEnrollmentTransitionResponse = {
+  success: boolean;
+  data?: {
+    action: "promote" | "repeat";
+    requestedCount: number;
+    processedCount: number;
+    successCount: number;
+    failedCount: number;
+    successfulEnrollmentIds: number[];
+    failures: Array<{
+      enrollmentId: number;
+      studentId: number;
+      error: string;
+    }>;
+  };
+  error?: string;
+};
+
+export type RunGradesResponse = {
+  success: boolean;
+  data?: {
+    gradedStudents: number;
+    gradedAssessments: number;
+    classLevel: string;
+    mode: "upper" | "lower";
+  };
+  error?: string;
+};
+
+export type SchoolDetailsForm = {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+  website: string;
+  logo: string;
+  discountType: "value" | "percentage";
+  discountAmount: string;
+};
+
+export type DailyAttendanceRow = {
+  studentId: number;
+  studentName: string;
+  registrationNumber: string | null;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+};
+
+export type DailyRegisterResponse = {
+  success: boolean;
+  data?: DailyAttendanceRow[];
+  summary?: {
+    total: number;
+    present: number;
+    absent: number;
+    unmarked: number;
+  };
+  error?: string;
+};
+
+export type BulkMarkResponse = {
+  success: boolean;
+  data?: {
+    totalProcessed: number;
+    inserted: number;
+    updated: number;
+  };
+  error?: string;
+};
+
+export type AttendanceHistoryRow = {
+  id: number;
+  studentId: number;
+  studentName: string;
+  registrationNumber: string | null;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  remarks: string | null;
+  class: {
+    id: number;
+    name: string;
+    level: string;
+  } | null;
+};
+
+export type AttendanceHistoryResponse = {
+  success: boolean;
+  data?: AttendanceHistoryRow[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
+};
+
+export type PaymentFeeOption = {
+  studentFeeId: number;
+  feeName: string;
+  academicYearLabel: string;
+  termLabel: string;
+  totalAmount: number;
+  amountPaid: number;
+  remainingAmount: number;
+  status: StudentFeeRecord["status"];
+  label: string;
+};
+
+export type PaymentFormProps = {
+  form: UseFormReturn<CreatePaymentValues>;
+  onSubmit: (values: CreatePaymentValues) => Promise<void>;
+  students: StudentBasic[];
+  studentFees: StudentFeeRecord[];
+  fees: FeeRecord[];
+  academicYears: AcademicYearRecord[];
+  terms: TermRecord[];
+  isSubmitting: boolean;
+  submitLabel: string;
+  submittingLabel: string;
+  currentPayment?: PaymentRecord | null;
 };

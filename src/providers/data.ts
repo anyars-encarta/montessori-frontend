@@ -11,9 +11,13 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   let message = "Request failed.";
 
   try {
-    const payload = (await response.json()) as { message?: string };
+    const payload = (await response.json()) as { message?: string; error?: string };
 
-    if (payload?.message) message = payload.message;
+    if (payload?.message) {
+      message = payload.message;
+    } else if (payload?.error) {
+      message = payload.error;
+    }
   } catch (e) {
     console.error("Failed to parse error response:", e);
     // Ignore errors
@@ -65,25 +69,70 @@ const options: CreateDataProviderOptions = {
           params.role = value;
         }
 
-        // if (resource === "departments") {
-        //   if (field === "name" || field === "code") params.search = value;
-        // }
-
-        // if (resource === "users") {
-        //   if (field === "search" || field === "name" || field === "email") {
-        //     params.search = value;
-        //   }
-        // }
-
-        // if (resource === "subjects") {
-        //   if (field === "department") params.department = value;
-        //   if (field === "name" || field === "code") params.search = value;
-        // }
-
         if (resource === "classes") {
           if (field === "name" || field === "code") params.search = value;
           if (field === "subject.id") params.subject = value;
           if (field === "teacher.id") params.teacher = value;
+        }
+
+        if (resource === "students") {
+          if (
+            field === "search" ||
+            field === "name" ||
+            field === "firstName" ||
+            field === "lastName" ||
+            field === "registrationNumber"
+          ) {
+            params.search = value;
+          }
+          if (field === "classId") params.classId = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "parentId") params.parentId = value;
+        }
+
+        if (resource === "student-class-enrollments/overview") {
+          if (field === "enrollmentId") params.enrollmentId = value;
+          if (field === "classId") params.classId = value;
+          if (field === "className") params.className = value;
+          if (field === "studentName") params.studentName = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "termId") params.termId = value;
+        }
+
+        if (resource === "fees") {
+          if (field === "search" || field === "name") params.search = value;
+          if (field === "feeType") params.feeType = value;
+          if (field === "academicYearId") params.academicYearId = value;
+          if (field === "applicableToLevel") params.applicableToLevel = value;
+        }
+
+        if (resource === "subjects") {
+          if (field === "search" || field === "name") params.search = value;
+          if (field === "code") params.code = value;
+        }
+
+        if (resource === "staff") {
+          if (
+            field === "search" ||
+            field === "name" ||
+            field === "firstName" ||
+            field === "lastName" ||
+            field === "email" ||
+            field === "phone"
+          ) {
+            params.search = value;
+          }
+          if (field === "staffType") params.staffType = value;
+          if (field === "isActive") params.isActive = value;
+          if (field === "subjectId") params.subjectId = value;
+        }
+
+        if (resource === "payments") {
+          if (field === "search") params.search = value;
+          if (field === "studentId") params.studentId = value;
+          if (field === "studentFeeId") params.studentFeeId = value;
+          if (field === "startDate") params.startDate = value;
+          if (field === "endDate") params.endDate = value;
         }
       });
 

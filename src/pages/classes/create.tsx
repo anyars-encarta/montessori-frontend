@@ -148,7 +148,7 @@ const CreateClass = () => {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Primary 1"
+                            placeholder="P1"
                             value={field.value ?? ""}
                             onChange={field.onChange}
                             onBlur={field.onBlur}

@@ -15,11 +15,17 @@ import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
 import { dataProvider } from "./providers/data";
 
 import {
-  BookOpen,
   GraduationCap,
   Home,
+  Settings,
   Users,
   Users2Icon,
+  Dock,
+  Subscript,
+  ClipboardCheck,
+  BookOpen,
+  Banknote,
+  HandCoins,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -28,6 +34,9 @@ import ListClasses from "./pages/classes/list";
 import ShowClass from "./pages/classes/show";
 import CreateClass from "./pages/classes/create";
 import EditClass from "./pages/classes/edit";
+import EnrollmentsPage from "./pages/classes/enrollments";
+import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
+import StudentAttendancePage from "./pages/classes/student-attendance";
 // import SubjectsShow from "./pages/subjects/show";
 import Login from "./pages/login";
 import Register from "./pages/register";
@@ -53,7 +62,22 @@ import CreateUser from "./pages/users/create";
 import EditUser from "./pages/users/edit";
 import ShowUser from "./pages/users/show";
 import ListUsers from "./pages/users/list";
-// import UpdateSubject from "./pages/subjects/edit";
+import ShowSetup from "./pages/setup/show";
+import CreateSetup from "./pages/setup/create";
+import EditSetup from "./pages/setup/edit";
+import ListFees from "./pages/fees/list";
+import CreateFees from "./pages/fees/create";
+import EditFees from "./pages/fees/edit";
+import ShowFees from "./pages/fees/show";
+import ListSubjects from "./pages/subjects/list";
+import CreateSubject from "./pages/subjects/create";
+import ShowSubject from "./pages/subjects/show";
+import EditSubject from "./pages/subjects/edit";
+import ListPayments from "./pages/payments/list";
+import CreatePayment from "./pages/payments/create";
+import ShowPayment from "./pages/payments/show";
+import EditPayment from "./pages/payments/edit";
+
 
 function App() {
   return (
@@ -92,6 +116,17 @@ function App() {
                   },
                 },
                 {
+                  name: "subjects",
+                  list: "/subjects",
+                  create: "/subjects/create",
+                  show: "/subjects/show/:id",
+                  edit: "/subjects/edit/:id",
+                  meta: {
+                    label: "Subjects",
+                    icon: <Subscript />,
+                  },
+                },
+                {
                   name: "students",
                   list: "/students",
                   create: "/students/create",
@@ -100,6 +135,22 @@ function App() {
                   meta: {
                     label: "Students",
                     icon: <GraduationCap />,
+                  },
+                },
+                {
+                  name: "class-enrollments",
+                  list: "/classes/enrollments",
+                  meta: {
+                    label: "Enrollments",
+                    icon: <Dock />,
+                  },
+                },
+                {
+                  name: "student-attendance",
+                  list: "/classes/student-attendance",
+                  meta: {
+                    label: "Student Attendance",
+                    icon: <ClipboardCheck />,
                   },
                 },
                 {
@@ -114,6 +165,17 @@ function App() {
                   },
                 },
                 {
+                  name: "payments",
+                  list: "/payments",
+                  create: "/payments/create",
+                  show: "/payments/show/:id",
+                  edit: "/payments/edit/:id",
+                  meta: {
+                    label: "Payments",
+                    icon: <HandCoins />,
+                  },
+                },
+                {
                   name: "users",
                   list: "/users",
                   create: "/users/create",
@@ -122,6 +184,28 @@ function App() {
                   meta: {
                     label: "Users",
                     icon: <Users />,
+                  },
+                },
+                {
+                  name: "setup",
+                  list: "/setup",
+                  create: "/setup/create",
+                  edit: "/setup/edit/:id",
+                  meta: {
+                    label: "Setup",
+                    icon: <Settings />,
+                  },
+                },
+                {
+                  name: "fees",
+                  list: "/fees",
+                  create: "/fees/create",
+                  show: "/fees/show/:id",
+                  edit: "/fees/edit/:id",
+                  meta: {
+                    label: "Fees",
+                    icon: <Banknote />,
+                    hide: true,
                   },
                 },
               ]}
@@ -152,8 +236,21 @@ function App() {
                   <Route path="classes">
                     <Route index element={<ListClasses />} />
                     <Route path="create" element={<CreateClass />} />
+                    <Route path="enrollments" element={<EnrollmentsPage />} />
+                    <Route path="student-attendance" element={<StudentAttendancePage />} />
+                    <Route
+                      path="enrollments/scores/:id"
+                      element={<EnrollmentScoresEditPage />}
+                    />
                     <Route path="show/:id" element={<ShowClass />} />
                     <Route path="edit/:id" element={<EditClass />} />
+                  </Route>
+
+                  <Route path="subjects">
+                    <Route index element={<ListSubjects />} />
+                    <Route path="create" element={<CreateSubject />} />
+                    <Route path="show/:id" element={<ShowSubject />} />
+                    <Route path="edit/:id" element={<EditSubject />} />
                   </Route>
 
                   <Route path="students">
@@ -170,11 +267,31 @@ function App() {
                     <Route path="edit/:id" element={<EditStaff />} />
                   </Route>
 
+                  <Route path="payments">
+                    <Route index element={<ListPayments />} />
+                    <Route path="create" element={<CreatePayment />} />
+                    <Route path="show/:id" element={<ShowPayment />} />
+                    <Route path="edit/:id" element={<EditPayment />} />
+                  </Route>
+
                   <Route path="users">
                     <Route index element={<ListUsers />} />
                     <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
+                  </Route>
+
+                  <Route path="setup">
+                    <Route index element={<ShowSetup />} />
+                    <Route path="create" element={<CreateSetup />} />
+                    <Route path="edit/:id" element={<EditSetup />} />
+                  </Route>
+
+                  <Route path="fees">
+                    <Route index element={<ListFees />} />
+                    <Route path="create" element={<CreateFees />} />
+                    <Route path="edit/:id" element={<EditFees />} />
+                    <Route path="show/:id" element={<ShowFees />} />
                   </Route>
                 </Route>
               </Routes>

@@ -20,19 +20,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SubjectRecord } from "@/types";
 import { HttpError, useDelete, useNotification } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Search } from "lucide-react";
-
-import { StaffListRecord } from "@/types";
 
 const extractErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === "object" && "message" in error) {
@@ -41,24 +33,22 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
-const ListStaff = () => {
+const ListSubjects = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStaffType, setSelectedStaffType] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [staffPendingDelete, setStaffPendingDelete] =
-    useState<StaffListRecord | null>(null);
+  const [subjectPendingDelete, setSubjectPendingDelete] =
+    useState<SubjectRecord | null>(null);
   const [deleteBlockedReason, setDeleteBlockedReason] = useState<string | null>(
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { open } = useNotification();
-  const { mutateAsync: deleteStaff } = useDelete();
+  const { mutateAsync: deleteSubject } = useDelete();
 
   const filters = useMemo(() => {
     const values: Array<{
       field: string;
-      operator: "contains" | "eq";
+      operator: "contains";
       value: string;
     }> = [];
 
@@ -71,111 +61,68 @@ const ListStaff = () => {
       });
     }
 
-    if (selectedStaffType) {
-      values.push({
-        field: "staffType",
-        operator: "eq",
-        value: selectedStaffType,
-      });
-    }
-
-    if (selectedStatus) {
-      values.push({
-        field: "isActive",
-        operator: "eq",
-        value: selectedStatus,
-      });
-    }
-
     return values;
-  }, [searchQuery, selectedStaffType, selectedStatus]);
+  }, [searchQuery]);
 
-  const staffTable = useTable<StaffListRecord>({
-    columns: useMemo<ColumnDef<StaffListRecord>[]>(
+  const subjectTable = useTable<SubjectRecord>({
+    columns: useMemo<ColumnDef<SubjectRecord>[]>(
       () => [
         {
           id: "name",
-          accessorFn: (row) => `${row.firstName} ${row.lastName}`.trim(),
-          size: 210,
-          header: () => <p className="column-title">Staff</p>,
+          accessorKey: "name",
+          size: 190,
+          header: () => <p className="column-title">Subject</p>,
           cell: ({ row }) => (
             <div className="flex items-center gap-3">
               {row.original.cloudinaryImageUrl ? (
                 <img
                   src={row.original.cloudinaryImageUrl}
-                  alt={`${row.original.firstName} ${row.original.lastName}`}
+                  alt={row.original.name}
                   className="h-8 w-8 rounded object-cover"
                 />
               ) : (
                 <div className="h-8 w-8 rounded bg-muted" />
               )}
-              <div>
-                <p className="font-medium">
-                  {row.original.firstName} {row.original.lastName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {row.original.registrationNumber ?? "No Reg. Number"}
-                </p>
-              </div>
+              <span className="font-medium">{row.original.name}</span>
             </div>
           ),
         },
         {
-          id: "staffType",
-          accessorKey: "staffType",
-          size: 120,
-          header: () => <p className="column-title">Type</p>,
-          cell: ({ getValue }) => (
-            <Badge variant="secondary" className="capitalize">
-              {String(getValue() ?? "").replace("_", " ")}
-            </Badge>
-          ),
-        },
-        {
-          id: "email",
-          accessorKey: "email",
-          size: 190,
-          header: () => <p className="column-title">Email</p>,
-          cell: ({ getValue }) => (
-            <span className="text-muted-foreground">
-              {getValue<string | null>() ?? "N/A"}
-            </span>
-          ),
-        },
-        {
-          id: "phone",
-          size: 90,
-          header: () => <p className="column-title">Phone</p>,
-          cell: ({ row }) => <span>{row.original.phone ?? null}</span>,
-        },
-        {
-          id: "subjects",
-          size: 90,
-          header: () => <p className="column-title">Subjects</p>,
-          cell: ({ row }) => <span>{row.original.subjects?.length ?? 0}</span>,
-        },
-        {
-          id: "status",
-          accessorKey: "isActive",
-          size: 100,
-          header: () => <p className="column-title">Status</p>,
+          id: "code",
+          accessorKey: "code",
+          size: 110,
+          header: () => <p className="column-title">Code</p>,
           cell: ({ getValue }) => {
-            const active = Boolean(getValue<boolean>());
+            const code = getValue<string | null>();
+            return code ? (
+              <Badge variant="secondary">{code}</Badge>
+            ) : (
+              <span className="text-muted-foreground">N/A</span>
+            );
+          },
+        },
+        {
+          id: "description",
+          accessorKey: "description",
+          size: 280,
+          header: () => <p className="column-title">Description</p>,
+          cell: ({ getValue }) => {
+            const description = getValue<string | null>();
             return (
-              <Badge variant={active ? "default" : "secondary"}>
-                {active ? "Active" : "Inactive"}
-              </Badge>
+              <span className="line-clamp-1 text-muted-foreground">
+                {description || "No description"}
+              </span>
             );
           },
         },
         {
           id: "actions",
-          size: 170,
+          size: 160,
           header: () => <p className="column-title">Actions</p>,
           cell: ({ row }) => (
             <div className="flex items-center gap-2">
               <ShowButton
-                resource="staff"
+                resource="subjects"
                 recordItemId={row.original.id}
                 variant="outline"
                 size="sm"
@@ -183,7 +130,7 @@ const ListStaff = () => {
                 <ActionButton type="view" />
               </ShowButton>
               <EditButton
-                resource="staff"
+                resource="subjects"
                 recordItemId={row.original.id}
                 variant="outline"
                 size="sm"
@@ -195,7 +142,7 @@ const ListStaff = () => {
                 variant="outline"
                 size="sm"
                 className="cursor-pointer"
-                onClick={() => setStaffPendingDelete(row.original)}
+                onClick={() => setSubjectPendingDelete(row.original)}
               >
                 <ActionButton type="delete" />
               </Button>
@@ -206,7 +153,7 @@ const ListStaff = () => {
       [],
     ),
     refineCoreProps: {
-      resource: "staff",
+      resource: "subjects",
       pagination: { pageSize: 10, mode: "server" },
       filters: {
         permanent: [...filters],
@@ -218,35 +165,38 @@ const ListStaff = () => {
   });
 
   const handleConfirmDelete = async () => {
-    if (!staffPendingDelete || isDeleting) return;
+    if (!subjectPendingDelete || isDeleting) return;
 
     setIsDeleting(true);
     try {
-      await deleteStaff(
+      await deleteSubject(
         {
-          resource: "staff",
-          id: staffPendingDelete.id,
+          resource: "subjects",
+          id: subjectPendingDelete.id,
           successNotification: false,
           errorNotification: false,
         },
         {
           onSuccess: () => {
-            setStaffPendingDelete(null);
+            setSubjectPendingDelete(null);
           },
         },
       );
 
       open?.({
         type: "success",
-        message: "Staff deleted",
-        description: `"${staffPendingDelete.firstName} ${staffPendingDelete.lastName}" was deleted successfully.`,
+        message: "Subject deleted",
+        description: `"${subjectPendingDelete.name}" was deleted successfully.`,
       });
     } catch (error) {
       const statusCode =
         error && typeof error === "object" && "statusCode" in error
           ? Number((error as HttpError).statusCode)
           : undefined;
-      const reason = extractErrorMessage(error, "Could not delete staff member.");
+      const reason = extractErrorMessage(
+        error,
+        "We could not delete this subject right now.",
+      );
 
       if (statusCode === 409) {
         setDeleteBlockedReason(reason);
@@ -258,82 +208,41 @@ const ListStaff = () => {
         });
       }
 
-      setStaffPendingDelete(null);
+      setSubjectPendingDelete(null);
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const hasActiveFilters =
-    Boolean(searchQuery.trim()) || Boolean(selectedStaffType) || Boolean(selectedStatus);
-
   return (
     <ListView>
       <Breadcrumb />
 
-      <h1 className="page-title">Staff</h1>
+      <h1 className="page-title">Subjects</h1>
 
       <div className="intro-row">
-        <p>Manage teaching and non-teaching staff records.</p>
+        <p>Manage subjects taught in the school.</p>
 
         <div className="actions-row">
           <div className="search-field">
             <Search className="search-icon" />
             <Input
               type="text"
-              placeholder="Search by name, email, or phone"
+              placeholder="Search by name, code, or description"
               className="pl-10 w-full"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
 
-          <div className="w-full sm:w-[170px]">
-            <Select
-              value={selectedStaffType || "all"}
-              onValueChange={(value) =>
-                setSelectedStaffType(value === "all" ? "" : value)
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="teacher">Teacher</SelectItem>
-                <SelectItem value="non_teaching">Non teaching</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <CreateButton resource="subjects" />
 
-          <div className="w-full sm:w-[150px]">
-            <Select
-              value={selectedStatus || "all"}
-              onValueChange={(value) => setSelectedStatus(value === "all" ? "" : value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="All status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All status</SelectItem>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <CreateButton resource="staff" />
-
-          {hasActiveFilters && (
+          {searchQuery.trim().length > 0 && (
             <Button
               type="button"
               variant="outline"
               className="cursor-pointer"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedStaffType("");
-                setSelectedStatus("");
-              }}
+              onClick={() => setSearchQuery("")}
             >
               Clear filters
             </Button>
@@ -341,22 +250,22 @@ const ListStaff = () => {
         </div>
       </div>
 
-      <DataTable table={staffTable} />
+      <DataTable table={subjectTable} />
 
       <AlertDialog
-        open={Boolean(staffPendingDelete)}
+        open={Boolean(subjectPendingDelete)}
         onOpenChange={(openState) => {
           if (!openState && !isDeleting) {
-            setStaffPendingDelete(null);
+            setSubjectPendingDelete(null);
           }
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete staff member?</AlertDialogTitle>
+            <AlertDialogTitle>Delete subject?</AlertDialogTitle>
             <AlertDialogDescription>
-              {staffPendingDelete
-                ? `This will permanently delete "${staffPendingDelete.firstName} ${staffPendingDelete.lastName}".`
+              {subjectPendingDelete
+                ? `This will permanently delete "${subjectPendingDelete.name}".`
                 : "This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -393,8 +302,10 @@ const ListStaff = () => {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Staff member cannot be deleted</AlertDialogTitle>
-            <AlertDialogDescription>{deleteBlockedReason}</AlertDialogDescription>
+            <AlertDialogTitle>Subject cannot be deleted yet</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteBlockedReason}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>Understood</AlertDialogAction>
@@ -405,4 +316,4 @@ const ListStaff = () => {
   );
 };
 
-export default ListStaff;
+export default ListSubjects;
