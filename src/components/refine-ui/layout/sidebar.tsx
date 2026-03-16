@@ -36,6 +36,7 @@ import React from "react";
 export function Sidebar() {
   const { open } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
+  const visibleMenuItems = menuItems.filter((item) => !item.meta?.hide);
 
   return (
     <ShadcnSidebar collapsible="icon" className={cn("border-none")}>
@@ -58,7 +59,7 @@ export function Sidebar() {
           }
         )}
       >
-        {menuItems.map((item: TreeMenuItem) => (
+        {visibleMenuItems.map((item: TreeMenuItem) => (
           <SidebarItem
             key={item.key || item.name}
             item={item}

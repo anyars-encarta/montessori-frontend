@@ -81,7 +81,7 @@ const CreateFees = () => {
       amount: Number.parseFloat(values.amount).toFixed(2),
       feeType: values.feeType,
       academicYearId: values.academicYearId,
-      applicableToLevel: values.applicableToLevel.trim(),
+      applicableToLevel: values.applicableToLevel?.trim() || "",
     });
   };
 

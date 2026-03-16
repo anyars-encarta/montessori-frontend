@@ -24,6 +24,7 @@ import {
   Subscript,
   ClipboardCheck,
   BookOpen,
+  Banknote,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -178,6 +179,18 @@ function App() {
                   meta: {
                     label: "Setup",
                     icon: <Settings />,
+                  },
+                },
+                {
+                  name: "fees",
+                  list: "/fees",
+                  create: "/fees/create",
+                  show: "/fees/show/:id",
+                  edit: "/fees/edit/:id",
+                  meta: {
+                    label: "Fees",
+                    icon: <Banknote />,
+                    hide: true,
                   },
                 },
               ]}
