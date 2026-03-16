@@ -22,7 +22,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   AcademicYearRecord,
-  CreateResponse,
   FeeRecord,
   PaymentRecord,
   StudentBasic,
@@ -30,7 +29,6 @@ import {
   TermRecord,
 } from "@/types";
 import { CreatePaymentValues } from "@/validations";
-import { BaseRecord, HttpError } from "@refinedev/core";
 import { UseFormReturn } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 

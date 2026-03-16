@@ -52,25 +52,6 @@ const CreatePayment = () => {
     setError,
   } = form;
 
-  useEffect(() => {
-    const studentId = searchParams.get("studentId");
-    const studentFeeId = searchParams.get("studentFeeId");
-
-    if (studentId) {
-      setValue("studentId", studentId, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
-
-    if (studentFeeId) {
-      setValue("studentFeeId", studentFeeId, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
-  }, [searchParams, setValue]);
-
   const { result: studentsResult } = useList<StudentBasic>({
     resource: "students",
     pagination: { pageSize: 1000 },
@@ -79,6 +60,31 @@ const CreatePayment = () => {
     resource: "student-fees",
     pagination: { pageSize: 2000 },
   });
+  
+  // Always prefill student and fee fields as soon as data loads and values are not set
+  useEffect(() => {
+    const studentId = searchParams.get("studentId");
+    const studentFeeId = searchParams.get("studentFeeId");
+    const studentsLoaded = studentsResult.data && studentsResult.data.length > 0;
+    const studentFeesLoaded = studentFeesResult.data && studentFeesResult.data.length > 0;
+    const currentStudentId = form.getValues("studentId");
+    const currentStudentFeeId = form.getValues("studentFeeId");
+
+    if (studentId && studentsLoaded && !currentStudentId) {
+      setValue("studentId", studentId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+
+    if (studentFeeId && studentFeesLoaded && !currentStudentFeeId) {
+      setValue("studentFeeId", studentFeeId, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [searchParams, setValue, studentsResult.data, studentFeesResult.data, form]);
+
   const { result: feesResult } = useList<FeeRecord>({
     resource: "fees",
     pagination: { pageSize: 1000 },
