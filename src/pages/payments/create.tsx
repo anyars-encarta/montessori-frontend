@@ -15,10 +15,18 @@ import {
 } from "@/types";
 import { createPaymentSchema, CreatePaymentValues } from "@/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { BaseRecord, HttpError, useBack, useList, useNotification } from "@refinedev/core";
+import {
+  BaseRecord,
+  HttpError,
+  useBack,
+  useList,
+  useNotification,
+} from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
 
-import PaymentForm, { buildPaymentFeeOptions } from "../../components/payment-form";
+import PaymentForm, {
+  buildPaymentFeeOptions,
+} from "../../components/payment-form";
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -60,13 +68,15 @@ const CreatePayment = () => {
     resource: "student-fees",
     pagination: { pageSize: 2000 },
   });
-  
+
   // Always prefill student and fee fields as soon as data loads and values are not set
   useEffect(() => {
     const studentId = searchParams.get("studentId");
     const studentFeeId = searchParams.get("studentFeeId");
-    const studentsLoaded = studentsResult.data && studentsResult.data.length > 0;
-    const studentFeesLoaded = studentFeesResult.data && studentFeesResult.data.length > 0;
+    const studentsLoaded =
+      studentsResult.data && studentsResult.data.length > 0;
+    const studentFeesLoaded =
+      studentFeesResult.data && studentFeesResult.data.length > 0;
     const currentStudentId = form.getValues("studentId");
     const currentStudentFeeId = form.getValues("studentFeeId");
 
@@ -83,7 +93,13 @@ const CreatePayment = () => {
         shouldValidate: true,
       });
     }
-  }, [searchParams, setValue, studentsResult.data, studentFeesResult.data, form]);
+  }, [
+    searchParams,
+    setValue,
+    studentsResult.data,
+    studentFeesResult.data,
+    form,
+  ]);
 
   const { result: feesResult } = useList<FeeRecord>({
     resource: "fees",
@@ -103,18 +119,27 @@ const CreatePayment = () => {
   const fees = feesResult.data;
   const academicYears = yearsResult.data;
   const terms = termsResult.data;
+  const selectedStudentId = watch("studentId");
+  const selectedStudentFeeId = watch("studentFeeId");
 
   const feeOptions = useMemo(
     () =>
       buildPaymentFeeOptions({
-        studentId: watch("studentId"),
+        studentId: selectedStudentId,
         studentFees,
         fees,
         academicYears,
         terms,
-        selectedStudentFeeId: watch("studentFeeId") ?? "",
+        selectedStudentFeeId: selectedStudentFeeId ?? "",
       }),
-    [academicYears, fees, studentFees, terms, watch],
+    [
+      academicYears,
+      fees,
+      selectedStudentFeeId,
+      selectedStudentId,
+      studentFees,
+      terms,
+    ],
   );
 
   const onSubmit = async (values: CreatePaymentValues) => {
@@ -123,10 +148,19 @@ const CreatePayment = () => {
     );
 
     const amount = Number.parseFloat(values.amount);
-    if (selectedFeeOption && amount - selectedFeeOption.remainingAmount > 0.0001) {
-      const message = `Payment amount cannot exceed the outstanding balance of $${selectedFeeOption.remainingAmount.toFixed(2)}.`;
+    if (
+      selectedFeeOption &&
+      amount - selectedFeeOption.remainingAmount > 0.0001
+    ) {
+      const message = `Payment amount cannot exceed the outstanding balance of $${selectedFeeOption.remainingAmount.toFixed(
+        2,
+      )}.`;
       setError("amount", { message });
-      open?.({ type: "error", message: "Invalid payment amount", description: message });
+      open?.({
+        type: "error",
+        message: "Invalid payment amount",
+        description: message,
+      });
       return;
     }
 
@@ -148,7 +182,10 @@ const CreatePayment = () => {
       <h1 className="page-title">Record Payment</h1>
 
       <div className="intro-row">
-        <p>Create a payment and optionally attach it to a student fee for full or part-payment processing.</p>
+        <p>
+          Create a payment and optionally attach it to a student fee for full or
+          part-payment processing.
+        </p>
         <Button onClick={back} className="cursor-pointer" type="button">
           Go Back
         </Button>
@@ -159,7 +196,9 @@ const CreatePayment = () => {
       <div className="my-4 flex items-center">
         <Card className="class-form-card w-full">
           <CardHeader className="relative z-10">
-            <CardTitle className="text-2xl pb-0 font-bold">Payment details</CardTitle>
+            <CardTitle className="text-2xl pb-0 font-bold">
+              Payment details
+            </CardTitle>
           </CardHeader>
 
           <Separator />

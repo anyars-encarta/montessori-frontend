@@ -84,7 +84,7 @@ const CreateSetup = () => {
       if (createdId) {
         navigate(`/setup/edit/${createdId}`);
       } else {
-        navigate("/setup/show");
+        navigate("/setup");
       }
     } catch (error) {
       const message =

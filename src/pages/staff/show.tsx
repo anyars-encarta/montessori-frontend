@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Staff, StaffSubjectAssignment } from "@/types";
-import { useBack, useList, useOne } from "@refinedev/core";
+import { useBack, useOne } from "@refinedev/core";
 import {
   CalendarDays,
   CheckCircle2,
@@ -56,21 +56,14 @@ const ShowStaff = () => {
     },
   });
 
-  const { result: staffListResult } = useList<StaffWithSubjects>({
-    resource: "staff",
-    pagination: { pageSize: 500 },
-  });
-
   const staff = query.data?.data;
 
   const subjectNames = useMemo(() => {
     if (!staff) return [];
-    const source =
-      staffListResult.data.find((record) => record.id === staff.id)?.subjects ?? staff.subjects ?? [];
-    return source
+    return (staff.subjects ?? [])
       .map((assignment) => assignment.subject?.name)
       .filter((value): value is string => Boolean(value));
-  }, [staff, staffListResult.data]);
+  }, [staff]);
 
   const initials = `${staff?.firstName?.[0] ?? ""}${staff?.lastName?.[0] ?? ""}`.toUpperCase();
 

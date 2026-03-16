@@ -180,9 +180,9 @@ const EnrollmentsPage = () => {
                     const current = new Set(prev);
 
                     if (shouldSelect) {
-                      visibleIds.forEach((id) => current.add(id));
+                      visibleIds.forEach((id) => { current.add(id); });
                     } else {
-                      visibleIds.forEach((id) => current.delete(id));
+                      visibleIds.forEach((id) => { current.delete(id); });
                     }
 
                     return Array.from(current);

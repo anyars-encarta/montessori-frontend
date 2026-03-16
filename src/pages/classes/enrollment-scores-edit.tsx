@@ -103,7 +103,6 @@ const EnrollmentScoresEditPage = () => {
 
       open?.({ type: "success", message: `${subjectName} Scores updated` });
       await query.refetch();
-      setSavingAssessmentId(null);
     } catch (error) {
       const message =
         error && typeof error === "object" && "message" in error

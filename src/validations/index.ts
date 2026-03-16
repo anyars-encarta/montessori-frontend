@@ -39,6 +39,12 @@ export const createStudentSchema = z.object({
 
 export type CreateStudentValues = z.infer<typeof createStudentSchema>;
 
+const decimalStringPattern = /^(?:0|[1-9]\d*)(?:\.\d+)?$/;
+const isNonNegativeDecimalString = (value: string) =>
+  decimalStringPattern.test(value);
+const isPositiveDecimalString = (value: string) =>
+  decimalStringPattern.test(value) && Number(value) > 0;
+
 export const createFeeSchema = z.object({
   name: z.string().trim().min(1, "Fee name is required"),
   description: z.string(),
@@ -46,10 +52,7 @@ export const createFeeSchema = z.object({
     .string()
     .trim()
     .min(1, "Amount is required")
-    .refine((value) => {
-      const parsed = Number.parseFloat(value);
-      return Number.isFinite(parsed) && parsed >= 0;
-    }, "Amount must be a non-negative number"),
+     .refine(isNonNegativeDecimalString, "Amount must be a non-negative number"),
   feeType: z.enum(["admission", "tuition", "feeding", "other"], {
     required_error: "Fee type is required",
   }),
@@ -68,10 +71,7 @@ export const editFeeSchema = z.object({
     .string()
     .trim()
     .min(1, "Amount is required")
-    .refine((value) => {
-      const parsed = Number.parseFloat(value);
-      return Number.isFinite(parsed) && parsed >= 0;
-    }, "Amount must be a non-negative number"),
+    .refine(isNonNegativeDecimalString, "Amount must be a non-negative number"),
   feeType: z.enum(["admission", "tuition", "feeding", "other"], {
     required_error: "Fee type is required",
   }),
@@ -90,10 +90,7 @@ export const createPaymentSchema = z.object({
     .string()
     .trim()
     .min(1, "Amount is required")
-    .refine((value) => {
-      const parsed = Number.parseFloat(value);
-      return Number.isFinite(parsed) && parsed > 0;
-    }, "Amount must be greater than 0"),
+    .refine(isPositiveDecimalString, "Amount must be greater than 0"),
   paymentDate: z.string().trim().min(1, "Payment date is required"),
   paymentMethod: z.string().nullable(),
   reference: z.string().nullable(),
@@ -138,7 +135,12 @@ export const createStaffSchema = z
   .object({
     firstName: z.string().trim().min(1, "First name is required"),
     lastName: z.string().trim().min(1, "Last name is required"),
-    email: z.string().trim().email("Invalid email").or(z.literal("")).nullable(),
+    email: z
+      .string()
+      .trim()
+      .email("Invalid email")
+      .or(z.literal(""))
+      .nullable(),
     phone: z.string().nullable(),
     address: z.string().nullable(),
     dateOfBirth: z.string().nullable(),

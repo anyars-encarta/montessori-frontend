@@ -83,30 +83,46 @@ export const buildPaymentFeeOptions = ({
       );
       const term = terms.find((item) => item.id === studentFee.termId);
 
-      const totalAmount = Number.parseFloat(studentFee.amount);
-      const recordedAmountPaid = Number.parseFloat(studentFee.amountPaid);
+      const parsedTotalAmount = Number.parseFloat(studentFee.amount);
+      const parsedRecordedAmountPaid = Number.parseFloat(studentFee.amountPaid);
+      const totalAmount = Number.isFinite(parsedTotalAmount)
+        ? parsedTotalAmount
+        : 0;
+      const recordedAmountPaid = Number.isFinite(parsedRecordedAmountPaid)
+        ? parsedRecordedAmountPaid
+        : 0;
       const adjustedAmountPaid =
         Number.isFinite(selectedFeeId) && studentFee.id === selectedFeeId
-          ? Math.max(0, recordedAmountPaid - (Number.isFinite(existingPaymentAmount) ? existingPaymentAmount : 0))
+          ? Math.max(
+              0,
+              recordedAmountPaid -
+                (Number.isFinite(existingPaymentAmount)
+                  ? existingPaymentAmount
+                  : 0),
+            )
           : recordedAmountPaid;
       const remainingAmount = Math.max(0, totalAmount - adjustedAmountPaid);
 
       return {
         studentFeeId: studentFee.id,
         feeName: fee?.name ?? `Fee #${studentFee.feeId}`,
-        academicYearLabel: academicYear?.year ?? `Year #${studentFee.academicYearId}`,
+        academicYearLabel:
+          academicYear?.year ?? `Year #${studentFee.academicYearId}`,
         termLabel: term?.name ?? `Term #${studentFee.termId}`,
-        totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
-        amountPaid: Number.isFinite(adjustedAmountPaid) ? adjustedAmountPaid : 0,
+        totalAmount,
+        amountPaid: adjustedAmountPaid,
         remainingAmount,
         status: studentFee.status,
-        label: `${fee?.name ?? `Fee #${studentFee.feeId}`} • ${term?.name ?? "Unknown Term"} • Remaining ${formatCurrency(remainingAmount)}`,
+        label: `${fee?.name ?? `Fee #${studentFee.feeId}`} • ${
+          term?.name ?? "Unknown Term"
+        } • Remaining ${formatCurrency(remainingAmount)}`,
       } satisfies PaymentFeeOption;
     })
     .filter(
       (option) =>
         option.remainingAmount > 0 ||
-        option.studentFeeId === (Number.isFinite(selectedFeeId) ? selectedFeeId : -1),
+        option.studentFeeId ===
+          (Number.isFinite(selectedFeeId) ? selectedFeeId : -1),
     )
     .sort((a, b) => a.feeName.localeCompare(b.feeName));
 };
@@ -158,7 +174,9 @@ const PaymentForm = ({
       (student) => student.id === selected.id,
     );
 
-    return selectedInFiltered ? filteredStudents : [selected, ...filteredStudents];
+    return selectedInFiltered
+      ? filteredStudents
+      : [selected, ...filteredStudents];
   }, [filteredStudents, selectedStudentId, students]);
 
   const feeOptions = useMemo(
@@ -260,9 +278,14 @@ const PaymentForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="unallocated">Unallocated payment</SelectItem>
+                    <SelectItem value="unallocated">
+                      Unallocated payment
+                    </SelectItem>
                     {feeOptions.map((option) => (
-                      <SelectItem key={option.studentFeeId} value={String(option.studentFeeId)}>
+                      <SelectItem
+                        key={option.studentFeeId}
+                        value={String(option.studentFeeId)}
+                      >
                         {option.label}
                       </SelectItem>
                     ))}
@@ -284,16 +307,23 @@ const PaymentForm = ({
               <div>
                 <p className="text-sm text-muted-foreground">Academic Period</p>
                 <p className="font-medium">
-                  {selectedFeeOption.academicYearLabel} / {selectedFeeOption.termLabel}
+                  {selectedFeeOption.academicYearLabel} /{" "}
+                  {selectedFeeOption.termLabel}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Amount Paid</p>
-                <p className="font-medium">{formatCurrency(selectedFeeOption.amountPaid)}</p>
+                <p className="font-medium">
+                  {formatCurrency(selectedFeeOption.amountPaid)}
+                </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-                <p className="font-medium">{formatCurrency(selectedFeeOption.remainingAmount)}</p>
+                <p className="text-sm text-muted-foreground">
+                  Outstanding Balance
+                </p>
+                <p className="font-medium">
+                  {formatCurrency(selectedFeeOption.remainingAmount)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -311,7 +341,7 @@ const PaymentForm = ({
                 <FormControl>
                   <Input
                     type="number"
-                    min="0"
+                    min="0.01"
                     step="0.01"
                     placeholder="0.00"
                     {...field}
@@ -320,7 +350,8 @@ const PaymentForm = ({
                 </FormControl>
                 {selectedFeeOption ? (
                   <p className="text-xs text-muted-foreground">
-                    You can record a part-payment up to {formatCurrency(selectedFeeOption.remainingAmount)}.
+                    You can record a part-payment up to{" "}
+                    {formatCurrency(selectedFeeOption.remainingAmount)}.
                   </p>
                 ) : null}
                 <FormMessage />
@@ -384,7 +415,11 @@ const PaymentForm = ({
               <FormItem>
                 <FormLabel>Reference</FormLabel>
                 <FormControl>
-                  <Input placeholder="Receipt / Transaction reference" {...field} value={field.value ?? ""} />
+                  <Input
+                    placeholder="Receipt / Transaction reference"
+                    {...field}
+                    value={field.value ?? ""}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -399,7 +434,11 @@ const PaymentForm = ({
             <FormItem>
               <FormLabel>Notes</FormLabel>
               <FormControl>
-                <Textarea placeholder="Optional payment notes" {...field} value={field.value ?? ""} />
+                <Textarea
+                  placeholder="Optional payment notes"
+                  {...field}
+                  value={field.value ?? ""}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

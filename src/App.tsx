@@ -190,7 +190,6 @@ function App() {
                   name: "setup",
                   list: "/setup",
                   create: "/setup/create",
-                  show: "/setup/show/:id",
                   edit: "/setup/edit/:id",
                   meta: {
                     label: "Setup",
