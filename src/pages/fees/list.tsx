@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AcademicYearRecord, FeeRecord, FeeType } from "@/types";
+import { AcademicYearRecord, ClassRecord, FeeRecord, FeeType } from "@/types";
 import { useList, useBack } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
@@ -31,13 +31,25 @@ const ListFees = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeeType, setSelectedFeeType] = useState("");
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
+  const [selectedClassLevel, setSelectedClassLevel] = useState("");
 
   const { result: yearsResult } = useList<AcademicYearRecord>({
     resource: "academic-years",
     pagination: { pageSize: 200 },
   });
 
+  const { result: classesResult } = useList<ClassRecord>({
+    resource: "classes",
+    pagination: { pageSize: 500 },
+  });
+
   const academicYears = yearsResult.data;
+  const classes = classesResult.data;
+  const classLevels = useMemo(() => {
+    return Array.from(new Set(classes.map((classRow) => classRow.level))).sort(
+      (a, b) => a.localeCompare(b),
+    );
+  }, [classes]);
 
   const filters = useMemo(() => {
     const values: Array<{
@@ -71,13 +83,22 @@ const ListFees = () => {
       });
     }
 
+    if (selectedClassLevel) {
+      values.push({
+        field: "applicableToLevel",
+        operator: "eq",
+        value: selectedClassLevel,
+      });
+    }
+
     return values;
-  }, [searchQuery, selectedAcademicYearId, selectedFeeType]);
+  }, [searchQuery, selectedAcademicYearId, selectedFeeType, selectedClassLevel]);
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     selectedFeeType.length > 0 ||
-    selectedAcademicYearId.length > 0;
+    selectedAcademicYearId.length > 0 ||
+    selectedClassLevel.length > 0;
 
   const feeTable = useTable<FeeRecord>({
     columns: useMemo<ColumnDef<FeeRecord>[]>(
@@ -246,6 +267,27 @@ const ListFees = () => {
             </Select>
           </div>
 
+          <div className="w-full sm:w-[180px]">
+            <Select
+              value={selectedClassLevel || "all"}
+              onValueChange={(value) =>
+                setSelectedClassLevel(value === "all" ? "" : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Levels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Levels</SelectItem>
+                {classLevels.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {level}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <CreateButton resource="fees" />
 
           {hasActiveFilters && (
@@ -257,6 +299,7 @@ const ListFees = () => {
                 setSearchQuery("");
                 setSelectedFeeType("");
                 setSelectedAcademicYearId("");
+                setSelectedClassLevel("");
               }}
             >
               Clear filters
