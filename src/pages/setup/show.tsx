@@ -129,7 +129,10 @@ const ShowSetup = () => {
       </div>
 
       <div className="flex flex-row gap-4 flex-wrap">
-        <Button className="cursor-pointer" onClick={() => navigate("/fees")}>
+        <Button
+          className="cursor-pointer"
+          onClick={() => navigate('/fees')}
+        >
           Manage Fees
         </Button>
       </div>
@@ -146,16 +149,16 @@ const ShowSetup = () => {
           ) : school ? (
             <div className="flex flex-col items-start gap-6 md:flex-row">
               {school.logo ? (
-                <img
-                  src={school.logo}
-                  alt={school.name}
-                  className="h-40 w-40 rounded-sm object-cover"
-                />
-              ) : (
-                <div className="h-40 w-40 rounded-sm bg-muted flex items-center justify-center text-muted-foreground">
-                  No Logo
-                </div>
-              )}
+              <img
+                src={school.logo}
+                alt={school.name}
+                className="h-40 w-40 rounded-sm object-cover"
+              />
+            ) : (
+              <div className="h-40 w-40 rounded-sm bg-muted flex items-center justify-center text-muted-foreground">
+                No Logo
+              </div>
+            )}
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-sm text-muted-foreground">Name</p>
