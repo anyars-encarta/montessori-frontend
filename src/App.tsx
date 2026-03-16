@@ -21,11 +21,12 @@ import {
   Users,
   Users2Icon,
   Dock,
-  Subscript,
+  Clipboard,
   ClipboardCheck,
   BookOpen,
   Banknote,
   HandCoins,
+  CheckSquare
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
 // import SubjectsList from "./pages/subjects/list";
@@ -124,7 +125,7 @@ function App() {
                   edit: "/subjects/edit/:id",
                   meta: {
                     label: "Subjects",
-                    icon: <Subscript />,
+                    icon: <Clipboard />,
                   },
                 },
                 {
@@ -193,6 +194,16 @@ function App() {
                   meta: {
                     label: "Users",
                     icon: <Users />,
+                  },
+                },
+                {
+                  name: "reports",
+                  list: "/reports",
+                  create: "/reports/create",
+                  edit: "/reports/edit/:id",
+                  meta: {
+                    label: "Reports",
+                    icon: <CheckSquare />,
                   },
                 },
                 {
