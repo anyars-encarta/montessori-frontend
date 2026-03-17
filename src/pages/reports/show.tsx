@@ -21,7 +21,7 @@ const ShowReports = () => {
                 <Separator />
             </div>
 
-            <section className="rounded-xl border bg-card p-5 sm:p-6 bg-muted/20">
+            <section className="rounded-xl border p-5 sm:p-6 bg-muted/20">
                 <h1 className="text-2xl font-bold tracking-tight">Reports Hub</h1>
                 <p className="mt-2 max-w-3xl text-sm text-muted-foreground ">
                     Access all reporting workflows from one place. Reports marked as
