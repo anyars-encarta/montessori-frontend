@@ -753,6 +753,50 @@ export type AttendanceHistoryResponse = {
   error?: string;
 };
 
+export type StaffDailyAttendanceRow = {
+  staffId: number;
+  staffName: string;
+  registrationNumber: string | null;
+  staffType: StaffType;
+  status: AttendanceStatus | null;
+  remarks: string | null;
+};
+
+export type StaffDailyRegisterResponse = {
+  success: boolean;
+  data?: StaffDailyAttendanceRow[];
+  summary?: {
+    total: number;
+    present: number;
+    absent: number;
+    unmarked: number;
+  };
+  error?: string;
+};
+
+export type StaffAttendanceHistoryRow = {
+  id: number;
+  staffId: number;
+  staffName: string;
+  registrationNumber: string | null;
+  staffType: StaffType;
+  attendanceDate: string;
+  status: AttendanceStatus;
+  remarks: string | null;
+};
+
+export type StaffAttendanceHistoryResponse = {
+  success: boolean;
+  data?: StaffAttendanceHistoryRow[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  error?: string;
+};
+
 export type PaymentFeeOption = {
   studentFeeId: number;
   feeName: string;
@@ -777,4 +821,15 @@ export type PaymentFormProps = {
   submitLabel: string;
   submittingLabel: string;
   currentPayment?: PaymentRecord | null;
+};
+
+export type DashboardSummary = {
+  totalStudents: number;
+  totalActiveStudents: number;
+  totalTeachers: number;
+  totalNonTeachingStaff: number;
+  totalClasses: number;
+  maleStudents: number;
+  femaleStudents: number;
+  otherStudents: number;
 };

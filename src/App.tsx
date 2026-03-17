@@ -21,15 +21,15 @@ import {
   Users,
   Users2Icon,
   Dock,
-  Subscript,
+  Clipboard,
   ClipboardCheck,
   BookOpen,
   Banknote,
   HandCoins,
+  CheckSquare,
 } from "lucide-react";
 import { Layout } from "./components/refine-ui/layout/layout";
-// import SubjectsList from "./pages/subjects/list";
-// import CreateSubject from "./pages/subjects/create";
+
 import ListClasses from "./pages/classes/list";
 import ShowClass from "./pages/classes/show";
 import CreateClass from "./pages/classes/create";
@@ -37,17 +37,8 @@ import EditClass from "./pages/classes/edit";
 import EnrollmentsPage from "./pages/classes/enrollments";
 import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
 import StudentAttendancePage from "./pages/classes/student-attendance";
-// import SubjectsShow from "./pages/subjects/show";
 import Login from "./pages/login";
 import Register from "./pages/register";
-// import DepartmentsCreate from "./pages/departments/create";
-// import DepartmentsList from "./pages/departments/list";
-// import DepartmentsShow from "./pages/departments/show";
-// import FacultyList from "./pages/faculty/list";
-// import FacultyShow from "./pages/faculty/show";
-// import EnrollmentsCreate from "./pages/enrollments/create";
-// import EnrollmentsJoin from "./pages/enrollments/join";
-// import EnrollmentConfirm from "./pages/enrollments/confirm";
 import { authProvider } from "./providers/auth";
 import Dashboard from "./pages/dashboard";
 import ListStudents from "./pages/students/list";
@@ -58,6 +49,7 @@ import ListStaff from "./pages/staff/list";
 import EditStaff from "./pages/staff/edit";
 import CreateStaff from "./pages/staff/create";
 import ShowStaff from "./pages/staff/show";
+import StaffAttendancePage from "./pages/staff/staff-attendance";
 import CreateUser from "./pages/users/create";
 import EditUser from "./pages/users/edit";
 import ShowUser from "./pages/users/show";
@@ -77,7 +69,7 @@ import ListPayments from "./pages/payments/list";
 import CreatePayment from "./pages/payments/create";
 import ShowPayment from "./pages/payments/show";
 import EditPayment from "./pages/payments/edit";
-
+import ShowReports from "./pages/reports/show";
 
 function App() {
   return (
@@ -123,7 +115,7 @@ function App() {
                   edit: "/subjects/edit/:id",
                   meta: {
                     label: "Subjects",
-                    icon: <Subscript />,
+                    icon: <Clipboard />,
                   },
                 },
                 {
@@ -165,6 +157,14 @@ function App() {
                   },
                 },
                 {
+                  name: "staff-attendance",
+                  list: "/staff/staff-attendance",
+                  meta: {
+                    label: "Staff Attendance",
+                    icon: <ClipboardCheck />,
+                  },
+                },
+                {
                   name: "payments",
                   list: "/payments",
                   create: "/payments/create",
@@ -184,6 +184,15 @@ function App() {
                   meta: {
                     label: "Users",
                     icon: <Users />,
+                  },
+                },
+                {
+                  name: "reports",
+                  list: "/reports",
+                  meta: {
+                    label: "Reports",
+                    icon: <CheckSquare />,
+                    hide: true,
                   },
                 },
                 {
@@ -237,7 +246,10 @@ function App() {
                     <Route index element={<ListClasses />} />
                     <Route path="create" element={<CreateClass />} />
                     <Route path="enrollments" element={<EnrollmentsPage />} />
-                    <Route path="student-attendance" element={<StudentAttendancePage />} />
+                    <Route
+                      path="student-attendance"
+                      element={<StudentAttendancePage />}
+                    />
                     <Route
                       path="enrollments/scores/:id"
                       element={<EnrollmentScoresEditPage />}
@@ -263,6 +275,10 @@ function App() {
                   <Route path="staff">
                     <Route index element={<ListStaff />} />
                     <Route path="create" element={<CreateStaff />} />
+                    <Route
+                      path="staff-attendance"
+                      element={<StaffAttendancePage />}
+                    />
                     <Route path="show/:id" element={<ShowStaff />} />
                     <Route path="edit/:id" element={<EditStaff />} />
                   </Route>
@@ -279,6 +295,10 @@ function App() {
                     <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
+                  </Route>
+
+                  <Route path="reports">
+                    <Route index element={<ShowReports />} />
                   </Route>
 
                   <Route path="setup">

@@ -1,7 +1,8 @@
-import { useMemo } from "react";
-import { useLink, useList } from "@refinedev/core";
+import { useEffect, useMemo, useState } from "react";
+import { useLink, useList, useNotification } from "@refinedev/core";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
+import { BACKEND_BASE_URL } from "@/constants";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,28 +10,43 @@ import { Separator } from "@/components/ui/separator";
 import type {
   Student,
   Staff,
+  AttendanceHistoryResponse,
   StudentAttendance,
   StudentFeeRecord,
   PaymentRecord,
+  DashboardSummary,
 } from "@/types";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import FinanceChart from "@/components/FinanceChart";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
-type DashboardSummary = {
-  totalStudents: number;
-  totalActiveStudents: number;
-  totalTeachers: number;
-  totalNonTeachingStaff: number;
-  totalClasses: number;
-  maleStudents: number;
-  femaleStudents: number;
-  otherStudents: number;
+const toLocalIsoDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getCurrentWeekRange = () => {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const daySinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - daySinceMonday);
+
+  return {
+    fromDate: toLocalIsoDate(monday),
+    toDate: toLocalIsoDate(today),
+  };
 };
 
 const Dashboard = () => {
   const Link = useLink();
+  const { open } = useNotification();
+  const [studentsAttendances, setStudentsAttendances] = useState<StudentAttendance[]>([]);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
   const { result: studentsResult } = useList<Student>({
     resource: "students",
     pagination: { mode: "server", currentPage: 1, pageSize: 100 },
@@ -39,14 +55,6 @@ const Dashboard = () => {
   const { result: staffResult } = useList<Staff>({
     resource: "staff",
     pagination: { mode: "server", currentPage: 1, pageSize: 100 },
-  });
-  //   resource: "subjects",
-  //   pagination: { mode: "off" },
-  // });
-
-  const { result: studentAttendanceResult } = useList<StudentAttendance>({
-    resource: "student-attendances",
-    pagination: { mode: "off" },
   });
 
   const { result: studentFeesResult } = useList<StudentFeeRecord>({
@@ -76,10 +84,77 @@ const Dashboard = () => {
 
   const staff = useMemo(() => staffResult.data ?? [], [staffResult.data]);
 
-  const studentsAttendances = useMemo(
-    () => studentAttendanceResult.data ?? [],
-    [studentAttendanceResult.data],
-  );
+  useEffect(() => {
+    let isDisposed = false;
+
+    const loadWeeklyAttendance = async () => {
+      if (!isDisposed) {
+        setAttendanceError(null);
+      }
+
+      const { fromDate, toDate } = getCurrentWeekRange();
+      const limit = 100;
+      let page = 1;
+      let totalPages = 1;
+      const allRows: StudentAttendance[] = [];
+
+      while (page <= totalPages) {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+          fromDate,
+          toDate,
+        });
+
+        const response = await fetch(
+          `${BACKEND_BASE_URL.replace(/\/+$/, "")}/student-attendances?${params.toString()}`,
+        );
+
+        const payload = (await response.json()) as AttendanceHistoryResponse;
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Failed to load attendance data");
+        }
+
+        const mappedRows: StudentAttendance[] = (payload.data ?? []).map((row) => ({
+          id: row.id,
+          studentId: row.studentId,
+          attendanceDate: row.attendanceDate,
+          status: row.status,
+          remarks: row.remarks,
+        }));
+
+        allRows.push(...mappedRows);
+
+        totalPages = payload.pagination?.totalPages ?? page;
+        page += 1;
+      }
+
+      if (!isDisposed) {
+        setAttendanceError(null);
+        setStudentsAttendances(allRows);
+      }
+    };
+
+    void loadWeeklyAttendance().catch((error: unknown) => {
+      if (!isDisposed) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to load weekly attendance.";
+
+        setAttendanceError(message);
+        open?.({
+          type: "error",
+          message: "Attendance load failed",
+          description: message,
+        });
+      }
+    });
+
+    return () => {
+      isDisposed = true;
+    };
+  }, []);
 
   const dashboardSummary = useMemo(
     () => dashboardSummaryResult.data?.[0] ?? null,
@@ -332,6 +407,9 @@ const Dashboard = () => {
             <h3 className="text-sm font-semibold text-muted-foreground">
               Weekly Attendance
             </h3>
+            {attendanceError && (
+              <p className="text-sm text-destructive">{attendanceError}</p>
+            )}
             <div className="h-80">
               <AttendanceChartContainer
                 attendances={studentsAttendances}
