@@ -37,10 +37,15 @@ const toIsoDate = (value: Date) => {
 
 const isWeekdayIsoDate = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const parsed = new Date(`${value}T00:00:00.000Z`);
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
   if (Number.isNaN(parsed.getTime())) return false;
-  const day = parsed.getUTCDay();
-  return day >= 1 && day <= 5;
+  const normalized = `${parsed.getUTCFullYear()}-${String(
+    parsed.getUTCMonth() + 1,
+  ).padStart(2, "0")}-${String(parsed.getUTCDate()).padStart(2, "0")}`;
+  if (normalized !== value) return false;
+  const weekDay = parsed.getUTCDay();
+  return weekDay >= 1 && weekDay <= 5;
 };
 
 const buildApiUrl = (path: string) => {
