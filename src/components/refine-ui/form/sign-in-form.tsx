@@ -158,7 +158,7 @@ export const SignInForm = () => {
               </Link>
             </div>
 
-            <Button type="submit" size="lg" className={cn("w-full", "mt-6")}>
+            <Button type="submit" size="lg" className={cn("w-full", "mt-6", "cursor-pointer")}>
               {signingIn ? (
                 <div className="flex gap-1 items-center">
                   <span>Signing In...</span>

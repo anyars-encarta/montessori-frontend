@@ -22,8 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import UploadWidget from "@/components/upload-widget";
+} from "@/components/ui/select";import { InputPassword } from '@/components/refine-ui/form/input-password';import UploadWidget from "@/components/upload-widget";
 import { User } from "@/types";
 import { editUserSchema, EditUserValues } from "@/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,9 +61,12 @@ const EditUser = () => {
     },
     defaultValues: {
       name: "",
-      role: "student",
+      email: '',
+      role: 'student',
       image: null,
       imageCldPubId: null,
+      password: '',
+      confirmPassword: '',
     },
   });
 
@@ -83,18 +85,24 @@ const EditUser = () => {
     if (!record) return;
     reset({
       name: record.name,
-      role: record.role as "admin" | "teacher" | "student",
+      email: record.email,
+      role: record.role as 'admin' | 'teacher' | 'student',
       image: record.image ?? null,
       imageCldPubId: record.imageCldPubId ?? null,
+      password: '',
+      confirmPassword: '',
     });
   }, [reset, userQuery.data?.data]);
 
   const onSubmit: SubmitHandler<EditUserValues> = async (values) => {
+    const password = values.password?.trim() || undefined;
     await onFinish({
       name: values.name.trim(),
+      email: values.email.trim().toLowerCase(),
       role: values.role,
       image: values.image ?? null,
       imageCldPubId: values.imageCldPubId ?? null,
+      ...(password ? { password } : {}),
     });
   };
 
@@ -166,7 +174,26 @@ const EditUser = () => {
                     </FormItem>
                   )}
                 />
-
+                <FormField
+                  control={control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Email <span className="text-orange-600">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Email address"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 {loggedInUser?.id !== userId && (
                   <FormField
                     control={control}
@@ -221,6 +248,42 @@ const EditUser = () => {
                             });
                           }}
                           disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <InputPassword
+                          placeholder="Leave blank to keep current password"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <InputPassword
+                          placeholder="Repeat new password"
+                          {...field}
+                          value={field.value ?? ''}
                         />
                       </FormControl>
                       <FormMessage />
