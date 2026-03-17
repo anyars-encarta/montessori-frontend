@@ -1,4 +1,17 @@
+import { ReportCard } from "@/types";
 import { GraduationCap, School } from "lucide-react";
+
+import {
+    BarChart3,
+    BookOpen,
+    BriefcaseBusiness,
+    CalendarCheck2,
+    ChartNoAxesCombined,
+    Coins,
+    FileBarChart2,
+    Landmark,
+    Layers,
+} from "lucide-react";
 
 export const USER_ROLES = {
     STUDENT: "student",
@@ -104,4 +117,102 @@ export const subjects = [
   { id: 8, name: "World History", code: "HIST" },
   { id: 9, name: "Spanish Language", code: "SPAN" },
   { id: 10, name: "Art and Design", code: "ART" }
+];
+
+export const reports: ReportCard[] = [
+    {
+        title: "Class Report",
+        summary:
+            "Class-level summary and enrollment totals by gender, with detailed enrollment records per class.",
+        category: "Academic",
+        status: "guided",
+        icon: Layers,
+        actions: [
+            { label: "Open Classes", path: "/classes" },
+            { label: "Open Enrollment Details", path: "/classes/enrollments" },
+        ],
+    },
+    {
+        title: "Enrollments Report",
+        summary:
+            "Summary and detailed enrollment report with filters for academic year, term, and class.",
+        category: "Academic",
+        status: "ready",
+        icon: FileBarChart2,
+        actions: [{ label: "Open Enrollments", path: "/classes/enrollments" }],
+    },
+    {
+        title: "Student Attendance Report",
+        summary:
+            "Daily register, attendance history, and CSV export for student attendance tracking.",
+        category: "Attendance",
+        status: "ready",
+        icon: CalendarCheck2,
+        actions: [
+            { label: "Open Student Attendance", path: "/classes/student-attendance" },
+        ],
+    },
+    {
+        title: "Staff Attendance Report",
+        summary:
+            "Daily register, attendance history, and CSV export for staff attendance insights.",
+        category: "Attendance",
+        status: "ready",
+        icon: BriefcaseBusiness,
+        actions: [{ label: "Open Staff Attendance", path: "/staff/staff-attendance" }],
+    },
+    {
+        title: "Income and Expenditure Report",
+        summary:
+            "Use payments and fee records to review incoming cashflow and compare against billed amounts.",
+        category: "Finance",
+        status: "guided",
+        icon: Landmark,
+        actions: [
+            { label: "Open Payments", path: "/payments" },
+            { label: "Open Fees", path: "/fees" },
+        ],
+    },
+    {
+        title: "Terminal Report",
+        summary:
+            "Use term setup and enrollment/attendance pages to analyze results for a specific term.",
+        category: "Academic",
+        status: "guided",
+        icon: BookOpen,
+        actions: [
+            { label: "Open Setup (Terms)", path: "/setup" },
+            { label: "Open Enrollments", path: "/classes/enrollments" },
+        ],
+    },
+    {
+        title: "Subject Performance Analysis",
+        summary:
+            "Analyze student performance by subject from enrollment workflows and class/subject context.",
+        category: "Analytics",
+        status: "guided",
+        icon: BarChart3,
+        actions: [
+            { label: "Open Subjects", path: "/subjects" },
+            { label: "Open Enrollments", path: "/classes/enrollments" },
+        ],
+    },
+    {
+        title: "Revenue Report",
+        summary:
+            "Track total collections, payment methods, and trends from payment records.",
+        category: "Finance",
+        status: "ready",
+        icon: Coins,
+        actions: [{ label: "Open Payments", path: "/payments" }],
+    },
+    {
+        title: "Fees Summary Report",
+        summary:
+            "Review fee configuration and scope by fee type, academic year, term, and class level.",
+        category: "Finance",
+        status: "ready",
+        icon: ChartNoAxesCombined,
+        actions: [{ label: "Open Fees", path: "/fees" }],
+    },
 ];
