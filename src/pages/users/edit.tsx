@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useEffect } from "react";
+import { useParams } from "react-router";
 
-import PageLoader from '@/components/PageLoader';
-import { Breadcrumb } from '@/components/refine-ui/layout/breadcrumb';
-import { EditView } from '@/components/refine-ui/views/edit-view';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PageLoader from "@/components/PageLoader";
+import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
+import { EditView } from "@/components/refine-ui/views/edit-view";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -13,32 +13,40 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import UploadWidget from '@/components/upload-widget';
-import { User } from '@/types';
-import { editUserSchema, EditUserValues } from '@/validations';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { BaseRecord, HttpError, useBack, useOne } from '@refinedev/core';
-import { useForm } from '@refinedev/react-hook-form';
-import { Loader2 } from 'lucide-react';
-import { SubmitHandler } from 'react-hook-form';
+} from "@/components/ui/select";
+import UploadWidget from "@/components/upload-widget";
+import { User } from "@/types";
+import { editUserSchema, EditUserValues } from "@/validations";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  BaseRecord,
+  HttpError,
+  useBack,
+  useGetIdentity,
+  useOne,
+} from "@refinedev/core";
+import { useForm } from "@refinedev/react-hook-form";
+import { Loader2 } from "lucide-react";
+import { SubmitHandler } from "react-hook-form";
 
 const EditUser = () => {
   const back = useBack();
   const { id } = useParams();
-  const userId = id ?? '';
+  const userId = id ?? "";
+
+  const { data: loggedInUser } = useGetIdentity<User>();
 
   const { query: userQuery } = useOne<User>({
-    resource: 'users',
+    resource: "users",
     id: userId,
     queryOptions: {
       enabled: Boolean(userId),
@@ -48,13 +56,13 @@ const EditUser = () => {
   const form = useForm<BaseRecord, HttpError, EditUserValues>({
     resolver: zodResolver(editUserSchema),
     refineCoreProps: {
-      resource: 'users',
-      action: 'edit',
+      resource: "users",
+      action: "edit",
       id: userId,
     },
     defaultValues: {
-      name: '',
-      role: 'student',
+      name: "",
+      role: "student",
       image: null,
       imageCldPubId: null,
     },
@@ -75,7 +83,7 @@ const EditUser = () => {
     if (!record) return;
     reset({
       name: record.name,
-      role: record.role as 'admin' | 'teacher' | 'student',
+      role: record.role as "admin" | "teacher" | "student",
       image: record.image ?? null,
       imageCldPubId: record.imageCldPubId ?? null,
     });
@@ -99,17 +107,17 @@ const EditUser = () => {
     );
   }
 
-    if (!userQuery.data?.data) {
-      return (
-        <EditView className="class-view">
+  if (!userQuery.data?.data) {
+    return (
+      <EditView className="class-view">
         <Breadcrumb />
         <p className="text-sm text-destructive">Failed to load user details.</p>
         <Button onClick={back} variant="outline" type="button">
           Go Back
         </Button>
       </EditView>
-      );
-    }
+    );
+  }
 
   return (
     <EditView className="class-view">
@@ -129,7 +137,9 @@ const EditUser = () => {
       <div className="my-4 flex items-center">
         <Card className="class-form-card w-full">
           <CardHeader className="relative z-10">
-            <CardTitle className="text-2xl pb-0 font-bold">Update user details</CardTitle>
+            <CardTitle className="text-2xl pb-0 font-bold">
+              Update user details
+            </CardTitle>
           </CardHeader>
 
           <Separator />
@@ -149,7 +159,7 @@ const EditUser = () => {
                         <Input
                           placeholder="Full name"
                           {...field}
-                          value={field.value ?? ''}
+                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -157,30 +167,35 @@ const EditUser = () => {
                   )}
                 />
 
-                <FormField
-                  control={control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Role <span className="text-orange-600">*</span>
-                      </FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="teacher">Teacher</SelectItem>
-                          <SelectItem value="student">Student</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {loggedInUser?.id !== userId && (
+                  <FormField
+                    control={control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Role <span className="text-orange-600">*</span>
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="teacher">Teacher</SelectItem>
+                            <SelectItem value="student">Student</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={control}
@@ -194,13 +209,13 @@ const EditUser = () => {
                             field.value
                               ? {
                                   url: field.value,
-                                  publicId: getValues('imageCldPubId') ?? '',
+                                  publicId: getValues("imageCldPubId") ?? "",
                                 }
                               : null
                           }
                           onChange={(value) => {
                             field.onChange(value?.url ?? null);
-                            setValue('imageCldPubId', value?.publicId ?? null, {
+                            setValue("imageCldPubId", value?.publicId ?? null, {
                               shouldDirty: true,
                               shouldValidate: true,
                             });
@@ -225,7 +240,7 @@ const EditUser = () => {
                         Saving...
                       </span>
                     ) : (
-                      'Save Changes'
+                      "Save Changes"
                     )}
                   </Button>
                 </div>

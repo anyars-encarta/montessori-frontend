@@ -4,26 +4,35 @@ import { useState } from "react";
 
 import { InputPassword } from "@/components/refine-ui/form/input-password";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import UploadWidget from "@/components/upload-widget";
 import { cn } from "@/lib/utils";
 import {
   useNotification,
   useRefineOptions,
   useRegister,
 } from "@refinedev/core";
+import { Loader2 } from "lucide-react";
 
 export const SignUpForm = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "teacher" | "student">("teacher");
+  const [image, setImage] = useState<string | null>(null);
+  const [imageCldPubId, setImageCldPubId] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [creatingUser, setCreatingUser] = useState(false);
 
   const { open } = useNotification();
 
@@ -35,6 +44,7 @@ export const SignUpForm = () => {
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setCreatingUser(true);
 
     if (password !== confirmPassword) {
       open?.({
@@ -48,9 +58,15 @@ export const SignUpForm = () => {
     }
 
     register({
+      name,
       email,
+      role,
+      image: image ?? undefined,
+      imageCldPubId: imageCldPubId ?? undefined,
       password,
     });
+
+    setCreatingUser(false);
   };
 
   // const handleSignUpWithGoogle = () => {
@@ -74,7 +90,7 @@ export const SignUpForm = () => {
         "justify-center",
         "px-6",
         "py-8",
-        "min-h-svh"
+        "min-h-svh",
       )}
     >
       <div className={cn("flex", "items-center", "justify-center", "gap-2")}>
@@ -94,7 +110,7 @@ export const SignUpForm = () => {
               "text-green-600",
               "dark:text-green-400",
               "text-3xl",
-              "font-semibold"
+              "font-semibold",
             )}
           >
             Sign up
@@ -111,6 +127,18 @@ export const SignUpForm = () => {
         <CardContent className={cn("px-0")}>
           <form onSubmit={handleSignUp}>
             <div className={cn("flex", "flex-col", "gap-2")}>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder=""
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className={cn("flex", "flex-col", "gap-2", "mt-6")}>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -119,6 +147,43 @@ export const SignUpForm = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+
+            <div className={cn("flex", "flex-col", "gap-2", "mt-6")}>
+              <Label>Role</Label>
+              <Select
+                value={role}
+                onValueChange={(value) =>
+                  setRole(value as "admin" | "teacher" | "student")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="teacher">Teacher</SelectItem>
+                  <SelectItem value="student">Student</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className={cn("flex", "flex-col", "gap-2")}>
+              <Label className="mt-6">Profile Image</Label>
+              <UploadWidget
+                value={
+                  image
+                    ? {
+                        url: image,
+                        publicId: imageCldPubId ?? "",
+                      }
+                    : null
+                }
+                onChange={(value) => {
+                  setImage(value?.url ?? null);
+                  setImageCldPubId(value?.publicId ?? null);
+                }}
               />
             </div>
 
@@ -154,10 +219,17 @@ export const SignUpForm = () => {
                 "mt-6",
                 "bg-green-600",
                 "hover:bg-green-700",
-                "text-white"
+                "text-white",
               )}
             >
-              Sign up
+              {creatingUser ? (
+                <div className="flex gap-1 items-center">
+                  <span>Creating User...</span>
+                  <Loader2 className="inline-block ml-2 animate-spin" />
+                </div>
+              ) : (
+                "Create User"
+              )}
             </Button>
 
             {/* <div className={cn("flex", "items-center", "gap-4", "mt-6")}>

@@ -565,7 +565,7 @@ export type SignUpPayload = {
   password: string;
   image?: string;
   imageCldPubId?: string;
-  role: UserRole;
+  role: "admin" | "teacher" | "student";
   department?: string;
 };
 

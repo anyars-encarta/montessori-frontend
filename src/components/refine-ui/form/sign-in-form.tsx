@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, Loader2 } from "lucide-react";
 
 import { InputPassword } from "@/components/refine-ui/form/input-password";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export const SignInForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   const Link = useLink();
 
@@ -33,11 +34,14 @@ export const SignInForm = () => {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setSigningIn(true);
 
     login({
       email,
       password,
     });
+
+    setSigningIn(false);
   };
 
   // const handleSignInWithGoogle = () => {
@@ -61,7 +65,7 @@ export const SignInForm = () => {
         "justify-center",
         "px-6",
         "py-8",
-        "min-h-svh"
+        "min-h-svh",
       )}
     >
       <div className={cn("flex", "items-center", "justify-center")}>
@@ -81,7 +85,7 @@ export const SignInForm = () => {
               "text-blue-600",
               "dark:text-blue-400",
               "text-3xl",
-              "font-semibold"
+              "font-semibold",
             )}
           >
             Sign in
@@ -124,7 +128,7 @@ export const SignInForm = () => {
                 "flex items-center justify-between",
                 "flex-wrap",
                 "gap-2",
-                "mt-4"
+                "mt-4",
               )}
             >
               <div className={cn("flex items-center", "space-x-2")}>
@@ -146,7 +150,7 @@ export const SignInForm = () => {
                   "gap-2",
                   "text-primary hover:underline",
                   "text-blue-600",
-                  "dark:text-blue-400"
+                  "dark:text-blue-400",
                 )}
               >
                 <span>Forgot password</span>
@@ -155,7 +159,14 @@ export const SignInForm = () => {
             </div>
 
             <Button type="submit" size="lg" className={cn("w-full", "mt-6")}>
-              Sign in
+              {signingIn ? (
+                <div className="flex gap-1 items-center">
+                  <span>Signing In...</span>
+                  <Loader2 className="inline-block ml-2 animate-spin" />
+                </div>
+              ) : (
+                "Sign In"
+              )}
             </Button>
 
             {/* <div className={cn("flex", "items-center", "gap-4", "mt-6")}>

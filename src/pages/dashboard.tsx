@@ -24,6 +24,7 @@ import type {
 } from "@/types";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import FinanceChart from "@/components/FinanceChart";
+import ActionButton from "@/components/actionButton";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
@@ -124,6 +125,9 @@ const Dashboard = () => {
             /\/+$/,
             "",
           )}/student-attendances?${params.toString()}`,
+          {
+            credentials: "include",
+          },
         );
 
         const payload = (await response.json()) as AttendanceHistoryResponse;
@@ -293,9 +297,27 @@ const Dashboard = () => {
       <div>
         <div className="flex items-center justify-between">
           <h1 className="page-title">Dashboard</h1>
-          <span className="text-primary">
-            Welcome, {loggedInUser?.name ?? "Guest"}
-          </span>
+
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-primary">
+                Welcome, {loggedInUser?.name ?? "Guest"}
+              </span>
+              <Link
+                to={`/users/edit/${loggedInUser?.id}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ActionButton type="update" />
+              </Link>
+            </div>
+
+            <Badge variant="outline">
+              {loggedInUser?.role
+                ? loggedInUser?.role.charAt(0).toUpperCase() +
+                  loggedInUser?.role.slice(1)
+                : "No role"}
+            </Badge>
+          </div>
         </div>
         <p className="text-muted-foreground">
           A quick snapshot of the latest activity and key metrics.
