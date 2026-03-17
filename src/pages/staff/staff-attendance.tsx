@@ -78,7 +78,7 @@ const StaffAttendancePage = () => {
     pagination: { pageSize: 1000 },
   });
 
-  const staff = staffResult.data;
+  const staff = staffResult.data ?? [];
 
   const summary = useMemo(() => {
     const present = rows.filter((row) => row.status === "present").length;
