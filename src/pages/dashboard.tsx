@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLink, useList, useNotification } from "@refinedev/core";
+import {
+  useGetIdentity,
+  useLink,
+  useList,
+  useNotification,
+} from "@refinedev/core";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
 import { BACKEND_BASE_URL } from "@/constants";
@@ -15,6 +20,7 @@ import type {
   StudentFeeRecord,
   PaymentRecord,
   DashboardSummary,
+  User,
 } from "@/types";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import FinanceChart from "@/components/FinanceChart";
@@ -45,8 +51,15 @@ const getCurrentWeekRange = () => {
 const Dashboard = () => {
   const Link = useLink();
   const { open } = useNotification();
-  const [studentsAttendances, setStudentsAttendances] = useState<StudentAttendance[]>([]);
+
+  const [studentsAttendances, setStudentsAttendances] = useState<
+    StudentAttendance[]
+  >([]);
+
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
+
+  const { data: loggedInUser } = useGetIdentity<User>();
+
   const { result: studentsResult } = useList<Student>({
     resource: "students",
     pagination: { mode: "server", currentPage: 1, pageSize: 100 },
@@ -107,7 +120,10 @@ const Dashboard = () => {
         });
 
         const response = await fetch(
-          `${BACKEND_BASE_URL.replace(/\/+$/, "")}/student-attendances?${params.toString()}`,
+          `${BACKEND_BASE_URL.replace(
+            /\/+$/,
+            "",
+          )}/student-attendances?${params.toString()}`,
         );
 
         const payload = (await response.json()) as AttendanceHistoryResponse;
@@ -115,13 +131,15 @@ const Dashboard = () => {
           throw new Error(payload.error ?? "Failed to load attendance data");
         }
 
-        const mappedRows: StudentAttendance[] = (payload.data ?? []).map((row) => ({
-          id: row.id,
-          studentId: row.studentId,
-          attendanceDate: row.attendanceDate,
-          status: row.status,
-          remarks: row.remarks,
-        }));
+        const mappedRows: StudentAttendance[] = (payload.data ?? []).map(
+          (row) => ({
+            id: row.id,
+            studentId: row.studentId,
+            attendanceDate: row.attendanceDate,
+            status: row.status,
+            remarks: row.remarks,
+          }),
+        );
 
         allRows.push(...mappedRows);
 
@@ -154,7 +172,7 @@ const Dashboard = () => {
     return () => {
       isDisposed = true;
     };
-  }, []);
+  }, [open]);
 
   const dashboardSummary = useMemo(
     () => dashboardSummaryResult.data?.[0] ?? null,
@@ -170,7 +188,8 @@ const Dashboard = () => {
     staff.filter((staffMember) => staffMember.staffType === "teacher").length;
   const totalNonTeachingCount =
     dashboardSummary?.totalNonTeachingStaff ??
-    staff.filter((staffMember) => staffMember.staffType === "non_teaching").length;
+    staff.filter((staffMember) => staffMember.staffType === "non_teaching")
+      .length;
   const totalClassesCount = dashboardSummary?.totalClasses ?? 0;
 
   const boys = dashboardSummary?.maleStudents ?? 0;
@@ -269,15 +288,13 @@ const Dashboard = () => {
     [studentPaymentsResult.data],
   );
 
-  const user = localStorage.getItem("user");
-
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center justify-between">
           <h1 className="page-title">Dashboard</h1>
           <span className="text-primary">
-            Welcome, {user ? JSON.parse(user).name : "Guest"}
+            Welcome, {loggedInUser?.name ?? "Guest"}
           </span>
         </div>
         <p className="text-muted-foreground">

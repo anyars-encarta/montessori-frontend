@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -17,7 +15,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
-  useLink,
   useNotification,
   useRefineOptions,
   useRegister,
@@ -30,7 +27,7 @@ export const SignUpForm = () => {
 
   const { open } = useNotification();
 
-  const Link = useLink();
+  // const Link = useLink();
 
   const { title } = useRefineOptions();
 
@@ -56,17 +53,17 @@ export const SignUpForm = () => {
     });
   };
 
-  const handleSignUpWithGoogle = () => {
-    register({
-      providerName: "google",
-    });
-  };
+  // const handleSignUpWithGoogle = () => {
+  //   register({
+  //     providerName: "google",
+  //   });
+  // };
 
-  const handleSignUpWithGitHub = () => {
-    register({
-      providerName: "github",
-    });
-  };
+  // const handleSignUpWithGitHub = () => {
+  //   register({
+  //     providerName: "github",
+  //   });
+  // };
 
   return (
     <div
@@ -102,11 +99,11 @@ export const SignUpForm = () => {
           >
             Sign up
           </CardTitle>
-          <CardDescription
+          {/* <CardDescription
             className={cn("text-muted-foreground", "font-medium")}
           >
             Welcome to lorem ipsum dolor.
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
 
         <Separator />
@@ -163,13 +160,13 @@ export const SignUpForm = () => {
               Sign up
             </Button>
 
-            <div className={cn("flex", "items-center", "gap-4", "mt-6")}>
+            {/* <div className={cn("flex", "items-center", "gap-4", "mt-6")}>
               <Separator className={cn("flex-1")} />
               <span className={cn("text-sm", "text-muted-foreground")}>or</span>
               <Separator className={cn("flex-1")} />
-            </div>
+            </div> */}
 
-            <div className={cn("flex", "flex-col", "gap-4", "mt-6")}>
+            {/* <div className={cn("flex", "flex-col", "gap-4", "mt-6")}>
               <div className={cn("grid grid-cols-2", "gap-6")}>
                 <Button
                   variant="outline"
@@ -214,13 +211,13 @@ export const SignUpForm = () => {
                   <div>GitHub</div>
                 </Button>
               </div>
-            </div>
+            </div> */}
           </form>
         </CardContent>
 
-        <Separator />
+        {/* <Separator /> */}
 
-        <CardFooter>
+        {/* <CardFooter>
           <div className={cn("w-full", "text-center text-sm")}>
             <span className={cn("text-sm", "text-muted-foreground")}>
               Have an account?{" "}
@@ -237,7 +234,7 @@ export const SignUpForm = () => {
               Sign in
             </Link>
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );

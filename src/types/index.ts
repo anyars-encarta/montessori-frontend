@@ -77,6 +77,18 @@ export enum UserRole {
   ADMIN = "admin",
 }
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  imageCldPubId: string | null;
+  role: UserRole | "student";
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type StudentBasic = {
   id: number;
   firstName: string;
@@ -485,6 +497,7 @@ export type Student = StudentBasic & {
   payments: StudentPayment[];
   attendances: StudentAttendance[];
   gender?: string | null;
+  isActive?: boolean;
 };
 
 export type StaffGender = "male" | "female" | "other";

@@ -1,7 +1,7 @@
+import { SignUpForm } from "@/components/refine-ui/form/sign-up-form";
+
 const CreateUser = () => {
-  return (
-    <div>CreateUser</div>
-  )
+  return <SignUpForm />;
 }
 
 export default CreateUser

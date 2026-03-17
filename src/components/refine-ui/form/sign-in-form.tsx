@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -41,17 +40,17 @@ export const SignInForm = () => {
     });
   };
 
-  const handleSignInWithGoogle = () => {
-    login({
-      providerName: "google",
-    });
-  };
+  // const handleSignInWithGoogle = () => {
+  //   login({
+  //     providerName: "google",
+  //   });
+  // };
 
-  const handleSignInWithGitHub = () => {
-    login({
-      providerName: "github",
-    });
-  };
+  // const handleSignInWithGitHub = () => {
+  //   login({
+  //     providerName: "github",
+  //   });
+  // };
 
   return (
     <div
@@ -159,13 +158,13 @@ export const SignInForm = () => {
               Sign in
             </Button>
 
-            <div className={cn("flex", "items-center", "gap-4", "mt-6")}>
+            {/* <div className={cn("flex", "items-center", "gap-4", "mt-6")}>
               <Separator className={cn("flex-1")} />
               <span className={cn("text-sm", "text-muted-foreground")}>or</span>
               <Separator className={cn("flex-1")} />
-            </div>
+            </div> */}
 
-            <div className={cn("flex", "flex-col", "gap-4", "mt-6")}>
+            {/* <div className={cn("flex", "flex-col", "gap-4", "mt-6")}>
               <p className={cn("text-sm", "font-medium")}>Sign in using</p>
               <div className={cn("grid grid-cols-2", "gap-6")}>
                 <Button
@@ -212,13 +211,13 @@ export const SignInForm = () => {
                   <div>GitHub</div>
                 </Button>
               </div>
-            </div>
+            </div> */}
           </form>
         </CardContent>
 
         <Separator />
 
-        <CardFooter>
+        {/* <CardFooter>
           <div className={cn("w-full", "text-center text-sm")}>
             <span className={cn("text-sm", "text-muted-foreground")}>
               No account?{" "}
@@ -235,7 +234,7 @@ export const SignInForm = () => {
               Sign up
             </Link>
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );

@@ -1,7 +1,361 @@
-const ListUsers = () => {
-  return (
-    <div>ListUsers</div>
-  )
-}
+import { useMemo, useState } from "react";
 
-export default ListUsers
+import ActionButton from "@/components/actionButton";
+import { CreateButton } from "@/components/refine-ui/buttons/create";
+import { EditButton } from "@/components/refine-ui/buttons/edit";
+import { ShowButton } from "@/components/refine-ui/buttons/show";
+import { DataTable } from "@/components/refine-ui/data-table/data-table";
+import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
+import { ListView } from "@/components/refine-ui/views/list-view";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { User } from "@/types";
+import { HttpError, useDelete, useNotification } from "@refinedev/core";
+import { useTable } from "@refinedev/react-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { Loader2, Search } from "lucide-react";
+
+const extractErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === "object" && "message" in error) {
+    return String(error.message);
+  }
+  return fallback;
+};
+
+const roleBadgeVariant = (
+  role: string,
+): "default" | "secondary" | "outline" => {
+  if (role === "admin") return "default";
+  if (role === "teacher") return "secondary";
+  return "outline";
+};
+
+const ListUsers = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [userPendingDelete, setUserPendingDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { open } = useNotification();
+  const { mutateAsync: deleteUser } = useDelete();
+
+  const filters = useMemo(() => {
+    const values: Array<{
+      field: string;
+      operator: "contains" | "eq";
+      value: string;
+    }> = [];
+
+    const normalizedSearch = searchQuery.trim();
+    if (normalizedSearch) {
+      values.push({
+        field: "search",
+        operator: "contains",
+        value: normalizedSearch,
+      });
+    }
+
+    if (selectedRole) {
+      values.push({
+        field: "role",
+        operator: "eq",
+        value: selectedRole,
+      });
+    }
+
+    return values;
+  }, [searchQuery, selectedRole]);
+
+  const usersTable = useTable<User>({
+    columns: useMemo<ColumnDef<User>[]>(
+      () => [
+        {
+          id: "name",
+          accessorKey: "name",
+          size: 230,
+          header: () => <p className="column-title">User</p>,
+          cell: ({ row }) => (
+            <div className="flex items-center gap-3">
+              {row.original.image ? (
+                <img
+                  src={row.original.image}
+                  alt={row.original.name}
+                  className="h-8 w-8 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium uppercase">
+                  {row.original.name?.charAt(0) ?? "?"}
+                </div>
+              )}
+              <div>
+                <p className="font-medium">{row.original.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {row.original.email}
+                </p>
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: "role",
+          accessorKey: "role",
+          size: 110,
+          header: () => <p className="column-title">Role</p>,
+          cell: ({ getValue }) => (
+            <Badge
+              variant={roleBadgeVariant(String(getValue() ?? ""))}
+              className="capitalize"
+            >
+              {String(getValue() ?? "")}
+            </Badge>
+          ),
+        },
+        {
+          id: "emailVerified",
+          accessorKey: "emailVerified",
+          size: 130,
+          header: () => <p className="column-title">Email Verified</p>,
+          cell: ({ getValue }) => {
+            const verified = Boolean(getValue<boolean>());
+            return (
+              <Badge variant={verified ? "default" : "secondary"}>
+                {verified ? "Verified" : "Unverified"}
+              </Badge>
+            );
+          },
+        },
+        {
+          id: "createdAt",
+          accessorKey: "createdAt",
+          size: 130,
+          header: () => <p className="column-title">Joined</p>,
+          cell: ({ getValue }) => (
+            <span className="text-muted-foreground text-sm">
+              {new Date(getValue<string>()).toLocaleDateString()}
+            </span>
+          ),
+        },
+        {
+          id: "actions",
+          size: 170,
+          header: () => <p className="column-title">Actions</p>,
+          cell: ({ row }) => (
+            <div className="flex items-center gap-2">
+              <ShowButton
+                resource="users"
+                recordItemId={row.original.id}
+                variant="outline"
+                size="sm"
+              >
+                <ActionButton type="view" />
+              </ShowButton>
+              <EditButton
+                resource="users"
+                recordItemId={row.original.id}
+                variant="outline"
+                size="sm"
+              >
+                <ActionButton type="update" />
+              </EditButton>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => setUserPendingDelete(row.original)}
+              >
+                <ActionButton type="delete" />
+              </Button>
+            </div>
+          ),
+        },
+      ],
+      [],
+    ),
+    refineCoreProps: {
+      resource: "users",
+      pagination: { pageSize: 10, mode: "server" },
+      filters: {
+        permanent: [...filters],
+      },
+      sorters: {
+        initial: [{ field: "createdAt", order: "desc" }],
+      },
+    },
+  });
+
+  const handleConfirmDelete = async () => {
+    if (!userPendingDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteUser(
+        {
+          resource: "users",
+          id: userPendingDelete.id,
+          successNotification: false,
+          errorNotification: false,
+        },
+        {
+          onSuccess: () => {
+            setUserPendingDelete(null);
+          },
+        },
+      );
+
+      open?.({
+        type: "success",
+        message: "User deleted",
+        description: `"${userPendingDelete.name}" was deleted successfully.`,
+      });
+    } catch (error) {
+      const statusCode =
+        error && typeof error === "object" && "statusCode" in error
+          ? Number((error as HttpError).statusCode)
+          : undefined;
+      const reason = extractErrorMessage(error, "Could not delete user.");
+
+      if (statusCode === 409) {
+        open?.({
+          type: "error",
+          message: "Cannot delete user",
+          description: reason,
+        });
+      } else {
+        open?.({
+          type: "error",
+          message: "Delete failed",
+          description: reason,
+        });
+      }
+
+      setUserPendingDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const hasActiveFilters = Boolean(searchQuery.trim()) || Boolean(selectedRole);
+
+  return (
+    <ListView>
+      <Breadcrumb />
+
+      <h1 className="page-title">Users</h1>
+
+      <div className="intro-row">
+        <p>Manage system user accounts and roles.</p>
+
+        <div className="actions-row">
+          <div className="search-field">
+            <Search className="search-icon" />
+            <Input
+              type="text"
+              placeholder="Search by name or email"
+              className="pl-10 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <div className="w-full sm:w-40">
+            <Select
+              value={selectedRole || "all"}
+              onValueChange={(value) =>
+                setSelectedRole(value === "all" ? "" : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All roles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All roles</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="teacher">Teacher</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <CreateButton resource="users" />
+
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedRole("");
+              }}
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <DataTable table={usersTable} />
+
+      <AlertDialog
+        open={Boolean(userPendingDelete)}
+        onOpenChange={(openState) => {
+          if (!openState && !isDeleting) {
+            setUserPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {userPendingDelete
+                ? `This will permanently delete "${userPendingDelete.name}" and all associated sessions.`
+                : "This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (event) => {
+                event.preventDefault();
+                await handleConfirmDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </ListView>
+  );
+};
+
+export default ListUsers;

@@ -183,3 +183,14 @@ export type CreateStaffValues = z.infer<typeof createStaffSchema>;
 export const editStaffSchema = createStaffSchema;
 
 export type EditStaffValues = z.infer<typeof editStaffSchema>;
+
+export const editUserSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  role: z.enum(["admin", "teacher", "student"], {
+    required_error: "Role is required",
+  }),
+  image: z.string().nullable(),
+  imageCldPubId: z.string().nullable(),
+});
+
+export type EditUserValues = z.infer<typeof editUserSchema>;

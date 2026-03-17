@@ -2,6 +2,20 @@ import type { AuthProvider } from "@refinedev/core";
 import { User, SignUpPayload } from "@/types";
 import { authClient } from "@/lib/auth-client";
 
+type SessionResponse = {
+  data?: {
+    user?: User;
+  } | null;
+  error?: {
+    message?: string;
+  } | null;
+};
+
+const getCurrentSessionUser = async () => {
+  const result = (await authClient.getSession()) as SessionResponse;
+  return result?.data?.user ?? null;
+};
+
 export const authProvider: AuthProvider = {
   register: async ({
     email,
@@ -132,28 +146,41 @@ export const authProvider: AuthProvider = {
     return { error };
   },
   check: async () => {
-    const user = localStorage.getItem("user");
+    try {
+      const user = await getCurrentSessionUser();
 
-    if (user) {
-      return {
-        authenticated: true,
-      };
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+        return {
+          authenticated: true,
+        };
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
     }
 
+    localStorage.removeItem("user");
     return {
       authenticated: false,
       logout: true,
       redirectTo: "/login",
       error: {
         name: "Unauthorized",
-        message: "Check failed",
+        message: "Please log in to continue.",
       },
     };
   },
   getPermissions: async () => {
-    const user = localStorage.getItem("user");
+    const sessionUser = await getCurrentSessionUser();
 
+    if (sessionUser) {
+      localStorage.setItem("user", JSON.stringify(sessionUser));
+      return { role: sessionUser.role };
+    }
+
+    const user = localStorage.getItem("user");
     if (!user) return null;
+
     try {
       const parsedUser: User = JSON.parse(user);
       return { role: parsedUser.role };
@@ -163,9 +190,23 @@ export const authProvider: AuthProvider = {
     }
   },
   getIdentity: async () => {
-    const user = localStorage.getItem("user");
+    const sessionUser = await getCurrentSessionUser();
 
+    if (sessionUser) {
+      localStorage.setItem("user", JSON.stringify(sessionUser));
+      return {
+        id: sessionUser.id,
+        name: sessionUser.name,
+        email: sessionUser.email,
+        image: sessionUser.image,
+        role: sessionUser.role,
+        imageCldPubId: sessionUser.imageCldPubId,
+      };
+    }
+
+    const user = localStorage.getItem("user");
     if (!user) return null;
+
     try {
       const parsedUser: User = JSON.parse(user);
       return {
