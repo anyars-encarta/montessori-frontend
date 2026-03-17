@@ -1,4 +1,5 @@
 import { CreateClassValues, CreatePaymentValues } from "@/validations";
+import { type LucideIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 
 export type Subject = {
@@ -832,4 +833,20 @@ export type DashboardSummary = {
   maleStudents: number;
   femaleStudents: number;
   otherStudents: number;
+};
+
+export type ReportState = "ready" | "guided";
+
+export type ReportAction = {
+    label: string;
+    path: string;
+};
+
+export type ReportCard = {
+    title: string;
+    summary: string;
+    category: "Academic" | "Attendance" | "Finance" | "Analytics";
+    status: ReportState;
+    icon: LucideIcon;
+    actions: ReportAction[];
 };

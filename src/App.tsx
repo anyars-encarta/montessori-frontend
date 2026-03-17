@@ -192,7 +192,6 @@ function App() {
                   meta: {
                     label: "Reports",
                     icon: <CheckSquare />,
-                    hide: true,
                   },
                 },
                 {
