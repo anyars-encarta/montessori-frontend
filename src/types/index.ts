@@ -822,3 +822,14 @@ export type PaymentFormProps = {
   submittingLabel: string;
   currentPayment?: PaymentRecord | null;
 };
+
+export type DashboardSummary = {
+  totalStudents: number;
+  totalActiveStudents: number;
+  totalTeachers: number;
+  totalNonTeachingStaff: number;
+  totalClasses: number;
+  maleStudents: number;
+  femaleStudents: number;
+  otherStudents: number;
+};

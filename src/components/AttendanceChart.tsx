@@ -49,7 +49,6 @@ const AttendanceChart = ({
             fill={presentColor}
             activeBar={<Rectangle fill={colors[0]} stroke={colors[1]} />}
             legendType="circle"
-            minPointSize={2}
             radius={[10, 10, 0, 0]}
           />
           <Bar
@@ -58,7 +57,6 @@ const AttendanceChart = ({
             fill={absentColor}
             activeBar={<Rectangle fill={colors[1]} stroke={colors[0]} />}
             legendType="circle"
-            minPointSize={2}
             radius={[10, 10, 0, 0]}
           />
         </BarChart>

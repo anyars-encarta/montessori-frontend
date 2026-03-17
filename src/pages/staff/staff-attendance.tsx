@@ -28,7 +28,12 @@ import {
 import { useList, useNotification } from "@refinedev/core";
 import { Check, Download, Loader2, Save } from "lucide-react";
 
-const toIsoDate = (value: Date) => value.toISOString().slice(0, 10);
+const toIsoDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const isWeekdayIsoDate = (value: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -57,7 +62,9 @@ const StaffAttendancePage = () => {
   const [isLoadingRegister, setIsLoadingRegister] = useState(false);
   const [isSavingRegister, setIsSavingRegister] = useState(false);
 
-  const [historyRows, setHistoryRows] = useState<StaffAttendanceHistoryRow[]>([]);
+  const [historyRows, setHistoryRows] = useState<StaffAttendanceHistoryRow[]>(
+    [],
+  );
   const [historyFromDate, setHistoryFromDate] = useState("");
   const [historyToDate, setHistoryToDate] = useState("");
   const [historyStaffId, setHistoryStaffId] = useState("");
@@ -188,7 +195,8 @@ const StaffAttendancePage = () => {
       open?.({
         type: "error",
         message: "Incomplete attendance",
-        description: "Mark every staff member as present or absent before saving.",
+        description:
+          "Mark every staff member as present or absent before saving.",
       });
       return;
     }
@@ -196,20 +204,23 @@ const StaffAttendancePage = () => {
     setIsSavingRegister(true);
 
     try {
-      const response = await fetch(buildApiUrl("/staff-attendances/bulk-mark"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        buildApiUrl("/staff-attendances/bulk-mark"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            attendanceDate,
+            entries: rows.map((row) => ({
+              staffId: row.staffId,
+              status: row.status,
+              remarks: row.remarks,
+            })),
+          }),
         },
-        body: JSON.stringify({
-          attendanceDate,
-          entries: rows.map((row) => ({
-            staffId: row.staffId,
-            status: row.status,
-            remarks: row.remarks,
-          })),
-        }),
-      });
+      );
 
       const payload = (await response.json()) as BulkMarkResponse;
 
@@ -220,7 +231,9 @@ const StaffAttendancePage = () => {
       open?.({
         type: "success",
         message: "Attendance saved",
-        description: `${payload.data?.totalProcessed ?? rows.length} attendance records were saved.`,
+        description: `${
+          payload.data?.totalProcessed ?? rows.length
+        } attendance records were saved.`,
       });
 
       await loadRegister();
@@ -243,28 +256,40 @@ const StaffAttendancePage = () => {
     setIsLoadingHistory(true);
 
     try {
-      const params = new URLSearchParams();
-      params.set("page", "1");
-      params.set("limit", "500");
+      const limit = 500;
+      let page = 1;
+      let totalPages = 1;
+      const allRows: StaffAttendanceHistoryRow[] = [];
 
-      if (historyFromDate) params.set("fromDate", historyFromDate);
-      if (historyToDate) params.set("toDate", historyToDate);
-      if (historyStaffId) params.set("staffId", historyStaffId);
-      if (historyStaffType) params.set("staffType", historyStaffType);
-      if (historyStatus) params.set("status", historyStatus);
-      if (historySearch.trim()) params.set("search", historySearch.trim());
+      while (page <= totalPages) {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+        });
 
-      const response = await fetch(
-        buildApiUrl(`/staff-attendances?${params.toString()}`),
-      );
+        if (historyFromDate) params.set("fromDate", historyFromDate);
+        if (historyToDate) params.set("toDate", historyToDate);
+        if (historyStaffId) params.set("staffId", historyStaffId);
+        if (historyStaffType) params.set("staffType", historyStaffType);
+        if (historyStatus) params.set("status", historyStatus);
+        if (historySearch.trim()) params.set("search", historySearch.trim());
 
-      const payload = (await response.json()) as StaffAttendanceHistoryResponse;
+        const response = await fetch(
+          buildApiUrl(`/staff-attendances?${params.toString()}`),
+        );
+        const payload =
+          (await response.json()) as StaffAttendanceHistoryResponse;
 
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.error ?? "Failed to load attendance history");
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Failed to load attendance history");
+        }
+
+        allRows.push(...(payload.data ?? []));
+        totalPages = payload.pagination?.totalPages ?? page;
+        page += 1;
       }
 
-      setHistoryRows(payload.data ?? []);
+      setHistoryRows(allRows);
     } catch (error) {
       open?.({
         type: "error",
@@ -290,7 +315,11 @@ const StaffAttendancePage = () => {
       return;
     }
 
-    const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const escapeCell = (value: string) => {
+      const sanitized = /^[=+\-@]/.test(value) ? `'${value}` : value;
+      return `"${sanitized.replace(/"/g, '""')}"`;
+    };
+
     const header = [
       "Date",
       "Staff Name",
@@ -338,7 +367,9 @@ const StaffAttendancePage = () => {
               <Label>Staff Type</Label>
               <Select
                 value={staffTypeFilter || "all"}
-                onValueChange={(value) => setStaffTypeFilter(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setStaffTypeFilter(value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All staff" />
@@ -456,12 +487,15 @@ const StaffAttendancePage = () => {
                   key={row.staffId}
                   className="grid gap-2 rounded-md border p-3 md:grid-cols-[44px_minmax(0,1.5fr)_minmax(0,1.2fr)_220px]"
                 >
-                  <div className="text-sm text-muted-foreground">{index + 1}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {index + 1}
+                  </div>
 
                   <div>
                     <p className="text-sm font-medium">{row.staffName}</p>
                     <p className="text-xs text-muted-foreground">
-                      {row.registrationNumber ?? "No Reg. Number"} • {formatStaffTypeLabel(row.staffType)}
+                      {row.registrationNumber ?? "No Reg. Number"} •{" "}
+                      {formatStaffTypeLabel(row.staffType)}
                     </p>
                   </div>
 
@@ -478,7 +512,9 @@ const StaffAttendancePage = () => {
                     <Button
                       type="button"
                       size="sm"
-                      variant={row.status === "absent" ? "destructive" : "outline"}
+                      variant={
+                        row.status === "absent" ? "destructive" : "outline"
+                      }
                       onClick={() => setStatusForRow(row.staffId, "absent")}
                     >
                       Absent
@@ -488,7 +524,9 @@ const StaffAttendancePage = () => {
                   <Input
                     placeholder="Optional remark"
                     value={row.remarks ?? ""}
-                    onChange={(event) => setRemarksForRow(row.staffId, event.target.value)}
+                    onChange={(event) =>
+                      setRemarksForRow(row.staffId, event.target.value)
+                    }
                   />
                 </div>
               ))
@@ -525,7 +563,9 @@ const StaffAttendancePage = () => {
               <Label>Staff</Label>
               <Select
                 value={historyStaffId || "all"}
-                onValueChange={(value) => setHistoryStaffId(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setHistoryStaffId(value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All staff" />
@@ -545,7 +585,9 @@ const StaffAttendancePage = () => {
               <Label>Staff Type</Label>
               <Select
                 value={historyStaffType || "all"}
-                onValueChange={(value) => setHistoryStaffType(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setHistoryStaffType(value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All" />
@@ -562,7 +604,9 @@ const StaffAttendancePage = () => {
               <Label>Status</Label>
               <Select
                 value={historyStatus || "all"}
-                onValueChange={(value) => setHistoryStatus(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setHistoryStatus(value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All" />
@@ -586,7 +630,11 @@ const StaffAttendancePage = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" onClick={loadHistory} disabled={isLoadingHistory}>
+            <Button
+              type="button"
+              onClick={loadHistory}
+              disabled={isLoadingHistory}
+            >
               {isLoadingHistory ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -619,7 +667,9 @@ const StaffAttendancePage = () => {
                   key={row.id}
                   className="grid gap-2 rounded-md border p-3 md:grid-cols-[130px_minmax(0,1.5fr)_130px_110px_200px]"
                 >
-                  <p className="text-sm text-muted-foreground">{row.attendanceDate}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {row.attendanceDate}
+                  </p>
 
                   <div>
                     <p className="text-sm font-medium">{row.staffName}</p>
@@ -633,8 +683,14 @@ const StaffAttendancePage = () => {
                   </p>
 
                   <Badge
-                    variant={row.status === "present" ? "default" : "destructive"}
-                    className={row.status === "present" ? "bg-emerald-600 hover:bg-emerald-600" : ""}
+                    variant={
+                      row.status === "present" ? "default" : "destructive"
+                    }
+                    className={
+                      row.status === "present"
+                        ? "bg-emerald-600 hover:bg-emerald-600"
+                        : ""
+                    }
                   >
                     {row.status}
                   </Badge>
