@@ -72,6 +72,139 @@ import ShowReports from "./pages/reports/show";
 import { ForgotPassword } from "./pages/forgot-password";
 import { ResetPassword } from "./pages/reset-password";
 
+// All available resources with their routes
+const ALL_RESOURCES = [
+  {
+    name: "dashboard",
+    list: "/",
+    meta: {
+      label: "Home",
+      icon: <Home />,
+    },
+  },
+  {
+    name: "classes",
+    list: "/classes",
+    create: "/classes/create",
+    show: "/classes/show/:id",
+    edit: "/classes/edit/:id",
+    meta: {
+      label: "Classes",
+      icon: <BookOpen />,
+    },
+  },
+  {
+    name: "subjects",
+    list: "/subjects",
+    create: "/subjects/create",
+    show: "/subjects/show/:id",
+    edit: "/subjects/edit/:id",
+    meta: {
+      label: "Subjects",
+      icon: <Clipboard />,
+    },
+  },
+  {
+    name: "students",
+    list: "/students",
+    create: "/students/create",
+    show: "/students/show/:id",
+    edit: "/students/edit/:id",
+    meta: {
+      label: "Students",
+      icon: <GraduationCap />,
+    },
+  },
+  {
+    name: "class-enrollments",
+    list: "/classes/enrollments",
+    meta: {
+      label: "Enrollments",
+      icon: <Dock />,
+    },
+  },
+  {
+    name: "student-attendance",
+    list: "/classes/student-attendance",
+    meta: {
+      label: "Student Attendance",
+      icon: <ClipboardCheck />,
+    },
+  },
+  {
+    name: "staff",
+    list: "/staff",
+    create: "/staff/create",
+    show: "/staff/show/:id",
+    edit: "/staff/edit/:id",
+    meta: {
+      label: "Staff",
+      icon: <Users2Icon />,
+    },
+  },
+  {
+    name: "staff-attendance",
+    list: "/staff/staff-attendance",
+    meta: {
+      label: "Staff Attendance",
+      icon: <ClipboardCheck />,
+    },
+  },
+  {
+    name: "payments",
+    list: "/payments",
+    create: "/payments/create",
+    show: "/payments/show/:id",
+    edit: "/payments/edit/:id",
+    meta: {
+      label: "Payments",
+      icon: <HandCoins />,
+    },
+  },
+  {
+    name: "users",
+    list: "/users",
+    create: "/users/create",
+    show: "/users/show/:id",
+    edit: "/users/edit/:id",
+    meta: {
+      label: "Users",
+      icon: <Users />,
+    },
+  },
+  {
+    name: "reports",
+    list: "/reports",
+    meta: {
+      label: "Reports",
+      icon: <CheckSquare />,
+    },
+  },
+  {
+    name: "setup",
+    list: "/setup",
+    create: "/setup/create",
+    edit: "/setup/edit/:id",
+    meta: {
+      label: "Setup",
+      icon: <Settings />,
+    },
+  },
+  {
+    name: "fees",
+    list: "/fees",
+    create: "/fees/create",
+    show: "/fees/show/:id",
+    edit: "/fees/edit/:id",
+    meta: {
+      label: "Fees",
+      icon: <Banknote />,
+      hide: true,
+    },
+  },
+];
+
+// Outer component with all providers
 function App() {
   return (
     <BrowserRouter>
@@ -88,136 +221,7 @@ function App() {
                 warnWhenUnsavedChanges: true,
                 projectId: "tv94aP-lQukHU-SW9MFa",
               }}
-              resources={[
-                {
-                  name: "dashboard",
-                  list: "/",
-                  meta: {
-                    label: "Home",
-                    icon: <Home />,
-                  },
-                },
-                {
-                  name: "classes",
-                  list: "/classes",
-                  create: "/classes/create",
-                  show: "/classes/show/:id",
-                  edit: "/classes/edit/:id",
-                  meta: {
-                    label: "Classes",
-                    icon: <BookOpen />,
-                  },
-                },
-                {
-                  name: "subjects",
-                  list: "/subjects",
-                  create: "/subjects/create",
-                  show: "/subjects/show/:id",
-                  edit: "/subjects/edit/:id",
-                  meta: {
-                    label: "Subjects",
-                    icon: <Clipboard />,
-                  },
-                },
-                {
-                  name: "students",
-                  list: "/students",
-                  create: "/students/create",
-                  show: "/students/show/:id",
-                  edit: "/students/edit/:id",
-                  meta: {
-                    label: "Students",
-                    icon: <GraduationCap />,
-                  },
-                },
-                {
-                  name: "class-enrollments",
-                  list: "/classes/enrollments",
-                  meta: {
-                    label: "Enrollments",
-                    icon: <Dock />,
-                  },
-                },
-                {
-                  name: "student-attendance",
-                  list: "/classes/student-attendance",
-                  meta: {
-                    label: "Student Attendance",
-                    icon: <ClipboardCheck />,
-                  },
-                },
-                {
-                  name: "staff",
-                  list: "/staff",
-                  create: "/staff/create",
-                  show: "/staff/show/:id",
-                  edit: "/staff/edit/:id",
-                  meta: {
-                    label: "Staff",
-                    icon: <Users2Icon />,
-                  },
-                },
-                {
-                  name: "staff-attendance",
-                  list: "/staff/staff-attendance",
-                  meta: {
-                    label: "Staff Attendance",
-                    icon: <ClipboardCheck />,
-                  },
-                },
-                {
-                  name: "payments",
-                  list: "/payments",
-                  create: "/payments/create",
-                  show: "/payments/show/:id",
-                  edit: "/payments/edit/:id",
-                  meta: {
-                    label: "Payments",
-                    icon: <HandCoins />,
-                  },
-                },
-                {
-                  name: "users",
-                  list: "/users",
-                  create: "/users/create",
-                  show: "/users/show/:id",
-                  edit: "/users/edit/:id",
-                  meta: {
-                    label: "Users",
-                    icon: <Users />,
-                  },
-                },
-                {
-                  name: "reports",
-                  list: "/reports",
-                  meta: {
-                    label: "Reports",
-                    icon: <CheckSquare />,
-                  },
-                },
-                {
-                  name: "setup",
-                  list: "/setup",
-                  create: "/setup/create",
-                  edit: "/setup/edit/:id",
-                  meta: {
-                    label: "Setup",
-                    icon: <Settings />,
-                  },
-                },
-                {
-                  name: "fees",
-                  list: "/fees",
-                  create: "/fees/create",
-                  show: "/fees/show/:id",
-                  edit: "/fees/edit/:id",
-                  meta: {
-                    label: "Fees",
-                    icon: <Banknote />,
-                    hide: true,
-                  },
-                },
-              ]}
+              resources={ALL_RESOURCES}
             >
               <Routes>
                 <Route

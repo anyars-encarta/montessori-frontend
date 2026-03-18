@@ -30,13 +30,20 @@ import {
   useRefineOptions,
   type TreeMenuItem,
 } from "@refinedev/core";
+import {
+  getStoredRole,
+  isResourceVisibleToRole,
+} from "@/utils/resource-visibility";
 import { ChevronRight, ListIcon, LogOut } from "lucide-react";
 import React from "react";
 
 export function Sidebar() {
   const { open } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
-  const visibleMenuItems = menuItems.filter((item) => !item.meta?.hide);
+  const userRole = getStoredRole();
+  const visibleMenuItems = menuItems.filter(
+    (item) => !item.meta?.hide && isResourceVisibleToRole(item.name, userRole)
+  );
 
   return (
     <ShadcnSidebar collapsible="icon" className={cn("border-none")}>
