@@ -62,7 +62,7 @@ const EditUser = () => {
     defaultValues: {
       name: "",
       email: '',
-      role: 'student',
+      role: 'staff',
       image: null,
       imageCldPubId: null,
       password: '',
@@ -86,7 +86,7 @@ const EditUser = () => {
     reset({
       name: record.name,
       email: record.email,
-      role: record.role as 'admin' | 'teacher' | 'student',
+      role: record.role as 'admin' | 'teacher' | 'staff',
       image: record.image ?? null,
       imageCldPubId: record.imageCldPubId ?? null,
       password: '',
@@ -215,7 +215,7 @@ const EditUser = () => {
                           <SelectContent>
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="teacher">Teacher</SelectItem>
-                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

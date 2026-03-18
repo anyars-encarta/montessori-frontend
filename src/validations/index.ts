@@ -192,7 +192,7 @@ export const editUserSchema = z
       .trim()
       .min(1, "Email is required")
       .email("Invalid email address"),
-    role: z.enum(["admin", "teacher", "student"], {
+    role: z.enum(["admin", "teacher", "staff"], {
       required_error: "Role is required",
     }),
     image: z.string().nullable(),

@@ -26,7 +26,7 @@ import { Loader2 } from "lucide-react";
 export const SignUpForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "teacher" | "student">("teacher");
+  const [role, setRole] = useState<"admin" | "teacher" | "staff">("teacher");
   const [image, setImage] = useState<string | null>(null);
   const [imageCldPubId, setImageCldPubId] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -123,7 +123,7 @@ export const SignUpForm = () => {
               <Select
                 value={role}
                 onValueChange={(value) =>
-                  setRole(value as "admin" | "teacher" | "student")
+                  setRole(value as "admin" | "teacher" | "staff")
                 }
               >
                 <SelectTrigger>
