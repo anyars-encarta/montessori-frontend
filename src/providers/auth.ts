@@ -1,6 +1,7 @@
 import type { AuthProvider } from "@refinedev/core";
 import { User, SignUpPayload } from "@/types";
 import { authClient } from "@/lib/auth-client";
+import { BACKEND_BASE_URL } from "@/constants";
 
 type SessionResponse = {
   data?: {
@@ -187,6 +188,43 @@ export const authProvider: AuthProvider = {
     } catch {
       localStorage.removeItem("user");
       return null;
+    }
+  },
+  forgotPassword: async ({ email }: { email: string }) => {
+    try {
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const res = await fetch(
+        `${BACKEND_BASE_URL.replace(/\/+$/, "")}/auth/request-password-reset`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, redirectTo }),
+        },
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return {
+          success: false,
+          error: {
+            name: "Forgot password failed",
+            message:
+              (body as { message?: string }).message ??
+              "Unable to send reset email. Please try again.",
+          },
+        };
+      }
+
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        error: {
+          name: "Forgot password failed",
+          message: "Unable to send reset email. Please try again.",
+        },
+      };
     }
   },
   getIdentity: async () => {

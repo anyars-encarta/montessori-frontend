@@ -14,14 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { useForgotPassword, useLink, useRefineOptions } from "@refinedev/core";
+import { useForgotPassword, useLink } from "@refinedev/core";
 
 export const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("");
 
   const Link = useLink();
-
-  const { title } = useRefineOptions();
 
   const { mutate: forgotPassword } = useForgotPassword();
 
@@ -45,16 +43,6 @@ export const ForgotPasswordForm = () => {
         "min-h-svh"
       )}
     >
-      <div className={cn("flex", "items-center", "justify-center", "gap-2")}>
-        {title.icon && (
-          <div
-            className={cn("text-foreground", "[&>svg]:w-12", "[&>svg]:h-12")}
-          >
-            {title.icon}
-          </div>
-        )}
-      </div>
-
       <Card className={cn("sm:w-[456px]", "p-12", "mt-6")}>
         <CardHeader className={cn("px-0")}>
           <CardTitle
