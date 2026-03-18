@@ -38,7 +38,7 @@ import EnrollmentsPage from "./pages/classes/enrollments";
 import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
 import StudentAttendancePage from "./pages/classes/student-attendance";
 import Login from "./pages/login";
-import Register from "./pages/register";
+import Register from "./pages/users/register";
 import { authProvider } from "./providers/auth";
 import Dashboard from "./pages/dashboard";
 import ListStudents from "./pages/students/list";
@@ -70,6 +70,7 @@ import CreatePayment from "./pages/payments/create";
 import ShowPayment from "./pages/payments/show";
 import EditPayment from "./pages/payments/edit";
 import ShowReports from "./pages/reports/show";
+import { ForgotPassword } from "./pages/forgot-password";
 
 function App() {
   return (
@@ -227,7 +228,7 @@ function App() {
                   }
                 >
                   <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
                 </Route>
 
                 <Route
@@ -240,6 +241,7 @@ function App() {
                   }
                 >
                   <Route path="/" element={<Dashboard />} />
+                  
 
                   <Route path="classes">
                     <Route index element={<ListClasses />} />
@@ -294,6 +296,7 @@ function App() {
                     <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
+                    <Route path="/register" element={<Register />} />
                   </Route>
 
                   <Route path="reports">
