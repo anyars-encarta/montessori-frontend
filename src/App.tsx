@@ -38,7 +38,6 @@ import EnrollmentsPage from "./pages/classes/enrollments";
 import EnrollmentScoresEditPage from "./pages/classes/enrollment-scores-edit";
 import StudentAttendancePage from "./pages/classes/student-attendance";
 import Login from "./pages/login";
-import Register from "./pages/users/register";
 import { authProvider } from "./providers/auth";
 import Dashboard from "./pages/dashboard";
 import ListStudents from "./pages/students/list";
@@ -296,7 +295,6 @@ function App() {
                     <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
-                    <Route path="/register" element={<Register />} />
                   </Route>
 
                   <Route path="reports">

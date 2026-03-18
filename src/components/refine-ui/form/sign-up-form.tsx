@@ -19,7 +19,6 @@ import UploadWidget from "@/components/upload-widget";
 import { cn } from "@/lib/utils";
 import {
   useNotification,
-  useRefineOptions,
   useRegister,
 } from "@refinedev/core";
 import { Loader2 } from "lucide-react";
@@ -35,10 +34,6 @@ export const SignUpForm = () => {
   const [creatingUser, setCreatingUser] = useState(false);
 
   const { open } = useNotification();
-
-  // const Link = useLink();
-
-  const { title } = useRefineOptions();
 
   const { mutate: register } = useRegister();
 
@@ -69,18 +64,6 @@ export const SignUpForm = () => {
     setCreatingUser(false);
   };
 
-  // const handleSignUpWithGoogle = () => {
-  //   register({
-  //     providerName: "google",
-  //   });
-  // };
-
-  // const handleSignUpWithGitHub = () => {
-  //   register({
-  //     providerName: "github",
-  //   });
-  // };
-
   return (
     <div
       className={cn(
@@ -93,16 +76,6 @@ export const SignUpForm = () => {
         "min-h-svh",
       )}
     >
-      <div className={cn("flex", "items-center", "justify-center", "gap-2")}>
-        {title.icon && (
-          <div
-            className={cn("text-foreground", "[&>svg]:w-12", "[&>svg]:h-12")}
-          >
-            {title.icon}
-          </div>
-        )}
-      </div>
-
       <Card className={cn("sm:w-[456px]", "p-12", "mt-6")}>
         <CardHeader className={cn("px-0")}>
           <CardTitle
@@ -113,13 +86,8 @@ export const SignUpForm = () => {
               "font-semibold",
             )}
           >
-            Sign up
+            Create a New User
           </CardTitle>
-          {/* <CardDescription
-            className={cn("text-muted-foreground", "font-medium")}
-          >
-            Welcome to lorem ipsum dolor.
-          </CardDescription> */}
         </CardHeader>
 
         <Separator />
