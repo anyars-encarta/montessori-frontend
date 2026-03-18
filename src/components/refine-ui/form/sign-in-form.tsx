@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useLink, useLogin, useRefineOptions } from "@refinedev/core";
+import { useLink, useLogin } from "@refinedev/core";
 
 export const SignInForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
@@ -27,8 +27,6 @@ export const SignInForm = () => {
   const [signingIn, setSigningIn] = useState(false);
 
   const Link = useLink();
-
-  const { title } = useRefineOptions();
 
   const { mutate: login } = useLogin();
 
@@ -45,28 +43,9 @@ export const SignInForm = () => {
   };
 
   return (
-    <div
-      className={cn(
-        "flex",
-        "flex-col",
-        "items-center",
-        "justify-center",
-        "px-6",
-        "py-8",
-        "min-h-svh",
-      )}
-    >
-      <div className={cn("flex", "items-center", "justify-center")}>
-        {title.icon && (
-          <div
-            className={cn("text-foreground", "[&>svg]:w-12", "[&>svg]:h-12")}
-          >
-            {title.icon}
-          </div>
-        )}
-      </div>
-
-      <Card className={cn("sm:w-[456px]", "p-12", "mt-6")}>
+    <div className="flex h-screen items-center justify-between gap-8">
+      <div className="w-full flex items-center justify-center p-8">
+         <Card className={cn("sm:w-[456px]", "p-12", "mt-6")}>
         <CardHeader className={cn("px-0")}>
           <CardTitle
             className={cn(
@@ -159,6 +138,15 @@ export const SignInForm = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
+
+        <img
+          src="/student_image.jpg"
+          height={1000}
+          width={1000}
+          alt="student"
+          className="sign-in-hero-image"
+        />
     </div>
   );
 };
