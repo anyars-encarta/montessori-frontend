@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Loader2 } from "lucide-react";
+import { CircleHelp, Loader2 } from "lucide-react";
 
 import { InputPassword } from "@/components/refine-ui/form/input-password";
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useLogin } from "@refinedev/core";
+import { useLink, useLogin } from "@refinedev/core";
 
 export const SignInForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+
+  const Link = useLink();
 
   const { mutateAsync: login } = useLogin();
 
@@ -109,6 +111,21 @@ export const SignInForm = () => {
                 />
                 <Label htmlFor="remember">Remember me</Label>
               </div>
+              <Link
+                to="/forgot-password"
+                className={cn(
+                  "text-sm",
+                  "flex",
+                  "items-center",
+                  "gap-2",
+                  "text-primary hover:underline",
+                  "text-blue-600",
+                  "dark:text-blue-400",
+                )}
+              >
+                <span>Forgot password</span>
+                <CircleHelp className={cn("w-4", "h-4")} />
+              </Link>
             </div>
 
             <Button
