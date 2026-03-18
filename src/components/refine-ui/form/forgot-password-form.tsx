@@ -82,7 +82,8 @@ export const ForgotPasswordForm = () => {
                     "bg-blue-600",
                     "hover:bg-blue-700",
                     "text-white",
-                    "px-6"
+                    "px-6",
+                    "cursor-pointer",
                   )}
                 >
                   Send

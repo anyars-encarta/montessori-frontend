@@ -70,6 +70,7 @@ import ShowPayment from "./pages/payments/show";
 import EditPayment from "./pages/payments/edit";
 import ShowReports from "./pages/reports/show";
 import { ForgotPassword } from "./pages/forgot-password";
+import { ResetPassword } from "./pages/reset-password";
 
 function App() {
   return (
@@ -228,6 +229,7 @@ function App() {
                 >
                   <Route path="/login" element={<Login />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                 </Route>
 
                 <Route
@@ -240,7 +242,6 @@ function App() {
                   }
                 >
                   <Route path="/" element={<Dashboard />} />
-                  
 
                   <Route path="classes">
                     <Route index element={<ListClasses />} />
