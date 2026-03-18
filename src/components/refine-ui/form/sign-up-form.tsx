@@ -26,7 +26,7 @@ import { Loader2 } from "lucide-react";
 export const SignUpForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"admin" | "teacher" | "staff">("teacher");
+  const [role, setRole] = useState<"admin" | "teacher" | "staff">("staff");
   const [image, setImage] = useState<string | null>(null);
   const [imageCldPubId, setImageCldPubId] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -35,33 +35,37 @@ export const SignUpForm = () => {
 
   const { open } = useNotification();
 
-  const { mutate: register } = useRegister();
+  const { mutateAsync: register } = useRegister();
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (creatingUser) return;
+
     setCreatingUser(true);
 
-    if (password !== confirmPassword) {
-      open?.({
-        type: "error",
-        message: "Passwords don't match",
-        description:
-          "Please make sure both password fields contain the same value.",
+    try {
+      if (password !== confirmPassword) {
+        open?.({
+          type: "error",
+          message: "Passwords don't match",
+          description:
+            "Please make sure both password fields contain the same value.",
+        });
+
+        return;
+      }
+
+      await register({
+        name,
+        email,
+        role,
+        image: image ?? undefined,
+        imageCldPubId: imageCldPubId ?? undefined,
+        password,
       });
-
-      return;
+    } finally {
+      setCreatingUser(false);
     }
-
-    register({
-      name,
-      email,
-      role,
-      image: image ?? undefined,
-      imageCldPubId: imageCldPubId ?? undefined,
-      password,
-    });
-
-    setCreatingUser(false);
   };
 
   return (
@@ -132,7 +136,7 @@ export const SignUpForm = () => {
                 <SelectContent>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="staff">Staff</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -182,6 +186,7 @@ export const SignUpForm = () => {
             <Button
               type="submit"
               size="lg"
+              disabled={creatingUser}
               className={cn(
                 "w-full",
                 "mt-6",
@@ -193,8 +198,8 @@ export const SignUpForm = () => {
             >
               {creatingUser ? (
                 <div className="flex gap-1 items-center">
-                  <span>Creating User...</span>
                   <Loader2 className="inline-block ml-2 animate-spin" />
+                  <span>Creating User...</span>
                 </div>
               ) : (
                 "Create User"

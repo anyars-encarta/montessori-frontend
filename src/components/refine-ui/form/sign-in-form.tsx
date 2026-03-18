@@ -28,18 +28,21 @@ export const SignInForm = () => {
 
   const Link = useLink();
 
-  const { mutate: login } = useLogin();
+  const { mutateAsync: login } = useLogin();
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (signingIn) return;
+
     setSigningIn(true);
-
-    login({
-      email,
-      password,
-    });
-
-    setSigningIn(false);
+    try {
+      await login({
+        email,
+        password,
+      });
+    } finally {
+      setSigningIn(false);
+    }
   };
 
   return (
@@ -125,11 +128,16 @@ export const SignInForm = () => {
               </Link>
             </div>
 
-            <Button type="submit" size="lg" className={cn("w-full", "mt-6", "cursor-pointer")}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={signingIn}
+              className={cn("w-full", "mt-6", "cursor-pointer")}
+            >
               {signingIn ? (
                 <div className="flex gap-1 items-center">
-                  <span>Signing In...</span>
                   <Loader2 className="inline-block ml-2 animate-spin" />
+                  <span>Signing In...</span>
                 </div>
               ) : (
                 "Sign In"

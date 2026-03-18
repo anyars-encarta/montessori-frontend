@@ -290,7 +290,7 @@ const ListUsers = () => {
                 <SelectItem value="all">All roles</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="teacher">Teacher</SelectItem>
-                <SelectItem value="student">Student</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
               </SelectContent>
             </Select>
           </div>

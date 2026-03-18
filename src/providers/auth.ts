@@ -30,7 +30,7 @@ export const authProvider: AuthProvider = {
         name: name || "",
         email,
         password,
-        role: role || "teacher",
+        role: role || "staff",
         image: image || "",
         imageCldPubId: imageCldPubId || "",
       });

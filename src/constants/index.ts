@@ -14,15 +14,15 @@ import {
 } from "lucide-react";
 
 export const USER_ROLES = {
-    STUDENT: "student",
+    STAFF: "staff",
     TEACHER: "teacher",
     ADMIN: "admin",
 };
 
 export const ROLE_OPTIONS = [
     {
-        value: USER_ROLES.STUDENT,
-        label: "Student",
+        value: USER_ROLES.STAFF,
+        label: "Staff",
         icon: GraduationCap,
     },
     {

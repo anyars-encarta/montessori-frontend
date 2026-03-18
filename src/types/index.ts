@@ -84,7 +84,7 @@ export type User = {
   emailVerified: boolean;
   image: string | null;
   imageCldPubId: string | null;
-  role: UserRole | "student";
+  role: UserRole | "staff";
   createdAt: string;
   updatedAt: string;
 };
@@ -565,7 +565,7 @@ export type SignUpPayload = {
   password: string;
   image?: string;
   imageCldPubId?: string;
-  role: "admin" | "teacher" | "student";
+  role: "admin" | "teacher" | "staff";
   department?: string;
 };
 
