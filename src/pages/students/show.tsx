@@ -168,7 +168,7 @@ const ShowStudent = () => {
       const printWindow = window.open(
         "",
         "_blank",
-        "noopener,noreferrer,width=1024,height=768",
+        "width=1024,height=768",
       );
 
       if (!printWindow) {
@@ -211,7 +211,7 @@ const ShowStudent = () => {
       const printWindow = window.open(
         "",
         "_blank",
-        "noopener,noreferrer,width=1024,height=768",
+        "width=1024,height=768",
       );
 
       if (!printWindow) {
@@ -258,7 +258,7 @@ const ShowStudent = () => {
       const printWindow = window.open(
         "",
         "_blank",
-        "noopener,noreferrer,width=1024,height=768",
+        "width=1024,height=768",
       );
 
       if (!printWindow) {

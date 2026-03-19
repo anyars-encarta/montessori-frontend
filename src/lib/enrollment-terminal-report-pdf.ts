@@ -75,7 +75,7 @@ const openPrintWindow = (
   const objectUrl = URL.createObjectURL(pdfBlob);
   const popup =
     existingWindow ??
-    window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+    window.open("", "_blank", "width=1024,height=768");
 
   if (!popup) {
     URL.revokeObjectURL(objectUrl);
@@ -227,7 +227,7 @@ export const generateEnrollmentTerminalReportPdf = async (
     bodyStyles: {
       valign: "middle",
     },
-    head: [["Subject", "Class", "Exam", "Total", "Pos", "Remark"]],
+    head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Position", "Remark"]],
     body:
       report.assessments.length > 0
         ? report.assessments.map((assessment) => [
