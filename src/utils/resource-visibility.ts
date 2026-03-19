@@ -46,7 +46,7 @@ const RESOURCE_VISIBILITY: Record<string, ResourceConfig> = {
   },
   staff: {
     name: "staff",
-    visibleTo: [USER_ROLES.ADMIN, USER_ROLES.STAFF],
+    visibleTo: [USER_ROLES.ADMIN],
   },
   "staff-attendance": {
     name: "staff-attendance",
