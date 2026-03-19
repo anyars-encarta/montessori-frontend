@@ -30,6 +30,7 @@ import { useList, useNotification } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
+import ActionButton from "@/components/actionButton";
 
 const formatDate = (date: string) => {
   const parsed = new Date(date);
@@ -335,7 +336,7 @@ const EnrollmentsPage = () => {
                 navigate(`/classes/enrollments/scores/${row.original.id}`)
               }
             >
-              Edit Scores
+              <ActionButton type="update" />
             </Button>
           ),
         },

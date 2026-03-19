@@ -863,3 +863,17 @@ export type ReportCard = {
     icon: LucideIcon;
     actions: ReportAction[];
 };
+
+export type PdfMode = "download" | "print";
+
+export type GenerateEnrollmentReportPdfOptions = {
+  mode?: PdfMode;
+  filename?: string;
+  autoClosePrintWindow?: boolean;
+  printWindow?: Window | null;
+};
+
+export type StudentPdfContext = {
+  fullName: string;
+  registrationNumber?: string | null;
+};

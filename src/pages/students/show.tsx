@@ -5,7 +5,11 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import { BACKEND_BASE_URL } from "@/constants";
-import { generateEnrollmentTerminalReportPdf } from "@/lib/enrollment-terminal-report-pdf";
+import {
+  generateEnrollmentTerminalReportPdf,
+  generateStudentFeeReportPdf,
+  generateStudentPaymentReportPdf,
+} from "@/lib/enrollment-terminal-report-pdf";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import {
   ShowView,
@@ -76,36 +80,24 @@ const ShowStudent = () => {
   const navigate = useNavigate();
   const { open } = useNotification();
 
-  const loadEnrollmentReport = useCallback(async (enrollmentId: number) => {
-    const response = await fetch(
-      buildApiUrl(
-        `/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`,
-      ),
-      {
-        credentials: "include",
-      },
-    );
+  const { query } = useShow<Student>({
+    resource: "students",
+    id: studentId,
+  });
 
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        message?: string;
-      };
-      throw new Error(
-        payload.error ?? payload.message ?? "Failed to fetch enrollment report",
-      );
-    }
+  const student = query.data?.data;
 
-    const payload = (await response.json()) as {
-      success?: boolean;
-      data?: ClassEnrollmentOverviewRow[];
-    };
+  const getStudentPrintContext = useCallback(
+    () => ({
+      fullName:
+        `${student?.firstName ?? ""} ${student?.lastName ?? ""}`.trim() ||
+        "Student",
+      registrationNumber: student?.registrationNumber ?? null,
+    }),
+    [student?.firstName, student?.lastName, student?.registrationNumber],
+  );
 
-    const report = payload.data?.[0];
-    if (!report) {
-      throw new Error("No terminal report data found for this enrollment.");
-    }
-
+  const loadSchoolDetails = useCallback(async () => {
     let school: SchoolDetailsRecord | null = null;
     try {
       const schoolResponse = await fetch(buildApiUrl("/school-details"), {
@@ -123,19 +115,79 @@ const ShowStudent = () => {
       // Report rendering should continue even if school details cannot be fetched.
     }
 
-    return { report, school };
+    return school;
   }, []);
+
+  const loadEnrollmentReport = useCallback(
+    async (enrollmentId: number) => {
+      const response = await fetch(
+        buildApiUrl(
+          `/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`,
+        ),
+        {
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          message?: string;
+        };
+        throw new Error(
+          payload.error ??
+            payload.message ??
+            "Failed to fetch enrollment report",
+        );
+      }
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: ClassEnrollmentOverviewRow[];
+      };
+
+      const report = payload.data?.[0];
+      if (!report) {
+        throw new Error("No terminal report data found for this enrollment.");
+      }
+
+      const school = await loadSchoolDetails();
+
+      return { report, school };
+    },
+    [loadSchoolDetails],
+  );
 
   const printEnrollmentReport = useCallback(
     async (enrollmentId: number) => {
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "noopener,noreferrer,width=1024,height=768",
+      );
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
       try {
         const { report, school } = await loadEnrollmentReport(enrollmentId);
 
         await generateEnrollmentTerminalReportPdf(report, school, {
           mode: "print",
           autoClosePrintWindow: true,
+          printWindow,
         });
       } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
         open?.({
           type: "error",
           message: "Print failed",
@@ -147,6 +199,100 @@ const ShowStudent = () => {
       }
     },
     [loadEnrollmentReport, open],
+  );
+
+  const printFeeReport = useCallback(
+    async (fee: StudentFeeRow) => {
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "noopener,noreferrer,width=1024,height=768",
+      );
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
+      try {
+        const school = await loadSchoolDetails();
+        await generateStudentFeeReportPdf(
+          fee,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "print",
+            autoClosePrintWindow: true,
+            printWindow,
+          },
+        );
+      } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print fee report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const printPaymentReport = useCallback(
+    async (payment: StudentPaymentRow) => {
+      const printWindow = window.open(
+        "",
+        "_blank",
+        "noopener,noreferrer,width=1024,height=768",
+      );
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
+      try {
+        const school = await loadSchoolDetails();
+        await generateStudentPaymentReportPdf(
+          payment,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "print",
+            autoClosePrintWindow: true,
+            printWindow,
+          },
+        );
+      } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print payment report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
   );
 
   const downloadEnrollmentReport = useCallback(
@@ -183,12 +329,72 @@ const ShowStudent = () => {
     [loadEnrollmentReport, open],
   );
 
-  const { query } = useShow<Student>({
-    resource: "students",
-    id: studentId,
-  });
+  const downloadFeeReport = useCallback(
+    async (fee: StudentFeeRow) => {
+      try {
+        const school = await loadSchoolDetails();
+        const studentPart = getStudentPrintContext().fullName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+        const yearPart = String(fee.academicYear ?? "year").replace(/\s+/g, "-");
+        const termPart = String(fee.term ?? "term")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
 
-  const student = query.data?.data;
+        await generateStudentFeeReportPdf(
+          fee,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "download",
+            filename: `fee-report-${studentPart}-${yearPart}-${termPart}.pdf`,
+          },
+        );
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download fee report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const downloadPaymentReport = useCallback(
+    async (payment: StudentPaymentRow) => {
+      try {
+        const school = await loadSchoolDetails();
+        const studentPart = getStudentPrintContext().fullName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+        const datePart = String(payment.paymentDate ?? "date").replace(/[^0-9]+/g, "-");
+
+        await generateStudentPaymentReportPdf(
+          payment,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "download",
+            filename: `payment-report-${studentPart}-${datePart}.pdf`,
+          },
+        );
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download payment report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
 
   const enrollmentColumns = useMemo<ColumnDef<StudentEnrollmentRow>[]>(
     () => [
@@ -260,7 +466,7 @@ const ShowStudent = () => {
               onClick={() => downloadEnrollmentReport(row.original.id)}
               title="Download PDF"
             >
-              PDF
+              <ActionButton type="download" />
             </Button>
           </div>
         ),
@@ -344,7 +550,7 @@ const ShowStudent = () => {
       },
       {
         id: "actions",
-        size: 130,
+        size: 190,
         header: () => <p className="column-title">Actions</p>,
         cell: ({ row }) => {
           const isPaid = row.original.status === "paid";
@@ -376,16 +582,27 @@ const ShowStudent = () => {
                 variant="outline"
                 size="sm"
                 className="cursor-pointer"
-                onClick={() => printEnrollmentReport(row.original.id)}
+                onClick={() => printFeeReport(row.original)}
               >
                 <ActionButton type="print" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => downloadFeeReport(row.original)}
+                title="Download PDF"
+              >
+                <ActionButton type="download" />
               </Button>
             </div>
           );
         },
       },
     ],
-    [navigate, studentId],
+    [downloadFeeReport, navigate, printFeeReport, studentId],
   );
 
   const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(
@@ -443,24 +660,37 @@ const ShowStudent = () => {
       },
       {
         id: "actions",
-        size: 130,
+        size: 190,
         header: () => <p className="column-title">Actions</p>,
         cell: ({ row }) => {
           return (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => printEnrollmentReport(row.original.id)}
-            >
-              <ActionButton type="print" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => printPaymentReport(row.original)}
+              >
+                <ActionButton type="print" />
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => downloadPaymentReport(row.original)}
+                title="Download PDF"
+              >
+                <ActionButton type="download" />
+              </Button>
+            </div>
           );
         },
       },
     ],
-    [],
+    [downloadPaymentReport, printPaymentReport],
   );
 
   const siblingsColumns = useMemo<ColumnDef<StudentSiblingRow>[]>(

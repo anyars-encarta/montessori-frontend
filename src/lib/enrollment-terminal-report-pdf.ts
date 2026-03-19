@@ -1,15 +1,16 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-import type { ClassEnrollmentOverviewRow, SchoolDetailsRecord } from "@/types";
+import type {
+  ClassEnrollmentOverviewRow,
+  GenerateEnrollmentReportPdfOptions,
+  SchoolDetailsRecord,
+  StudentFeeRow,
+  StudentPaymentRow,
+  StudentPdfContext,
+} from "@/types";
 
-type PdfMode = "download" | "print";
 
-type GenerateEnrollmentReportPdfOptions = {
-  mode?: PdfMode;
-  filename?: string;
-  autoClosePrintWindow?: boolean;
-};
 
 const mm = (value: number) => value;
 
@@ -65,10 +66,16 @@ const maybeAddLogo = async (
   return true;
 };
 
-const openPrintWindow = (doc: jsPDF, autoClose = true) => {
+const openPrintWindow = (
+  doc: jsPDF,
+  autoClose = true,
+  existingWindow?: Window | null,
+) => {
   const pdfBlob = doc.output("blob");
   const objectUrl = URL.createObjectURL(pdfBlob);
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
+  const popup =
+    existingWindow ??
+    window.open("", "_blank", "noopener,noreferrer,width=1024,height=768");
 
   if (!popup) {
     URL.revokeObjectURL(objectUrl);
@@ -234,7 +241,7 @@ export const generateEnrollmentTerminalReportPdf = async (
         : [["No assessments found for this enrollment.", "", "", "", "", ""]],
     columnStyles: {
       0: { cellWidth: 36 },
-      10: { cellWidth: 24 },
+      5: { cellWidth: 32 },
     },
     margin: { left: 12, right: 12 },
   });
@@ -253,5 +260,203 @@ export const generateEnrollmentTerminalReportPdf = async (
     return;
   }
 
-  openPrintWindow(doc, options.autoClosePrintWindow ?? true);
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};
+
+export const generateStudentFeeReportPdf = async (
+  fee: StudentFeeRow,
+  student: StudentPdfContext,
+  school: SchoolDetailsRecord | null,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerTop = mm(12);
+  const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+  const textStartX = logoAdded ? mm(36) : mm(12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(schoolName, textStartX, mm(19));
+
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (schoolLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(schoolLine, textStartX, mm(24));
+  }
+
+  doc.setDrawColor(31, 41, 55);
+  doc.setLineWidth(0.4);
+  doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Student Fee Report", mm(12), mm(42));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Student: ${student.fullName}`, mm(12), mm(50));
+  doc.text(`Registration: ${toDisplay(student.registrationNumber)}`, mm(12), mm(56));
+
+  const amount = Number.parseFloat(fee.amount ?? "0");
+  const paid = Number.parseFloat(fee.amountPaid ?? "0");
+  const remaining = Math.max(amount - paid, 0);
+
+  autoTable(doc, {
+    startY: mm(64),
+    theme: "grid",
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      fontSize: 8,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 9,
+      textColor: [17, 24, 39],
+      lineColor: [229, 231, 235],
+      lineWidth: 0.1,
+      cellPadding: 2,
+    },
+    head: [["Fee", "Academic Year", "Term", "Due Date", "Amount", "Paid", "Remaining", "Status"]],
+    body: [[
+      toDisplay(fee.feeName),
+      toDisplay(fee.academicYear),
+      toDisplay(fee.term),
+      formatDate(fee.dueDate),
+      toDisplay(fee.amount),
+      toDisplay(fee.amountPaid),
+      remaining.toFixed(2),
+      toDisplay(fee.status),
+    ]],
+    margin: { left: 12, right: 12 },
+  });
+
+  const generatedAt = new Date().toLocaleString();
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Generated on ${generatedAt}`, mm(12), 286);
+
+  if (mode === "download") {
+    const fallbackFile = `fee-report-${sanitizeFilePart(student.fullName)}-${fee.id}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};
+
+export const generateStudentPaymentReportPdf = async (
+  payment: StudentPaymentRow,
+  student: StudentPdfContext,
+  school: SchoolDetailsRecord | null,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerTop = mm(12);
+  const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+  const textStartX = logoAdded ? mm(36) : mm(12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(schoolName, textStartX, mm(19));
+
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (schoolLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(schoolLine, textStartX, mm(24));
+  }
+
+  doc.setDrawColor(31, 41, 55);
+  doc.setLineWidth(0.4);
+  doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Student Payment Report", mm(12), mm(42));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Student: ${student.fullName}`, mm(12), mm(50));
+  doc.text(`Registration: ${toDisplay(student.registrationNumber)}`, mm(12), mm(56));
+
+  autoTable(doc, {
+    startY: mm(64),
+    theme: "grid",
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      fontSize: 8,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 9,
+      textColor: [17, 24, 39],
+      lineColor: [229, 231, 235],
+      lineWidth: 0.1,
+      cellPadding: 2,
+    },
+    head: [["Fee", "Method", "Payment Date", "Reference", "Amount", "Status"]],
+    body: [[
+      toDisplay(payment.feeName),
+      toDisplay(payment.paymentMethod),
+      formatDate(payment.paymentDate),
+      toDisplay(payment.reference),
+      toDisplay(payment.amount),
+      toDisplay(payment.status),
+    ]],
+    margin: { left: 12, right: 12 },
+  });
+
+  const generatedAt = new Date().toLocaleString();
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Generated on ${generatedAt}`, mm(12), 286);
+
+  if (mode === "download") {
+    const fallbackFile = `payment-report-${sanitizeFilePart(student.fullName)}-${payment.id}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
 };
