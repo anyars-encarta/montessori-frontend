@@ -220,23 +220,18 @@ export const generateEnrollmentTerminalReportPdf = async (
     bodyStyles: {
       valign: "middle",
     },
-    head: [["Subject", "HW1", "HW2", "EX1", "EX2", "Test", "Class", "Exam", "Total", "Pos", "Remark"]],
+    head: [["Subject", "Class", "Exam", "Total", "Pos", "Remark"]],
     body:
       report.assessments.length > 0
         ? report.assessments.map((assessment) => [
             toDisplay(assessment.subjectName),
-            toDisplay(assessment.homeWork1),
-            toDisplay(assessment.homeWork2),
-            toDisplay(assessment.exercise1),
-            toDisplay(assessment.exercise2),
-            toDisplay(assessment.classTest),
             toDisplay(assessment.classMark),
             toDisplay(assessment.examMark),
             toDisplay(assessment.totalMark),
             toDisplay(assessment.subjectPosition),
             toDisplay(assessment.remarks),
           ])
-        : [["No assessments found for this enrollment.", "", "", "", "", "", "", "", "", "", ""]],
+        : [["No assessments found for this enrollment.", "", "", "", "", ""]],
     columnStyles: {
       0: { cellWidth: 36 },
       10: { cellWidth: 24 },
