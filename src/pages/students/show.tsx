@@ -6,6 +6,11 @@ import { useNavigate, useParams } from "react-router";
 
 import { BACKEND_BASE_URL } from "@/constants";
 import {
+  ActionTooltip,
+  actionButtonTitles,
+  tableActionButtonClassName,
+} from "@/components/actionButton";
+import {
   generateEnrollmentTerminalReportPdf,
   generateStudentFeeReportPdf,
   generateStudentPaymentReportPdf,
@@ -448,26 +453,31 @@ const ShowStudent = () => {
               <ActionButton type="view" />
             </ShowButton>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => printEnrollmentReport(row.original.id)}
-            >
-              <ActionButton type="print" />
-            </Button>
+            <ActionTooltip title={actionButtonTitles.print}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={tableActionButtonClassName}
+                aria-label={actionButtonTitles.print}
+                onClick={() => printEnrollmentReport(row.original.id)}
+              >
+                <ActionButton type="print" />
+              </Button>
+            </ActionTooltip>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() => downloadEnrollmentReport(row.original.id)}
-              title="Download PDF"
-            >
-              <ActionButton type="download" />
-            </Button>
+            <ActionTooltip title={actionButtonTitles.download}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={tableActionButtonClassName}
+                aria-label={actionButtonTitles.download}
+                onClick={() => downloadEnrollmentReport(row.original.id)}
+              >
+                <ActionButton type="download" />
+              </Button>
+            </ActionTooltip>
           </div>
         ),
       },
@@ -577,26 +587,31 @@ const ShowStudent = () => {
                 Pay Fee
               </Button>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => printFeeReport(row.original)}
-              >
-                <ActionButton type="print" />
-              </Button>
+              <ActionTooltip title={actionButtonTitles.print}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={tableActionButtonClassName}
+                  aria-label={actionButtonTitles.print}
+                  onClick={() => printFeeReport(row.original)}
+                >
+                  <ActionButton type="print" />
+                </Button>
+              </ActionTooltip>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => downloadFeeReport(row.original)}
-                title="Download PDF"
-              >
-                <ActionButton type="download" />
-              </Button>
+              <ActionTooltip title={actionButtonTitles.download}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={tableActionButtonClassName}
+                  aria-label={actionButtonTitles.download}
+                  onClick={() => downloadFeeReport(row.original)}
+                >
+                  <ActionButton type="download" />
+                </Button>
+              </ActionTooltip>
             </div>
           );
         },
@@ -665,26 +680,31 @@ const ShowStudent = () => {
         cell: ({ row }) => {
           return (
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => printPaymentReport(row.original)}
-              >
-                <ActionButton type="print" />
-              </Button>
+              <ActionTooltip title={actionButtonTitles.print}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={tableActionButtonClassName}
+                  aria-label={actionButtonTitles.print}
+                  onClick={() => printPaymentReport(row.original)}
+                >
+                  <ActionButton type="print" />
+                </Button>
+              </ActionTooltip>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => downloadPaymentReport(row.original)}
-                title="Download PDF"
-              >
-                <ActionButton type="download" />
-              </Button>
+              <ActionTooltip title={actionButtonTitles.download}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={tableActionButtonClassName}
+                  aria-label={actionButtonTitles.download}
+                  onClick={() => downloadPaymentReport(row.original)}
+                >
+                  <ActionButton type="download" />
+                </Button>
+              </ActionTooltip>
             </div>
           );
         },

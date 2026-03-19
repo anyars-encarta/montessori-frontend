@@ -1,11 +1,13 @@
 "use client";
 
+import { ActionTooltip, tableActionButtonClassName } from "@/components/actionButton";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { type BaseKey, useDeleteButton } from "@refinedev/core";
 import { Loader2, Trash } from "lucide-react";
 import React from "react";
@@ -64,25 +66,49 @@ export const DeleteButton = React.forwardRef<
   const confirmCancelText = defaultCancelLabel;
   const confirmOkText = defaultConfirmOkLabel;
   const confirmTitle = defaultConfirmTitle;
+  const isIconOnly = Boolean(children);
+  const className = cn(isIconOnly ? tableActionButtonClassName : undefined, rest.className);
+  const title = rest.title ?? (isIconOnly ? label : undefined);
+  const size = isIconOnly ? "icon" : rest.size;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <span>
-          <Button
-            variant="destructive"
-            {...rest}
-            ref={ref}
-            disabled={isDisabled}
-          >
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {children ?? (
-              <div className="flex items-center gap-2 font-semibold">
-                <Trash className="h-4 w-4" />
-                <span>{label}</span>
-              </div>
-            )}
-          </Button>
+          {isIconOnly && title ? (
+            <ActionTooltip title={title}>
+              <Button
+                variant="destructive"
+                {...rest}
+                className={className}
+                aria-label={title}
+                size={size}
+                ref={ref}
+                disabled={isDisabled}
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {children}
+              </Button>
+            </ActionTooltip>
+          ) : (
+            <Button
+              variant="destructive"
+              {...rest}
+              className={className}
+              aria-label={title}
+              size={size}
+              ref={ref}
+              disabled={isDisabled}
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {children ?? (
+                <div className="flex items-center gap-2 font-semibold">
+                  <Trash className="h-4 w-4" />
+                  <span>{label}</span>
+                </div>
+              )}
+            </Button>
+          )}
         </span>
       </PopoverTrigger>
       <PopoverContent className="w-auto" align="start">

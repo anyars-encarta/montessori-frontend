@@ -1,5 +1,12 @@
 import type { LucideIcon } from "lucide-react";
 import { Download, Eye, Pencil, Printer, Trash2 } from "lucide-react";
+import React from "react";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const iconMap: Record<string, LucideIcon> = {
   view: Eye,
@@ -8,6 +15,30 @@ const iconMap: Record<string, LucideIcon> = {
   print: Printer,
   download: Download,
 };
+
+export const tableActionButtonClassName =
+  "size-8 shrink-0 p-0 hover:bg-accent/80 hover:text-accent-foreground";
+
+export const actionButtonTitles: Record<string, string> = {
+  view: "View record",
+  update: "Edit record",
+  delete: "Delete record",
+  print: "Print report",
+  download: "Download PDF",
+};
+
+export const ActionTooltip = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <Tooltip>
+    <TooltipTrigger asChild>{children}</TooltipTrigger>
+    <TooltipContent>{title}</TooltipContent>
+  </Tooltip>
+);
 
 const ActionButton = ({ type }: { type: string }) => {
   const Icon = iconMap[type];
