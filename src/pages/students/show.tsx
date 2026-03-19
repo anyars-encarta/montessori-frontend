@@ -1,9 +1,11 @@
-import { useShow } from "@refinedev/core";
+import { useNotification, useShow } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 
+import { BACKEND_BASE_URL } from "@/constants";
+import { generateEnrollmentTerminalReportPdf } from "@/lib/enrollment-terminal-report-pdf";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import {
   ShowView,
@@ -15,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   Student,
+  ClassEnrollmentOverviewRow,
+  SchoolDetailsRecord,
   StudentEnrollmentRow,
   StudentFeeRow,
   StudentPaymentRow,
@@ -42,6 +46,12 @@ const formatDate = (value?: string | null) => {
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
 
+const buildApiUrl = (path: string) => {
+  const normalizedBase = BACKEND_BASE_URL.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+};
+
 const healthIndicators: Array<{
   key:
     | "diphtheria"
@@ -64,6 +74,99 @@ const ShowStudent = () => {
   const { id } = useParams();
   const studentId = id ?? "";
   const navigate = useNavigate();
+  const { open } = useNotification();
+
+  const loadEnrollmentReport = useCallback(async (enrollmentId: number) => {
+    const response = await fetch(
+      buildApiUrl(`/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`),
+      {
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      throw new Error(
+        payload.error ?? payload.message ?? "Failed to fetch enrollment report",
+      );
+    }
+
+    const payload = (await response.json()) as {
+      success?: boolean;
+      data?: ClassEnrollmentOverviewRow[];
+    };
+
+    const report = payload.data?.[0];
+    if (!report) {
+      throw new Error("No terminal report data found for this enrollment.");
+    }
+
+    let school: SchoolDetailsRecord | null = null;
+    try {
+      const schoolResponse = await fetch(buildApiUrl("/school-details"), {
+        credentials: "include",
+      });
+
+      if (schoolResponse.ok) {
+        const schoolPayload = (await schoolResponse.json()) as {
+          success?: boolean;
+          data?: SchoolDetailsRecord[];
+        };
+        school = schoolPayload.data?.[0] ?? null;
+      }
+    } catch {
+      // Report rendering should continue even if school details cannot be fetched.
+    }
+
+    return { report, school };
+  }, []);
+
+  const printEnrollmentReport = useCallback(async (enrollmentId: number) => {
+    try {
+      const { report, school } = await loadEnrollmentReport(enrollmentId);
+
+      await generateEnrollmentTerminalReportPdf(report, school, {
+        mode: "print",
+        autoClosePrintWindow: true,
+      });
+    } catch (error) {
+      open?.({
+        type: "error",
+        message: "Print failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to print terminal report.",
+      });
+    }
+  }, [loadEnrollmentReport, open]);
+
+  const downloadEnrollmentReport = useCallback(async (enrollmentId: number) => {
+    try {
+      const { report, school } = await loadEnrollmentReport(enrollmentId);
+
+      const yearPart = String(report.academicYear.year ?? "year").replace(/\s+/g, "-");
+      const termPart = report.term.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const studentPart = report.student.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+      await generateEnrollmentTerminalReportPdf(report, school, {
+        mode: "download",
+        filename: `terminal-report-${studentPart}-${yearPart}-${termPart}.pdf`,
+      });
+    } catch (error) {
+      open?.({
+        type: "error",
+        message: "Download failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to download terminal report.",
+      });
+    }
+  }, [loadEnrollmentReport, open]);
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -111,7 +214,7 @@ const ShowStudent = () => {
       },
       {
         id: "actions",
-        size: 120,
+        size: 180,
         header: () => <p className="column-title">Actions</p>,
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
@@ -123,11 +226,32 @@ const ShowStudent = () => {
             >
               <ActionButton type="view" />
             </ShowButton>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => printEnrollmentReport(row.original.id)}
+            >
+              <ActionButton type="print" />
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => downloadEnrollmentReport(row.original.id)}
+              title="Download PDF"
+            >
+              PDF
+            </Button>
           </div>
         ),
       },
     ],
-    [],
+    [downloadEnrollmentReport, printEnrollmentReport],
   );
 
   const feesColumns = useMemo<ColumnDef<StudentFeeRow>[]>(
