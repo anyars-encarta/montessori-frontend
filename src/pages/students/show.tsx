@@ -78,7 +78,9 @@ const ShowStudent = () => {
 
   const loadEnrollmentReport = useCallback(async (enrollmentId: number) => {
     const response = await fetch(
-      buildApiUrl(`/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`),
+      buildApiUrl(
+        `/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`,
+      ),
       {
         credentials: "include",
       },
@@ -124,49 +126,62 @@ const ShowStudent = () => {
     return { report, school };
   }, []);
 
-  const printEnrollmentReport = useCallback(async (enrollmentId: number) => {
-    try {
-      const { report, school } = await loadEnrollmentReport(enrollmentId);
+  const printEnrollmentReport = useCallback(
+    async (enrollmentId: number) => {
+      try {
+        const { report, school } = await loadEnrollmentReport(enrollmentId);
 
-      await generateEnrollmentTerminalReportPdf(report, school, {
-        mode: "print",
-        autoClosePrintWindow: true,
-      });
-    } catch (error) {
-      open?.({
-        type: "error",
-        message: "Print failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Unable to print terminal report.",
-      });
-    }
-  }, [loadEnrollmentReport, open]);
+        await generateEnrollmentTerminalReportPdf(report, school, {
+          mode: "print",
+          autoClosePrintWindow: true,
+        });
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print terminal report.",
+        });
+      }
+    },
+    [loadEnrollmentReport, open],
+  );
 
-  const downloadEnrollmentReport = useCallback(async (enrollmentId: number) => {
-    try {
-      const { report, school } = await loadEnrollmentReport(enrollmentId);
+  const downloadEnrollmentReport = useCallback(
+    async (enrollmentId: number) => {
+      try {
+        const { report, school } = await loadEnrollmentReport(enrollmentId);
 
-      const yearPart = String(report.academicYear.year ?? "year").replace(/\s+/g, "-");
-      const termPart = report.term.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-      const studentPart = report.student.fullName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const yearPart = String(report.academicYear.year ?? "year").replace(
+          /\s+/g,
+          "-",
+        );
+        const termPart = report.term.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+        const studentPart = report.student.fullName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
 
-      await generateEnrollmentTerminalReportPdf(report, school, {
-        mode: "download",
-        filename: `terminal-report-${studentPart}-${yearPart}-${termPart}.pdf`,
-      });
-    } catch (error) {
-      open?.({
-        type: "error",
-        message: "Download failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Unable to download terminal report.",
-      });
-    }
-  }, [loadEnrollmentReport, open]);
+        await generateEnrollmentTerminalReportPdf(report, school, {
+          mode: "download",
+          filename: `terminal-report-${studentPart}-${yearPart}-${termPart}.pdf`,
+        });
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download terminal report.",
+        });
+      }
+    },
+    [loadEnrollmentReport, open],
+  );
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -335,23 +350,37 @@ const ShowStudent = () => {
           const isPaid = row.original.status === "paid";
 
           if (isPaid) {
-            return <span className="text-xs text-muted-foreground">No action</span>;
+            return (
+              <span className="text-xs text-muted-foreground">No action</span>
+            );
           }
 
           return (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              onClick={() =>
-                navigate(
-                  `/payments/create?studentId=${studentId}&studentFeeId=${row.original.id}`,
-                )
-              }
-            >
-              Pay Fee
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() =>
+                  navigate(
+                    `/payments/create?studentId=${studentId}&studentFeeId=${row.original.id}`,
+                  )
+                }
+              >
+                Pay Fee
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => printEnrollmentReport(row.original.id)}
+              >
+                <ActionButton type="print" />
+              </Button>
+            </div>
           );
         },
       },
@@ -411,6 +440,24 @@ const ShowStudent = () => {
             {getValue<string>()}
           </Badge>
         ),
+      },
+      {
+        id: "actions",
+        size: 130,
+        header: () => <p className="column-title">Actions</p>,
+        cell: ({ row }) => {
+          return (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => printEnrollmentReport(row.original.id)}
+            >
+              <ActionButton type="print" />
+            </Button>
+          );
+        },
       },
     ],
     [],
@@ -624,7 +671,9 @@ const ShowStudent = () => {
                 </p>
               </div>
               <div className="p-3 border rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Scholarship</p>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Scholarship
+                </p>
                 <p className="font-semibold text-sm">
                   {student.onScholarship ? "Enabled" : "Disabled"}
                 </p>
