@@ -750,3 +750,190 @@ export const generateStudentSummariesReportPdf = async (
     options.printWindow,
   );
 };
+
+export const generateClassEnrollmentSummariesReportPdf = async (
+  summaries: ClassEnrollmentOverviewRow[],
+  school: SchoolDetailsRecord | null,
+  scopeLabel: string,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (summaries.length === 0) {
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const headerTop = mm(12);
+    const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+    const textStartX = logoAdded ? mm(36) : mm(12);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text(schoolName, textStartX, mm(19));
+
+    if (schoolLine) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(schoolLine, textStartX, mm(24));
+    }
+
+    doc.setDrawColor(31, 41, 55);
+    doc.setLineWidth(0.4);
+    doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Class Terminal Reports", mm(12), mm(42));
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Filter: ${scopeLabel}`, mm(12), mm(50));
+    doc.text("No students found for the selected filters.", mm(12), mm(58));
+
+    addPdfFooter(doc);
+  } else {
+    for (let index = 0; index < summaries.length; index += 1) {
+      const summary = summaries[index];
+
+      if (index > 0) {
+        doc.addPage();
+      }
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const headerTop = mm(12);
+      const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+      const textStartX = logoAdded ? mm(36) : mm(12);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(schoolName, textStartX, mm(19));
+
+      if (schoolLine) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.text(schoolLine, textStartX, mm(24));
+      }
+
+      doc.setDrawColor(31, 41, 55);
+      doc.setLineWidth(0.4);
+      doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("Student Terminal Report", mm(12), mm(42));
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+
+      const infoRows = [
+        ["Student", summary.student.fullName],
+        ["Registration", toDisplay(summary.student.registrationNumber)],
+        ["Class", `${toDisplay(summary.class.name)} (${toDisplay(summary.class.level)})`],
+        ["Academic Year", toDisplay(summary.academicYear.year)],
+        ["Term", toDisplay(summary.term.name)],
+        ["Enrollment Date", formatDate(summary.enrollmentDate)],
+      ];
+
+      let infoY = mm(50);
+      for (const [label, value] of infoRows) {
+        doc.setFont("helvetica", "bold");
+        doc.text(`${label}:`, mm(12), infoY);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(value), mm(42), infoY);
+        infoY += mm(5.5);
+      }
+
+      const summaryTop = infoY + mm(3);
+      const summaryWidth = (pageWidth - mm(24) - mm(8)) / 3;
+      const summaryHeight = mm(13);
+
+      const summaryItems: Array<[string, string]> = [
+        ["Aggregate", toDisplay(summary.aggregate)],
+        ["Class Position", toDisplay(summary.classPosition)],
+        ["Remark", toDisplay(summary.remarks)],
+      ];
+
+      summaryItems.forEach(([label, value], itemIndex) => {
+        const x = mm(12) + itemIndex * (summaryWidth + mm(4));
+        doc.setDrawColor(209, 213, 219);
+        doc.setFillColor(249, 250, 251);
+        doc.roundedRect(x, summaryTop, summaryWidth, summaryHeight, 1.2, 1.2, "FD");
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(75, 85, 99);
+        doc.setFontSize(8);
+        doc.text(label, x + mm(2.2), summaryTop + mm(4));
+
+        doc.setTextColor(17, 24, 39);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.text(value, x + mm(2.2), summaryTop + mm(9));
+      });
+
+      autoTable(doc, {
+        startY: summaryTop + summaryHeight + mm(6),
+        theme: "grid",
+        headStyles: {
+          fillColor: [243, 244, 246],
+          textColor: [17, 24, 39],
+          fontStyle: "bold",
+          lineColor: [209, 213, 219],
+          lineWidth: 0.1,
+          fontSize: 8,
+        },
+        styles: {
+          font: "helvetica",
+          fontSize: 8,
+          textColor: [17, 24, 39],
+          lineColor: [229, 231, 235],
+          lineWidth: 0.1,
+          cellPadding: 1.6,
+        },
+        bodyStyles: {
+          valign: "middle",
+        },
+        head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Position", "Remark"]],
+        body:
+          summary.assessments.length > 0
+            ? summary.assessments.map((assessment) => [
+                toDisplay(assessment.subjectName),
+                toDisplay(assessment.classMark),
+                toDisplay(assessment.examMark),
+                toDisplay(assessment.totalMark),
+                toDisplay(assessment.subjectPosition),
+                toDisplay(assessment.remarks),
+              ])
+            : [["No assessments found for this enrollment.", "", "", "", "", ""]],
+        columnStyles: {
+          0: { cellWidth: 36 },
+          5: { cellWidth: 32 },
+        },
+        margin: { left: 12, right: 12 },
+      });
+
+      const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 265;
+      addPdfFooter(doc, Math.min(finalY + mm(8), 286));
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.setTextColor(107, 114, 128);
+      doc.text(`Filter: ${scopeLabel}`, pageWidth - mm(12), 286, { align: "right" });
+    }
+  }
+
+  if (mode === "download") {
+    const fallbackFile = `class-terminal-reports-${sanitizeFilePart(scopeLabel)}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};

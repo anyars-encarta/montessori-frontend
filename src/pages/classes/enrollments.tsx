@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
@@ -23,6 +23,7 @@ import {
   ClassEnrollmentOverviewRow,
   ClassRecord,
   RunGradesResponse,
+  SchoolDetailsRecord,
   TermRecord,
 } from "@/types";
 import { BACKEND_BASE_URL } from "@/constants";
@@ -31,6 +32,7 @@ import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
 import ActionButton from "@/components/actionButton";
+import { generateClassEnrollmentSummariesReportPdf } from "@/lib/enrollment-terminal-report-pdf";
 
 const formatDate = (date: string) => {
   const parsed = new Date(date);
@@ -74,6 +76,10 @@ const EnrollmentsPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
   const [isRepeating, setIsRepeating] = useState(false);
+  const [isPrintingFilteredReport, setIsPrintingFilteredReport] =
+    useState(false);
+  const [isDownloadingFilteredReport, setIsDownloadingFilteredReport] =
+    useState(false);
 
   const { result: classesResult } = useList<ClassRecord>({
     resource: "classes",
@@ -181,9 +187,13 @@ const EnrollmentsPage = () => {
                     const current = new Set(prev);
 
                     if (shouldSelect) {
-                      visibleIds.forEach((id) => { current.add(id); });
+                      visibleIds.forEach((id) => {
+                        current.add(id);
+                      });
                     } else {
-                      visibleIds.forEach((id) => { current.delete(id); });
+                      visibleIds.forEach((id) => {
+                        current.delete(id);
+                      });
                     }
 
                     return Array.from(current);
@@ -373,6 +383,220 @@ const EnrollmentsPage = () => {
 
   const selectedTerm =
     filteredTerms.find((term) => String(term.id) === termIdFilter) ?? null;
+
+  const filteredReportAvailable = Boolean(
+    classIdFilter && academicYearIdFilter && termIdFilter,
+  );
+
+  const loadSchoolDetails = useCallback(async () => {
+    let school: SchoolDetailsRecord | null = null;
+    try {
+      const schoolResponse = await fetch(buildApiUrl("/school-details"), {
+        credentials: "include",
+      });
+
+      if (schoolResponse.ok) {
+        const schoolPayload = (await schoolResponse.json()) as {
+          success?: boolean;
+          data?: SchoolDetailsRecord[];
+        };
+        school = schoolPayload.data?.[0] ?? null;
+      }
+    } catch {
+      // Reports can still generate without school details.
+    }
+
+    return school;
+  }, []);
+
+  const fetchFilteredEnrollmentReports = useCallback(async () => {
+    if (!classIdFilter || !academicYearIdFilter || !termIdFilter) {
+      throw new Error("Select class, academic year, and term before exporting reports.");
+    }
+
+    const normalizedStudentName = studentNameFilter.trim();
+    const allRows: ClassEnrollmentOverviewRow[] = [];
+
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+      const params = new URLSearchParams({
+        classId: classIdFilter,
+        academicYearId: academicYearIdFilter,
+        termId: termIdFilter,
+        page: String(page),
+        limit: "200",
+      });
+
+      if (normalizedStudentName) {
+        params.set("studentName", normalizedStudentName);
+      }
+
+      const response = await fetch(
+        buildApiUrl(`/student-class-enrollments/overview?${params.toString()}`),
+        {
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(await extractErrorMessage(response));
+      }
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: ClassEnrollmentOverviewRow[];
+        pagination?: {
+          page?: number;
+          totalPages?: number;
+        };
+      };
+
+      allRows.push(...(payload.data ?? []));
+      totalPages = payload.pagination?.totalPages ?? 1;
+      page += 1;
+    }
+
+    return allRows;
+  }, [academicYearIdFilter, classIdFilter, studentNameFilter, termIdFilter]);
+
+  const buildReportScopeLabel = useCallback(() => {
+    const classLabel = selectedClass
+      ? `${selectedClass.name} (${selectedClass.level})`
+      : "N/A";
+    const yearLabel = selectedAcademicYear ? String(selectedAcademicYear.year) : "N/A";
+    const termLabel = selectedTerm ? selectedTerm.name : "N/A";
+    const studentLabel = studentNameFilter.trim()
+      ? ` | Student contains: ${studentNameFilter.trim()}`
+      : "";
+
+    return `Class: ${classLabel} | Year: ${yearLabel} | Term: ${termLabel}${studentLabel}`;
+  }, [selectedAcademicYear, selectedClass, selectedTerm, studentNameFilter]);
+
+  const handleTerminalReportPrint = useCallback(async () => {
+    if (!filteredReportAvailable) {
+      open?.({
+        type: "error",
+        message: "Select required filters",
+        description: "Choose class, academic year, and term to print filtered reports.",
+      });
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=1024,height=768");
+    if (!printWindow) {
+      open?.({
+        type: "error",
+        message: "Print failed",
+        description: "Pop-up blocked. Please allow pop-ups and try again.",
+      });
+      return;
+    }
+
+    try {
+      setIsPrintingFilteredReport(true);
+
+      const [reports, school] = await Promise.all([
+        fetchFilteredEnrollmentReports(),
+        loadSchoolDetails(),
+      ]);
+
+      if (reports.length === 0) {
+        throw new Error("No students found for the selected class/year/term filters.");
+      }
+
+      await generateClassEnrollmentSummariesReportPdf(
+        reports,
+        school,
+        buildReportScopeLabel(),
+        {
+          mode: "print",
+          autoClosePrintWindow: true,
+          printWindow,
+        },
+      );
+    } catch (error) {
+      if (!printWindow.closed) {
+        printWindow.close();
+      }
+
+      open?.({
+        type: "error",
+        message: "Print failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to print filtered terminal reports.",
+      });
+    } finally {
+      setIsPrintingFilteredReport(false);
+    }
+  }, [
+    buildReportScopeLabel,
+    fetchFilteredEnrollmentReports,
+    filteredReportAvailable,
+    loadSchoolDetails,
+    open,
+  ]);
+
+  const handleTerminalReportDownload = useCallback(async () => {
+    if (!filteredReportAvailable) {
+      open?.({
+        type: "error",
+        message: "Select required filters",
+        description: "Choose class, academic year, and term to download filtered reports.",
+      });
+      return;
+    }
+
+    try {
+      setIsDownloadingFilteredReport(true);
+
+      const [reports, school] = await Promise.all([
+        fetchFilteredEnrollmentReports(),
+        loadSchoolDetails(),
+      ]);
+
+      if (reports.length === 0) {
+        throw new Error("No students found for the selected class/year/term filters.");
+      }
+
+      const fileClass = selectedClass?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "class";
+      const fileYear = selectedAcademicYear ? String(selectedAcademicYear.year) : "year";
+      const fileTerm = selectedTerm?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "term";
+
+      await generateClassEnrollmentSummariesReportPdf(
+        reports,
+        school,
+        buildReportScopeLabel(),
+        {
+          mode: "download",
+          filename: `class-terminal-reports-${fileClass}-${fileYear}-${fileTerm}.pdf`,
+        },
+      );
+    } catch (error) {
+      open?.({
+        type: "error",
+        message: "Download failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to download filtered terminal reports.",
+      });
+    } finally {
+      setIsDownloadingFilteredReport(false);
+    }
+  }, [
+    buildReportScopeLabel,
+    fetchFilteredEnrollmentReports,
+    filteredReportAvailable,
+    loadSchoolDetails,
+    open,
+    selectedAcademicYear,
+    selectedClass,
+    selectedTerm,
+  ]);
 
   const filteredPromotionTerms = useMemo(() => {
     if (!targetAcademicYearId) return terms;
@@ -793,43 +1017,86 @@ const EnrollmentsPage = () => {
             )}
           </Button>
 
-          {activeFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 md:col-span-5">
-              {activeFilters.map((filter) => (
-                <Badge
-                  key={filter.key}
-                  variant="secondary"
-                  className="gap-2 pr-1"
-                >
-                  <span>{filter.label}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-1 text-xs"
-                    onClick={filter.clear}
+          <div className="w-full md:col-span-5 flex items-center justify-between gap-3">
+            <div className="flex flex-1 flex-wrap items-center gap-2">
+              {activeFilters.length > 0 &&
+                activeFilters.map((filter) => (
+                  <Badge
+                    key={filter.key}
+                    variant="secondary"
+                    className="gap-2 pr-1"
                   >
-                    ✕
-                  </Button>
-                </Badge>
-              ))}
+                    <span>{filter.label}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-1 text-xs"
+                      onClick={filter.clear}
+                    >
+                      ✕
+                    </Button>
+                  </Badge>
+                ))}
 
-              <Button
-                type="button"
-                className="cursor-pointer"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setStudentNameFilter("");
-                  setClassIdFilter("");
-                  setAcademicYearIdFilter("");
-                  setTermIdFilter("");
-                }}
-              >
-                Clear all
-              </Button>
+              {activeFilters.length > 0 && (
+                <Button
+                  type="button"
+                  className="cursor-pointer"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setStudentNameFilter("");
+                    setClassIdFilter("");
+                    setAcademicYearIdFilter("");
+                    setTermIdFilter("");
+                  }}
+                >
+                  Clear all
+                </Button>
+              )}
             </div>
-          )}
+
+            <div className="ml-auto flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 cursor-pointer"
+                  disabled={!filteredReportAvailable || isPrintingFilteredReport}
+                  onClick={handleTerminalReportPrint}
+                >
+                  {isPrintingFilteredReport ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ActionButton type="print" />
+                  )}
+                  <span>{isPrintingFilteredReport ? "Printing..." : "Print"}</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 cursor-pointer"
+                  disabled={!filteredReportAvailable || isDownloadingFilteredReport}
+                  onClick={handleTerminalReportDownload}
+                >
+                  {isDownloadingFilteredReport ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ActionButton type="download" />
+                  )}
+                  <span>
+                    {isDownloadingFilteredReport ? "Downloading..." : "Download"}
+                  </span>
+                </Button>
+              </div>
+
+              <p className="text-right text-xs text-muted-foreground">
+                Exports all students matching current class/year/term filters.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
