@@ -33,6 +33,14 @@ const sanitizeFilePart = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 
+const addPdfFooter = (doc: jsPDF, y = 286) => {
+  const generatedAt = new Date().toLocaleString();
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128);
+  doc.text(`Generated on ${generatedAt}`, mm(12), y);
+};
+
 const loadImageAsDataUrl = async (url: string): Promise<string | null> => {
   try {
     const response = await fetch(url, { mode: "cors" });
@@ -88,15 +96,22 @@ const openPrintWindow = (
     <html>
       <head>
         <title>Terminal Report</title>
+        <meta charset="UTF-8" />
         <style>
-          html, body { margin: 0; padding: 0; height: 100%; }
-          iframe { border: 0; width: 100%; height: 100%; }
+          html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+          #pdf-embed { border: 0; width: 100%; height: 100%; display: block; }
         </style>
       </head>
       <body>
-        <iframe src="${objectUrl}"></iframe>
+        <embed id="pdf-embed" type="application/pdf" />
         <script>
-          const revoke = () => URL.revokeObjectURL("${objectUrl}");
+          const objectUrl = "${objectUrl}";
+          const revoke = () => {
+            try { URL.revokeObjectURL(objectUrl); } catch {}
+          };
+          const embedEl = document.getElementById("pdf-embed");
+          embedEl.src = objectUrl;
+          
           window.onafterprint = () => {
             revoke();
             ${autoClose ? "window.close();" : ""}
@@ -105,13 +120,13 @@ const openPrintWindow = (
           window.addEventListener("focus", () => {
             setTimeout(() => {
               if (${autoClose ? "!window.closed" : "false"}) {
-                try { revoke(); } catch {}
+                revoke();
                 ${autoClose ? "window.close();" : ""}
               }
             }, 300);
           }, { once: true });
 
-          setTimeout(() => window.print(), 350);
+          setTimeout(() => window.print(), 500);
         </script>
       </body>
     </html>
@@ -247,12 +262,7 @@ export const generateEnrollmentTerminalReportPdf = async (
   });
 
   const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 265;
-  const generatedAt = new Date().toLocaleString();
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Generated on ${generatedAt}`, mm(12), Math.min(finalY + mm(8), 286));
+  addPdfFooter(doc, Math.min(finalY + mm(8), 286));
 
   if (mode === "download") {
     const fallbackFile = `terminal-report-${sanitizeFilePart(report.student.fullName)}-${report.id}.pdf`;
@@ -348,11 +358,7 @@ export const generateStudentFeeReportPdf = async (
     margin: { left: 12, right: 12 },
   });
 
-  const generatedAt = new Date().toLocaleString();
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Generated on ${generatedAt}`, mm(12), 286);
+  addPdfFooter(doc);
 
   if (mode === "download") {
     const fallbackFile = `fee-report-${sanitizeFilePart(student.fullName)}-${fee.id}.pdf`;
@@ -442,14 +448,298 @@ export const generateStudentPaymentReportPdf = async (
     margin: { left: 12, right: 12 },
   });
 
-  const generatedAt = new Date().toLocaleString();
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128);
-  doc.text(`Generated on ${generatedAt}`, mm(12), 286);
+  addPdfFooter(doc);
 
   if (mode === "download") {
     const fallbackFile = `payment-report-${sanitizeFilePart(student.fullName)}-${payment.id}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};
+
+export const generateStudentFeesReportPdf = async (
+  fees: StudentFeeRow[],
+  student: StudentPdfContext,
+  school: SchoolDetailsRecord | null,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerTop = mm(12);
+  const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+  const textStartX = logoAdded ? mm(36) : mm(12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(schoolName, textStartX, mm(19));
+
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (schoolLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(schoolLine, textStartX, mm(24));
+  }
+
+  doc.setDrawColor(31, 41, 55);
+  doc.setLineWidth(0.4);
+  doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Student Fees Report", mm(12), mm(42));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Student: ${student.fullName}`, mm(12), mm(50));
+  doc.text(`Registration: ${toDisplay(student.registrationNumber)}`, mm(12), mm(56));
+
+  autoTable(doc, {
+    startY: mm(64),
+    theme: "grid",
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      fontSize: 8,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 8,
+      textColor: [17, 24, 39],
+      lineColor: [229, 231, 235],
+      lineWidth: 0.1,
+      cellPadding: 1.8,
+    },
+    head: [["Fee", "Academic Year", "Term", "Due Date", "Amount", "Paid", "Remaining", "Status"]],
+    body:
+      fees.length > 0
+        ? fees.map((fee) => {
+            const amount = Number.parseFloat(fee.amount ?? "0");
+            const paid = Number.parseFloat(fee.amountPaid ?? "0");
+            const remaining = Math.max(amount - paid, 0);
+
+            return [
+              toDisplay(fee.feeName),
+              toDisplay(fee.academicYear),
+              toDisplay(fee.term),
+              formatDate(fee.dueDate),
+              toDisplay(fee.amount),
+              toDisplay(fee.amountPaid),
+              remaining.toFixed(2),
+              toDisplay(fee.status),
+            ];
+          })
+        : [["No fee records found.", "", "", "", "", "", "", ""]],
+    margin: { left: 12, right: 12 },
+  });
+
+  addPdfFooter(doc);
+
+  if (mode === "download") {
+    const fallbackFile = `fees-report-${sanitizeFilePart(student.fullName)}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};
+
+export const generateStudentPaymentsReportPdf = async (
+  payments: StudentPaymentRow[],
+  student: StudentPdfContext,
+  school: SchoolDetailsRecord | null,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerTop = mm(12);
+  const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+  const textStartX = logoAdded ? mm(36) : mm(12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(schoolName, textStartX, mm(19));
+
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (schoolLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(schoolLine, textStartX, mm(24));
+  }
+
+  doc.setDrawColor(31, 41, 55);
+  doc.setLineWidth(0.4);
+  doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Student Payments Report", mm(12), mm(42));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Student: ${student.fullName}`, mm(12), mm(50));
+  doc.text(`Registration: ${toDisplay(student.registrationNumber)}`, mm(12), mm(56));
+
+  autoTable(doc, {
+    startY: mm(64),
+    theme: "grid",
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      fontSize: 8,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 8,
+      textColor: [17, 24, 39],
+      lineColor: [229, 231, 235],
+      lineWidth: 0.1,
+      cellPadding: 1.8,
+    },
+    head: [["Fee", "Method", "Payment Date", "Reference", "Amount", "Status"]],
+    body:
+      payments.length > 0
+        ? payments.map((payment) => [
+            toDisplay(payment.feeName),
+            toDisplay(payment.paymentMethod),
+            formatDate(payment.paymentDate),
+            toDisplay(payment.reference),
+            toDisplay(payment.amount),
+            toDisplay(payment.status),
+          ])
+        : [["No payment records found.", "", "", "", "", ""]],
+    margin: { left: 12, right: 12 },
+  });
+
+  addPdfFooter(doc);
+
+  if (mode === "download") {
+    const fallbackFile = `payments-report-${sanitizeFilePart(student.fullName)}.pdf`;
+    doc.save(options.filename ?? fallbackFile);
+    return;
+  }
+
+  openPrintWindow(
+    doc,
+    options.autoClosePrintWindow ?? true,
+    options.printWindow,
+  );
+};
+
+export const generateStudentSummariesReportPdf = async (
+  summaries: ClassEnrollmentOverviewRow[],
+  student: StudentPdfContext,
+  school: SchoolDetailsRecord | null,
+  options: GenerateEnrollmentReportPdfOptions = {},
+) => {
+  const mode = options.mode ?? "print";
+  const schoolName = school?.name?.trim() || "School";
+
+  const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  const headerTop = mm(12);
+  const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
+  const textStartX = logoAdded ? mm(36) : mm(12);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text(schoolName, textStartX, mm(19));
+
+  const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  if (schoolLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(schoolLine, textStartX, mm(24));
+  }
+
+  doc.setDrawColor(31, 41, 55);
+  doc.setLineWidth(0.4);
+  doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text("Student Summaries Report", mm(12), mm(42));
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text(`Student: ${student.fullName}`, mm(12), mm(50));
+  doc.text(`Registration: ${toDisplay(student.registrationNumber)}`, mm(12), mm(56));
+
+  autoTable(doc, {
+    startY: mm(64),
+    theme: "grid",
+    headStyles: {
+      fillColor: [243, 244, 246],
+      textColor: [17, 24, 39],
+      fontStyle: "bold",
+      lineColor: [209, 213, 219],
+      lineWidth: 0.1,
+      fontSize: 8,
+    },
+    styles: {
+      font: "helvetica",
+      fontSize: 8,
+      textColor: [17, 24, 39],
+      lineColor: [229, 231, 235],
+      lineWidth: 0.1,
+      cellPadding: 1.8,
+    },
+    head: [["Class", "Academic Year", "Term", "Enrollment Date", "Aggregate", "Position", "Remark"]],
+    body:
+      summaries.length > 0
+        ? summaries.map((summary) => [
+            toDisplay(summary.class.name),
+            toDisplay(summary.academicYear.year),
+            toDisplay(summary.term.name),
+            formatDate(summary.enrollmentDate),
+            toDisplay(summary.aggregate),
+            toDisplay(summary.classPosition),
+            toDisplay(summary.remarks),
+          ])
+        : [["No enrollment summaries found.", "", "", "", "", "", ""]],
+    margin: { left: 12, right: 12 },
+  });
+
+  addPdfFooter(doc);
+
+  if (mode === "download") {
+    const fallbackFile = `summaries-report-${sanitizeFilePart(student.fullName)}.pdf`;
     doc.save(options.filename ?? fallbackFile);
     return;
   }

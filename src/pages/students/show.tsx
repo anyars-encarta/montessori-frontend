@@ -1,7 +1,7 @@
 import { useNotification, useShow } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import { BACKEND_BASE_URL } from "@/constants";
@@ -13,7 +13,10 @@ import {
 import {
   generateEnrollmentTerminalReportPdf,
   generateStudentFeeReportPdf,
+  generateStudentFeesReportPdf,
   generateStudentPaymentReportPdf,
+  generateStudentPaymentsReportPdf,
+  generateStudentSummariesReportPdf,
 } from "@/lib/enrollment-terminal-report-pdf";
 import { DataTable } from "@/components/refine-ui/data-table/data-table";
 import {
@@ -24,6 +27,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Student,
   ClassEnrollmentOverviewRow,
@@ -79,11 +89,37 @@ const healthIndicators: Array<{
   { key: "tuberculosis", label: "Tuberculosis" },
 ];
 
+type StudentReportSelection =
+  | "summary"
+  | "all-summaries"
+  | "fee"
+  | "payment"
+  | "all-fees"
+  | "all-payments";
+
+const getDateTimestamp = (...values: Array<string | null | undefined>) => {
+  for (const value of values) {
+    if (!value) continue;
+
+    const timestamp = new Date(value).getTime();
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
+};
+
 const ShowStudent = () => {
   const { id } = useParams();
   const studentId = id ?? "";
   const navigate = useNavigate();
   const { open } = useNotification();
+  const [selectedReportType, setSelectedReportType] =
+    useState<StudentReportSelection>("summary");
+  const [selectedFeeReportId, setSelectedFeeReportId] = useState<string>("");
+  const [selectedPaymentReportId, setSelectedPaymentReportId] =
+    useState<string>("");
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -165,11 +201,7 @@ const ShowStudent = () => {
 
   const printEnrollmentReport = useCallback(
     async (enrollmentId: number) => {
-      const printWindow = window.open(
-        "",
-        "_blank",
-        "width=1024,height=768",
-      );
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
 
       if (!printWindow) {
         open?.({
@@ -208,11 +240,7 @@ const ShowStudent = () => {
 
   const printFeeReport = useCallback(
     async (fee: StudentFeeRow) => {
-      const printWindow = window.open(
-        "",
-        "_blank",
-        "width=1024,height=768",
-      );
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
 
       if (!printWindow) {
         open?.({
@@ -255,11 +283,7 @@ const ShowStudent = () => {
 
   const printPaymentReport = useCallback(
     async (payment: StudentPaymentRow) => {
-      const printWindow = window.open(
-        "",
-        "_blank",
-        "width=1024,height=768",
-      );
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
 
       if (!printWindow) {
         open?.({
@@ -338,10 +362,13 @@ const ShowStudent = () => {
     async (fee: StudentFeeRow) => {
       try {
         const school = await loadSchoolDetails();
-        const studentPart = getStudentPrintContext().fullName
-          .toLowerCase()
+        const studentPart = getStudentPrintContext()
+          .fullName.toLowerCase()
           .replace(/[^a-z0-9]+/g, "-");
-        const yearPart = String(fee.academicYear ?? "year").replace(/\s+/g, "-");
+        const yearPart = String(fee.academicYear ?? "year").replace(
+          /\s+/g,
+          "-",
+        );
         const termPart = String(fee.term ?? "term")
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "-");
@@ -373,10 +400,13 @@ const ShowStudent = () => {
     async (payment: StudentPaymentRow) => {
       try {
         const school = await loadSchoolDetails();
-        const studentPart = getStudentPrintContext().fullName
-          .toLowerCase()
+        const studentPart = getStudentPrintContext()
+          .fullName.toLowerCase()
           .replace(/[^a-z0-9]+/g, "-");
-        const datePart = String(payment.paymentDate ?? "date").replace(/[^0-9]+/g, "-");
+        const datePart = String(payment.paymentDate ?? "date").replace(
+          /[^0-9]+/g,
+          "-",
+        );
 
         await generateStudentPaymentReportPdf(
           payment,
@@ -400,6 +430,612 @@ const ShowStudent = () => {
     },
     [getStudentPrintContext, loadSchoolDetails, open],
   );
+
+  const printFeesReport = useCallback(
+    async (fees: StudentFeeRow[]) => {
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
+      try {
+        const school = await loadSchoolDetails();
+        await generateStudentFeesReportPdf(
+          fees,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "print",
+            autoClosePrintWindow: true,
+            printWindow,
+          },
+        );
+      } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print fees report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const downloadFeesReport = useCallback(
+    async (fees: StudentFeeRow[]) => {
+      try {
+        const school = await loadSchoolDetails();
+        const studentPart = getStudentPrintContext()
+          .fullName.toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+
+        await generateStudentFeesReportPdf(
+          fees,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "download",
+            filename: `fees-report-${studentPart}.pdf`,
+          },
+        );
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download fees report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const printPaymentsReport = useCallback(
+    async (payments: StudentPaymentRow[]) => {
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
+      try {
+        const school = await loadSchoolDetails();
+        await generateStudentPaymentsReportPdf(
+          payments,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "print",
+            autoClosePrintWindow: true,
+            printWindow,
+          },
+        );
+      } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print payments report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const downloadPaymentsReport = useCallback(
+    async (payments: StudentPaymentRow[]) => {
+      try {
+        const school = await loadSchoolDetails();
+        const studentPart = getStudentPrintContext()
+          .fullName.toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+
+        await generateStudentPaymentsReportPdf(
+          payments,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "download",
+            filename: `payments-report-${studentPart}.pdf`,
+          },
+        );
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download payments report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const latestEnrollment = useMemo(() => {
+    const enrollments = student?.enrollments ?? [];
+
+    if (enrollments.length === 0) {
+      return null;
+    }
+
+    return enrollments.reduce((latest, current) => {
+      const latestDate = getDateTimestamp(latest.enrollment.enrollmentDate);
+      const currentDate = getDateTimestamp(current.enrollment.enrollmentDate);
+
+      return currentDate > latestDate ? current : latest;
+    });
+  }, [student?.enrollments]);
+
+  const latestEnrollmentId = latestEnrollment?.enrollment.id ?? null;
+
+  const enrollmentSummaries = useMemo(() => {
+    const enrollments = student?.enrollments ?? [];
+    return [...enrollments].sort((left, right) => {
+      return (
+        getDateTimestamp(right.enrollment.enrollmentDate) -
+        getDateTimestamp(left.enrollment.enrollmentDate)
+      );
+    });
+  }, [student?.enrollments]);
+
+  const printSummariesReport = useCallback(
+    async (enrollmentIds: number[]) => {
+      const printWindow = window.open("", "_blank", "width=1024,height=768");
+
+      if (!printWindow) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "Pop-up blocked. Please allow pop-ups and try again.",
+        });
+        return;
+      }
+
+      try {
+        const school = await loadSchoolDetails();
+        const reports: ClassEnrollmentOverviewRow[] = [];
+
+        for (const enrollmentId of enrollmentIds) {
+          try {
+            const response = await fetch(
+              buildApiUrl(
+                `/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`,
+              ),
+              { credentials: "include" },
+            );
+            if (response.ok) {
+              const payload = (await response.json()) as {
+                success?: boolean;
+                data?: ClassEnrollmentOverviewRow[];
+              };
+              const report = payload.data?.[0];
+              if (report) reports.push(report);
+            }
+          } catch {
+            // Continue fetching other reports
+          }
+        }
+
+        if (reports.length === 0) {
+          throw new Error("No enrollment summaries could be fetched.");
+        }
+
+        await generateStudentSummariesReportPdf(
+          reports,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "print",
+            autoClosePrintWindow: true,
+            printWindow,
+          },
+        );
+      } catch (error) {
+        if (!printWindow.closed) {
+          printWindow.close();
+        }
+
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to print summaries report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const downloadSummariesReport = useCallback(
+    async (enrollmentIds: number[]) => {
+      try {
+        const school = await loadSchoolDetails();
+        const reports: ClassEnrollmentOverviewRow[] = [];
+
+        for (const enrollmentId of enrollmentIds) {
+          try {
+            const response = await fetch(
+              buildApiUrl(
+                `/student-class-enrollments/overview?enrollmentId=${enrollmentId}&limit=1`,
+              ),
+              { credentials: "include" },
+            );
+            if (response.ok) {
+              const payload = (await response.json()) as {
+                success?: boolean;
+                data?: ClassEnrollmentOverviewRow[];
+              };
+              const report = payload.data?.[0];
+              if (report) reports.push(report);
+            }
+          } catch {
+            // Continue fetching other reports
+          }
+        }
+
+        if (reports.length === 0) {
+          throw new Error("No enrollment summaries could be fetched.");
+        }
+
+        const studentPart = getStudentPrintContext()
+          .fullName.toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-");
+
+        await generateStudentSummariesReportPdf(
+          reports,
+          getStudentPrintContext(),
+          school,
+          {
+            mode: "download",
+            filename: `summaries-report-${studentPart}.pdf`,
+          },
+        );
+      } catch (error) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to download summaries report.",
+        });
+      }
+    },
+    [getStudentPrintContext, loadSchoolDetails, open],
+  );
+
+  const feeReports = useMemo<StudentFeeRow[]>(() => {
+    const fees = student?.fees ?? [];
+
+    return [...fees]
+      .sort((left, right) => {
+        return (
+          getDateTimestamp(
+            right.studentFee.dueDate,
+            right.studentFee.updatedAt,
+            right.studentFee.createdAt,
+          ) -
+          getDateTimestamp(
+            left.studentFee.dueDate,
+            left.studentFee.updatedAt,
+            left.studentFee.createdAt,
+          )
+        );
+      })
+      .map((fee) => ({
+        id: fee.studentFee.id,
+        feeName: fee.fee?.name ?? `Fee #${fee.studentFee.feeId}`,
+        amount: fee.studentFee.amount,
+        amountPaid: fee.studentFee.amountPaid,
+        dueDate: fee.studentFee.dueDate ?? "",
+        academicYear: fee.academicYear?.year
+          ? String(fee.academicYear.year)
+          : "N/A",
+        term: fee.term?.name ?? "N/A",
+        status: fee.studentFee.status,
+      }));
+  }, [student?.fees]);
+
+  const paymentReports = useMemo<StudentPaymentRow[]>(() => {
+    const payments = student?.payments ?? [];
+
+    return [...payments]
+      .sort((left, right) => {
+        return (
+          getDateTimestamp(right.payment.paymentDate, right.payment.createdAt) -
+          getDateTimestamp(left.payment.paymentDate, left.payment.createdAt)
+        );
+      })
+      .map((payment) => {
+        const linkedFeeId = payment.studentFee?.id ?? payment.payment.studentFeeId;
+        const linkedFee = (student?.fees ?? []).find(
+          (item) => item.studentFee.id === linkedFeeId,
+        );
+
+        return {
+          id: payment.payment.id,
+          amount: payment.payment.amount,
+          paymentDate: payment.payment.paymentDate,
+          paymentMethod: payment.payment.paymentMethod ?? "N/A",
+          reference: payment.payment.reference ?? "N/A",
+          feeName: linkedFee?.fee?.name ?? (linkedFeeId ? `Fee #${linkedFeeId}` : "Unallocated"),
+          status: payment.studentFee?.status ?? "paid",
+        };
+      });
+  }, [student?.fees, student?.payments]);
+
+  const selectedFeeReport =
+    feeReports.find((fee) => fee.id.toString() === selectedFeeReportId) ??
+    feeReports[0] ??
+    null;
+
+  const selectedPaymentReport =
+    paymentReports.find(
+      (payment) => payment.id.toString() === selectedPaymentReportId,
+    ) ??
+    paymentReports[0] ??
+    null;
+
+  const selectedReportAvailable =
+    (selectedReportType === "summary" && latestEnrollmentId !== null) ||
+    (selectedReportType === "all-summaries" && enrollmentSummaries.length > 0) ||
+    (selectedReportType === "fee" && selectedFeeReport !== null) ||
+    (selectedReportType === "payment" && selectedPaymentReport !== null) ||
+    (selectedReportType === "all-fees" && feeReports.length > 0) ||
+    (selectedReportType === "all-payments" && paymentReports.length > 0);
+
+  const selectedReportHelpText =
+    selectedReportType === "summary"
+      ? latestEnrollmentId !== null
+        ? "Prints or downloads the latest student summary."
+        : "No enrollment summary is available for this student yet."
+      : selectedReportType === "all-summaries"
+        ? enrollmentSummaries.length > 0
+          ? `Prints or downloads a combined PDF for all ${enrollmentSummaries.length} enrollment summaries.`
+          : "No enrollment summaries are available for this student yet."
+        : selectedReportType === "fee"
+          ? selectedFeeReport
+            ? `Prints or downloads the selected fee record: ${selectedFeeReport.feeName}.`
+            : "No fee record is available for this student yet."
+          : selectedReportType === "payment"
+            ? selectedPaymentReport
+              ? `Prints or downloads the selected payment record: ${selectedPaymentReport.feeName}.`
+              : "No payment record is available for this student yet."
+            : selectedReportType === "all-fees"
+              ? feeReports.length > 0
+                ? `Prints or downloads a combined PDF for all ${feeReports.length} fee records.`
+                : "No fee records are available for this student yet."
+              : paymentReports.length > 0
+                ? `Prints or downloads a combined PDF for all ${paymentReports.length} payment records.`
+                : "No payment records are available for this student yet.";
+
+  const handleSelectedReportPrint = useCallback(async () => {
+    if (selectedReportType === "summary") {
+      if (latestEnrollmentId === null) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "No enrollment summary is available for this student.",
+        });
+        return;
+      }
+
+      await printEnrollmentReport(latestEnrollmentId);
+      return;
+    }
+
+    if (selectedReportType === "all-summaries") {
+      if (enrollmentSummaries.length === 0) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "No enrollment summaries are available for this student.",
+        });
+        return;
+      }
+
+      const enrollmentIds = enrollmentSummaries.map((e) => e.enrollment.id);
+      await printSummariesReport(enrollmentIds);
+      return;
+    }
+
+    if (selectedReportType === "fee") {
+      if (!selectedFeeReport) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "No fee record is available for this student.",
+        });
+        return;
+      }
+
+      await printFeeReport(selectedFeeReport);
+      return;
+    }
+
+    if (selectedReportType === "all-fees") {
+      if (feeReports.length === 0) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "No fee records are available for this student.",
+        });
+        return;
+      }
+
+      await printFeesReport(feeReports);
+      return;
+    }
+
+    if (selectedReportType === "all-payments") {
+      if (paymentReports.length === 0) {
+        open?.({
+          type: "error",
+          message: "Print failed",
+          description: "No payment records are available for this student.",
+        });
+        return;
+      }
+
+      await printPaymentsReport(paymentReports);
+      return;
+    }
+
+    if (!selectedPaymentReport) {
+      open?.({
+        type: "error",
+        message: "Print failed",
+        description: "No payment record is available for this student.",
+      });
+      return;
+    }
+
+    await printPaymentReport(selectedPaymentReport);
+  }, [
+    enrollmentSummaries,
+    feeReports,
+    latestEnrollmentId,
+    open,
+    paymentReports,
+    printEnrollmentReport,
+    printFeeReport,
+    printFeesReport,
+    printPaymentReport,
+    printPaymentsReport,
+    printSummariesReport,
+    selectedFeeReport,
+    selectedPaymentReport,
+    selectedReportType,
+  ]);
+
+  const handleSelectedReportDownload = useCallback(async () => {
+    if (selectedReportType === "summary") {
+      if (latestEnrollmentId === null) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description: "No enrollment summary is available for this student.",
+        });
+        return;
+      }
+
+      await downloadEnrollmentReport(latestEnrollmentId);
+      return;
+    }
+
+    if (selectedReportType === "all-summaries") {
+      if (enrollmentSummaries.length === 0) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description: "No enrollment summaries are available for this student.",
+        });
+        return;
+      }
+
+      const enrollmentIds = enrollmentSummaries.map((e) => e.enrollment.id);
+      await downloadSummariesReport(enrollmentIds);
+      return;
+    }
+
+    if (selectedReportType === "fee") {
+      if (!selectedFeeReport) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description: "No fee record is available for this student.",
+        });
+        return;
+      }
+
+      await downloadFeeReport(selectedFeeReport);
+      return;
+    }
+
+    if (selectedReportType === "all-fees") {
+      if (feeReports.length === 0) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description: "No fee records are available for this student.",
+        });
+        return;
+      }
+
+      await downloadFeesReport(feeReports);
+      return;
+    }
+
+    if (selectedReportType === "all-payments") {
+      if (paymentReports.length === 0) {
+        open?.({
+          type: "error",
+          message: "Download failed",
+          description: "No payment records are available for this student.",
+        });
+        return;
+      }
+
+      await downloadPaymentsReport(paymentReports);
+      return;
+    }
+
+    if (!selectedPaymentReport) {
+      open?.({
+        type: "error",
+        message: "Download failed",
+        description: "No payment record is available for this student.",
+      });
+      return;
+    }
+
+    await downloadPaymentReport(selectedPaymentReport);
+  }, [
+    downloadEnrollmentReport,
+    downloadFeesReport,
+    downloadFeeReport,
+    downloadPaymentReport,
+    downloadPaymentsReport,
+    downloadSummariesReport,
+    enrollmentSummaries,
+    feeReports,
+    latestEnrollmentId,
+    open,
+    paymentReports,
+    selectedFeeReport,
+    selectedPaymentReport,
+    selectedReportType,
+  ]);
 
   const enrollmentColumns = useMemo<ColumnDef<StudentEnrollmentRow>[]>(
     () => [
@@ -828,18 +1464,6 @@ const ShowStudent = () => {
 
   const studentName = `${student.firstName} ${student.lastName}`;
 
-  const latestEnrollment = (student.enrollments ?? []).reduce(
-    (latest, current) => {
-      if (!latest) return current;
-
-      const latestDate = new Date(latest.enrollment.enrollmentDate).getTime();
-      const currentDate = new Date(current.enrollment.enrollmentDate).getTime();
-
-      return currentDate > latestDate ? current : latest;
-    },
-    student.enrollments?.[0],
-  );
-
   return (
     <ShowView className="class-view class-show space-y-6">
       <ShowViewHeader resource="students" title="Student Details" />
@@ -864,22 +1488,120 @@ const ShowStudent = () => {
                 </p>
               </div>
             </div>
-            <div className="flex gap-2 flex-wrap justify-end">
-              <Badge variant={student.isActive ? "default" : "secondary"}>
-                {student.isActive ? "Active" : "Inactive"}
-              </Badge>
-              <Badge variant={student.onScholarship ? "default" : "secondary"}>
-                {student.onScholarship ? "On Scholarship" : "No Scholarship"}
-              </Badge>
-              <Badge variant={student.getDiscount ? "default" : "secondary"}>
-                {student.getDiscount ? "Discount Enabled" : "No Discount"}
-              </Badge>
-              {student.gender && (
-                <Badge variant="outline">
-                  {student.gender.split("")[0].toUpperCase() +
-                    student.gender.slice(1)}
+            <div className="flex flex-col items-end gap-4">
+              <div className="flex gap-2 flex-wrap justify-end">
+                <Badge variant={student.isActive ? "default" : "secondary"}>
+                  {student.isActive ? "Active" : "Inactive"}
                 </Badge>
-              )}
+                <Badge
+                  variant={student.onScholarship ? "default" : "secondary"}
+                >
+                  {student.onScholarship ? "On Scholarship" : "No Scholarship"}
+                </Badge>
+                <Badge variant={student.getDiscount ? "default" : "secondary"}>
+                  {student.getDiscount ? "Discount Enabled" : "No Discount"}
+                </Badge>
+                {student.gender && (
+                  <Badge variant="outline">
+                    {student.gender.split("")[0].toUpperCase() +
+                      student.gender.slice(1)}
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <Select
+                    value={selectedReportType}
+                    onValueChange={(value) =>
+                      setSelectedReportType(value as StudentReportSelection)
+                    }
+                  >
+                    <SelectTrigger
+                      className="w-47.5 bg-background"
+                      aria-label="Select report to print or download"
+                    >
+                      <SelectValue placeholder="Select report" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="summary">Summary</SelectItem>
+                      <SelectItem value="fee">Fee</SelectItem>
+                      <SelectItem value="payment">Payment</SelectItem>
+                      <SelectItem value="all-fees">All Fees</SelectItem>
+                      <SelectItem value="all-payments">All Payments</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {selectedReportType === "fee" && (
+                    <Select
+                      value={selectedFeeReport?.id.toString() ?? ""}
+                      onValueChange={setSelectedFeeReportId}
+                      disabled={feeReports.length === 0}
+                    >
+                      <SelectTrigger
+                        className="min-w-56 bg-background"
+                        aria-label="Select fee record"
+                      >
+                        <SelectValue placeholder="Select fee record" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {feeReports.map((fee) => (
+                          <SelectItem key={fee.id} value={fee.id.toString()}>
+                            {fee.feeName} | {fee.term} | {formatDate(fee.dueDate)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {selectedReportType === "payment" && (
+                    <Select
+                      value={selectedPaymentReport?.id.toString() ?? ""}
+                      onValueChange={setSelectedPaymentReportId}
+                      disabled={paymentReports.length === 0}
+                    >
+                      <SelectTrigger
+                        className="min-w-56 bg-background"
+                        aria-label="Select payment record"
+                      >
+                        <SelectValue placeholder="Select payment record" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paymentReports.map((payment) => (
+                          <SelectItem key={payment.id} value={payment.id.toString()}>
+                            {payment.feeName} | {formatDate(payment.paymentDate)} | {payment.amount}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 cursor-pointer"
+                    disabled={!selectedReportAvailable}
+                    onClick={handleSelectedReportPrint}
+                  >
+                    <ActionButton type="print" />
+                    <span>Print</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2 cursor-pointer"
+                    disabled={!selectedReportAvailable}
+                    onClick={handleSelectedReportDownload}
+                  >
+                    <ActionButton type="download" />
+                    <span>Download</span>
+                  </Button>
+                </div>
+                <p className="text-right text-xs text-muted-foreground">
+                  {selectedReportHelpText}
+                </p>
+              </div>
             </div>
           </div>
         </CardHeader>
