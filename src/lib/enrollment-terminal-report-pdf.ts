@@ -242,7 +242,7 @@ export const generateEnrollmentTerminalReportPdf = async (
     bodyStyles: {
       valign: "middle",
     },
-    head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Position", "Remark"]],
+    head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Grade", "Position", "Remark"]],
     body:
       report.assessments.length > 0
         ? report.assessments.map((assessment) => [
@@ -250,13 +250,14 @@ export const generateEnrollmentTerminalReportPdf = async (
             toDisplay(assessment.classMark),
             toDisplay(assessment.examMark),
             toDisplay(assessment.totalMark),
+            toDisplay(assessment.grade),
             toDisplay(assessment.subjectPosition),
             toDisplay(assessment.remarks),
           ])
-        : [["No assessments found for this enrollment.", "", "", "", "", ""]],
+        : [["No assessments found for this enrollment.", "", "", "", "", "", ""]],
     columnStyles: {
       0: { cellWidth: 36 },
-      5: { cellWidth: 32 },
+      6: { cellWidth: 32 },
     },
     margin: { left: 12, right: 12 },
   });
@@ -896,7 +897,7 @@ export const generateClassEnrollmentSummariesReportPdf = async (
         bodyStyles: {
           valign: "middle",
         },
-        head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Position", "Remark"]],
+        head: [["Subject", "Class (30%)", "Exam (70%)", "Total (100%)", "Grade", "Position", "Remark"]],
         body:
           summary.assessments.length > 0
             ? summary.assessments.map((assessment) => [
@@ -904,13 +905,14 @@ export const generateClassEnrollmentSummariesReportPdf = async (
                 toDisplay(assessment.classMark),
                 toDisplay(assessment.examMark),
                 toDisplay(assessment.totalMark),
+                toDisplay(assessment.grade),
                 toDisplay(assessment.subjectPosition),
                 toDisplay(assessment.remarks),
               ])
-            : [["No assessments found for this enrollment.", "", "", "", "", ""]],
+            : [["No assessments found for this enrollment.", "", "", "", "", "", ""]],
         columnStyles: {
           0: { cellWidth: 36 },
-          5: { cellWidth: 32 },
+          6: { cellWidth: 32 },
         },
         margin: { left: 12, right: 12 },
       });
