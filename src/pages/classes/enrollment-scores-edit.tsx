@@ -191,6 +191,7 @@ const EnrollmentScoresEditPage = () => {
                     <th className="p-2 font-medium">Class Score</th>
                     <th className="p-2 font-medium">Exam Score</th>
                     <th className="p-2 font-medium">Total Score</th>
+                    <th className="p-2 font-medium">Grade</th>
                     <th className="p-2 font-medium">Position</th>
                     <th className="p-2 font-medium">Remarks</th>
                     <th className="p-2 font-medium">Actions</th>
@@ -308,6 +309,9 @@ const EnrollmentScoresEditPage = () => {
                         </td>
                         <td className="p-2 font-medium">
                           {assessment.totalMark}
+                        </td>
+                        <td className="p-2 font-medium">
+                          {assessment.grade}
                         </td>
                         <td className="p-2 font-medium">
                           {assessment.subjectPosition}

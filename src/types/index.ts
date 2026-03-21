@@ -628,6 +628,7 @@ export type EnrollmentAssessmentRow = {
   classMark: string;
   examMark: string;
   totalMark: string;
+  grade: string | null;
   subjectPosition: string;
   remarks: string;
 };
