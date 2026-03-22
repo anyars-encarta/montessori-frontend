@@ -600,6 +600,7 @@ export type TermRecord = {
   academicYearId: number;
   startDate: string;
   endDate: string;
+  holidayDates?: string[];
 };
 
 export type AcademicYearForm = {
@@ -614,6 +615,7 @@ export type TermForm = {
   academicYearId: string;
   startDate: string;
   endDate: string;
+  holidayDatesText: string;
 };
 
 export type EnrollmentAssessmentRow = {

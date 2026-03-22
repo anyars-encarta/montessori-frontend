@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ const emptyTerm: TermForm = {
   academicYearId: "",
   startDate: "",
   endDate: "",
+  holidayDatesText: "",
 };
 
 const CURRENCY_SYMBOL = "$";
@@ -78,6 +80,23 @@ const extractErrorMessage = (error: unknown, fallback: string) => {
     return String(error.message);
   }
   return fallback;
+};
+
+const serializeHolidayDates = (holidayDates?: string[]) => {
+  if (!Array.isArray(holidayDates) || holidayDates.length === 0) {
+    return "";
+  }
+
+  return holidayDates.join("\n");
+};
+
+const parseHolidayDatesText = (value: string) => {
+  const parts = value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  return [...new Set(parts)].sort((a, b) => a.localeCompare(b));
 };
 
 const EditSetup = () => {
@@ -255,6 +274,7 @@ const EditSetup = () => {
       academicYearId: Number.parseInt(termForm.academicYearId, 10),
       startDate: termForm.startDate,
       endDate: termForm.endDate,
+      holidayDates: parseHolidayDatesText(termForm.holidayDatesText),
     };
 
     try {
@@ -658,6 +678,21 @@ const EditSetup = () => {
                 required
               />
             </div>
+            <div className="space-y-2 md:col-span-6">
+              <Label htmlFor="term-holidays">Holiday Dates</Label>
+              <Textarea
+                id="term-holidays"
+                rows={4}
+                value={termForm.holidayDatesText}
+                onChange={(event) =>
+                  setTermForm((prev) => ({ ...prev, holidayDatesText: event.target.value }))
+                }
+                placeholder="Enter dates in YYYY-MM-DD format, one per line or comma-separated"
+              />
+              <p className="text-xs text-muted-foreground">
+                These dates are excluded from attendance working-day totals for this term.
+              </p>
+            </div>
             <div className="flex items-end gap-2 md:col-span-2">
               <Button
                 type="submit"
@@ -698,6 +733,9 @@ const EditSetup = () => {
                     <p className="text-sm text-muted-foreground">
                       Year: {yearById.get(term.academicYearId)?.year ?? "N/A"} • {formatDate(term.startDate)} - {formatDate(term.endDate)}
                     </p>
+                    <p className="text-xs text-muted-foreground">
+                      Holidays: {Array.isArray(term.holidayDates) ? term.holidayDates.length : 0}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -712,6 +750,7 @@ const EditSetup = () => {
                           academicYearId: String(term.academicYearId),
                           startDate: term.startDate,
                           endDate: term.endDate,
+                          holidayDatesText: serializeHolidayDates(term.holidayDates),
                         });
                       }}
                     >
