@@ -644,6 +644,7 @@ export type ClassEnrollmentOverviewRow = {
     id: number;
     name: string;
     level: string;
+    capacity?: number;
   };
   academicYear: {
     id: number;
@@ -653,8 +654,12 @@ export type ClassEnrollmentOverviewRow = {
     id: number;
     name: string;
     sequenceNumber: number;
+    startDate?: string;
+    endDate?: string;
+    nextTermStartDate?: string | null;
   };
   enrollmentDate: string;
+  attendance?: string;
   classPosition: string;
   aggregate: string;
   remarks: string;

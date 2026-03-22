@@ -23,7 +23,14 @@ const toDisplay = (value?: string | number | null) => {
 const formatDate = (value?: string | null) => {
   if (!value) return "N/A";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString();
+  return Number.isNaN(date.getTime())
+    ? "N/A"
+    : date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
 };
 
 const sanitizeFilePart = (value: string) =>
@@ -39,6 +46,17 @@ const addPdfFooter = (doc: jsPDF, y = 286) => {
   doc.setFontSize(8);
   doc.setTextColor(107, 114, 128);
   doc.text(`Generated on ${generatedAt}`, mm(12), y);
+};
+
+const drawSchoolName = (doc: jsPDF, text: string, x: number, y: number) => {
+  try {
+    // Use Algerian when available in runtime font registry; fallback otherwise.
+    doc.setFont("algerian", "normal");
+  } catch {
+    doc.setFont("times", "bold");
+  }
+  doc.setFontSize(18);
+  doc.text(text.toUpperCase(), x, y);
 };
 
 const loadImageAsDataUrl = async (url: string): Promise<string | null> => {
@@ -149,9 +167,7 @@ export const generateEnrollmentTerminalReportPdf = async (
   const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
   const textStartX = logoAdded ? mm(36) : mm(12);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text(schoolName, textStartX, mm(19));
+  drawSchoolName(doc, schoolName, textStartX, mm(19));
 
   const schoolLine = [school?.address, school?.phone, school?.email, school?.website]
     .map((part) => (part ?? "").trim())
@@ -169,27 +185,68 @@ export const generateEnrollmentTerminalReportPdf = async (
   doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(14);
   doc.text("Student Terminal Report", mm(12), mm(42));
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
 
-  const infoRows = [
+  const leftInfoRows = [
     ["Student", report.student.fullName],
     ["Registration", toDisplay(report.student.registrationNumber)],
     ["Class", `${toDisplay(report.class.name)} (${toDisplay(report.class.level)})`],
+  ];
+
+  const rightInfoRows = [
     ["Academic Year", toDisplay(report.academicYear.year)],
     ["Term", toDisplay(report.term.name)],
     ["Enrollment Date", formatDate(report.enrollmentDate)],
   ];
 
   let infoY = mm(50);
-  for (const [label, value] of infoRows) {
+  for (let i = 0; i < 3; i += 1) {
+    const [leftLabel, leftValue] = leftInfoRows[i] ?? ["", ""];
+    const [rightLabel, rightValue] = rightInfoRows[i] ?? ["", ""];
+
     doc.setFont("helvetica", "bold");
-    doc.text(`${label}:`, mm(12), infoY);
+    doc.text(`${leftLabel}:`, mm(12), infoY);
     doc.setFont("helvetica", "normal");
-    doc.text(String(value), mm(42), infoY);
+    doc.text(String(leftValue), mm(48), infoY);
+
+    doc.setFont("helvetica", "bold");
+    doc.text(`${rightLabel}:`, mm(108), infoY);
+    doc.setFont("helvetica", "normal");
+    doc.text(String(rightValue), mm(148), infoY);
+
+    infoY += mm(5.5);
+  }
+
+  const leftExtraRows = [
+    ["No. on Roll", toDisplay(report.class.capacity)],
+    ["Next Term Begins", formatDate(report.term.nextTermStartDate)],
+  ];
+
+  const rightExtraRows = [
+    ["School Vacates On", formatDate(report.term.endDate)],
+    ["Attendance", toDisplay(report.attendance)],
+  ];
+
+  for (let i = 0; i < 2; i += 1) {
+    const [leftLabel, leftValue] = leftExtraRows[i] ?? ["", ""];
+    const [rightLabel, rightValue] = rightExtraRows[i] ?? ["", ""];
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(17, 24, 39);
+    doc.text(`${leftLabel}:`, mm(12), infoY);
+    doc.setFont("helvetica", "normal");
+    doc.text(String(leftValue), mm(48), infoY);
+
+    doc.setFont("helvetica", "bold");
+    doc.text(`${rightLabel}:`, mm(108), infoY);
+    doc.setFont("helvetica", "normal");
+    doc.text(String(rightValue), mm(148), infoY);
+
     infoY += mm(5.5);
   }
 
@@ -809,9 +866,7 @@ export const generateClassEnrollmentSummariesReportPdf = async (
       const logoAdded = await maybeAddLogo(doc, school, mm(12), headerTop);
       const textStartX = logoAdded ? mm(36) : mm(12);
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text(schoolName, textStartX, mm(19));
+      drawSchoolName(doc, schoolName, textStartX, mm(19));
 
       if (schoolLine) {
         doc.setFont("helvetica", "normal");
@@ -824,27 +879,68 @@ export const generateClassEnrollmentSummariesReportPdf = async (
       doc.line(mm(12), mm(34), pageWidth - mm(12), mm(34));
 
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
+      doc.setFontSize(14);
       doc.text("Student Terminal Report", mm(12), mm(42));
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(10);
 
-      const infoRows = [
+      const leftInfoRows = [
         ["Student", summary.student.fullName],
         ["Registration", toDisplay(summary.student.registrationNumber)],
         ["Class", `${toDisplay(summary.class.name)} (${toDisplay(summary.class.level)})`],
+      ];
+
+      const rightInfoRows = [
         ["Academic Year", toDisplay(summary.academicYear.year)],
         ["Term", toDisplay(summary.term.name)],
         ["Enrollment Date", formatDate(summary.enrollmentDate)],
       ];
 
       let infoY = mm(50);
-      for (const [label, value] of infoRows) {
+      for (let i = 0; i < 3; i += 1) {
+        const [leftLabel, leftValue] = leftInfoRows[i] ?? ["", ""];
+        const [rightLabel, rightValue] = rightInfoRows[i] ?? ["", ""];
+
         doc.setFont("helvetica", "bold");
-        doc.text(`${label}:`, mm(12), infoY);
+        doc.text(`${leftLabel}:`, mm(12), infoY);
         doc.setFont("helvetica", "normal");
-        doc.text(String(value), mm(42), infoY);
+        doc.text(String(leftValue), mm(48), infoY);
+
+        doc.setFont("helvetica", "bold");
+        doc.text(`${rightLabel}:`, mm(108), infoY);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(rightValue), mm(148), infoY);
+
+        infoY += mm(5.5);
+      }
+
+      const leftExtraRows = [
+        ["No. on Roll", toDisplay(summary.class.capacity)],
+        ["Next Term Begins", formatDate(summary.term.nextTermStartDate)],
+      ];
+
+      const rightExtraRows = [
+        ["School Vacates On", formatDate(summary.term.endDate)],
+        ["Attendance", toDisplay(summary.attendance)],
+      ];
+
+      for (let i = 0; i < 2; i += 1) {
+        const [leftLabel, leftValue] = leftExtraRows[i] ?? ["", ""];
+        const [rightLabel, rightValue] = rightExtraRows[i] ?? ["", ""];
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(17, 24, 39);
+        doc.text(`${leftLabel}:`, mm(12), infoY);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(leftValue), mm(48), infoY);
+
+        doc.setFont("helvetica", "bold");
+        doc.text(`${rightLabel}:`, mm(108), infoY);
+        doc.setFont("helvetica", "normal");
+        doc.text(String(rightValue), mm(148), infoY);
+
         infoY += mm(5.5);
       }
 
