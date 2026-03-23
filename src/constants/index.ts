@@ -1,4 +1,4 @@
-import { ReportCard } from "@/types";
+import { ReportCard, UserRole } from "@/types";
 import { GraduationCap, School } from "lucide-react";
 
 import {
@@ -131,6 +131,7 @@ export const reports: ReportCard[] = [
             { label: "Open Classes", path: "/classes" },
             { label: "Open Enrollment Details", path: "/classes/enrollments" },
         ],
+        visibleTo: [UserRole.ADMIN],
     },
     {
         title: "Enrollments Report",
@@ -140,6 +141,7 @@ export const reports: ReportCard[] = [
         status: "ready",
         icon: FileBarChart2,
         actions: [{ label: "Open Enrollments", path: "/classes/enrollments" }],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
     },
     {
         title: "Student Attendance Report",
@@ -151,6 +153,7 @@ export const reports: ReportCard[] = [
         actions: [
             { label: "Open Student Attendance", path: "/classes/student-attendance" },
         ],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
     },
     {
         title: "Staff Attendance Report",
@@ -160,6 +163,7 @@ export const reports: ReportCard[] = [
         status: "ready",
         icon: BriefcaseBusiness,
         actions: [{ label: "Open Staff Attendance", path: "/staff/staff-attendance" }],
+        visibleTo: [UserRole.ADMIN],
     },
     {
         title: "Income and Expenditure Report",
@@ -172,6 +176,7 @@ export const reports: ReportCard[] = [
             { label: "Open Payments", path: "/payments" },
             { label: "Open Fees", path: "/fees" },
         ],
+        visibleTo: [UserRole.ADMIN],
     },
     {
         title: "Terminal Report",
@@ -184,6 +189,7 @@ export const reports: ReportCard[] = [
             { label: "Open Setup (Terms)", path: "/setup" },
             { label: "Open Enrollments", path: "/classes/enrollments" },
         ],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
     },
     {
         title: "Subject Performance Analysis",
@@ -196,6 +202,7 @@ export const reports: ReportCard[] = [
             { label: "Open Subjects", path: "/subjects" },
             { label: "Open Enrollments", path: "/classes/enrollments" },
         ],
+        visibleTo: [UserRole.ADMIN],
     },
     {
         title: "Revenue Report",
@@ -205,6 +212,7 @@ export const reports: ReportCard[] = [
         status: "ready",
         icon: Coins,
         actions: [{ label: "Open Payments", path: "/payments" }],
+        visibleTo: [UserRole.ADMIN],
     },
     {
         title: "Fees Summary Report",
@@ -214,5 +222,6 @@ export const reports: ReportCard[] = [
         status: "ready",
         icon: ChartNoAxesCombined,
         actions: [{ label: "Open Fees", path: "/fees" }],
+        visibleTo: [UserRole.ADMIN],
     },
 ];

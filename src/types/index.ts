@@ -870,6 +870,7 @@ export type ReportCard = {
     status: ReportState;
     icon: LucideIcon;
     actions: ReportAction[];
+    visibleTo: UserRole[];
 };
 
 export type PdfMode = "download" | "print";

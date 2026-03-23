@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router";
 
 import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
@@ -7,16 +8,39 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { reports } from "@/constants";
+import { useGetIdentity } from "@refinedev/core";
+import { User, UserRole } from "@/types";
 
 const ShowReports = () => {
   const navigate = useNavigate();
+  const { data: loggedInUser } = useGetIdentity<User>();
+  const visibleReports = useMemo(() => {
+    if (!loggedInUser?.role) {
+      return [];
+    }
+
+    const currentRole =
+      loggedInUser.role === "admin"
+        ? UserRole.ADMIN
+        : loggedInUser.role === "teacher"
+          ? UserRole.TEACHER
+          : loggedInUser.role === "staff"
+            ? UserRole.STAFF
+            : null;
+
+    if (!currentRole) {
+      return [];
+    }
+
+    return reports.filter((report) => report.visibleTo.includes(currentRole));
+  }, [loggedInUser?.role]);
 
   return (
     <ListView className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Breadcrumb />
-          <Badge variant="outline">{reports.length} Report Modules</Badge>
+          <Badge variant="outline">{visibleReports.length} Report Modules</Badge>
         </div>
         <Separator />
       </div>
@@ -34,7 +58,7 @@ const ShowReports = () => {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {reports.map((report) => {
+        {visibleReports.map((report) => {
           const Icon = report.icon;
 
           return (
@@ -84,6 +108,17 @@ const ShowReports = () => {
           );
         })}
       </section>
+
+      {visibleReports.length === 0 && (
+        <Card className="border-dashed bg-muted/10">
+          <CardContent className="py-10 text-center">
+            <p className="text-sm font-medium">No reports available for your role.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Reports are only shown to signed-in users whose role is included in each report's access list.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </ListView>
   );
 };
