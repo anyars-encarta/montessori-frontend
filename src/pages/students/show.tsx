@@ -1,4 +1,9 @@
-import { useNotification, useShow } from "@refinedev/core";
+import {
+  useBack,
+  useGetIdentity,
+  useNotification,
+  useShow,
+} from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
@@ -42,6 +47,7 @@ import {
   StudentFeeRow,
   StudentPaymentRow,
   StudentSiblingRow,
+  User,
 } from "@/types";
 import PageLoader from "@/components/PageLoader";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
@@ -120,6 +126,9 @@ const ShowStudent = () => {
   const [selectedFeeReportId, setSelectedFeeReportId] = useState<string>("");
   const [selectedPaymentReportId, setSelectedPaymentReportId] =
     useState<string>("");
+  const back = useBack();
+
+  const { data: loggedInUser } = useGetIdentity<User>();
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -777,7 +786,8 @@ const ShowStudent = () => {
         );
       })
       .map((payment) => {
-        const linkedFeeId = payment.studentFee?.id ?? payment.payment.studentFeeId;
+        const linkedFeeId =
+          payment.studentFee?.id ?? payment.payment.studentFeeId;
         const linkedFee = (student?.fees ?? []).find(
           (item) => item.studentFee.id === linkedFeeId,
         );
@@ -788,7 +798,9 @@ const ShowStudent = () => {
           paymentDate: payment.payment.paymentDate,
           paymentMethod: payment.payment.paymentMethod ?? "N/A",
           reference: payment.payment.reference ?? "N/A",
-          feeName: linkedFee?.fee?.name ?? (linkedFeeId ? `Fee #${linkedFeeId}` : "Unallocated"),
+          feeName:
+            linkedFee?.fee?.name ??
+            (linkedFeeId ? `Fee #${linkedFeeId}` : "Unallocated"),
           status: payment.studentFee?.status ?? "paid",
         };
       });
@@ -808,7 +820,8 @@ const ShowStudent = () => {
 
   const selectedReportAvailable =
     (selectedReportType === "summary" && latestEnrollmentId !== null) ||
-    (selectedReportType === "all-summaries" && enrollmentSummaries.length > 0) ||
+    (selectedReportType === "all-summaries" &&
+      enrollmentSummaries.length > 0) ||
     (selectedReportType === "fee" && selectedFeeReport !== null) ||
     (selectedReportType === "payment" && selectedPaymentReport !== null) ||
     (selectedReportType === "all-fees" && feeReports.length > 0) ||
@@ -820,24 +833,24 @@ const ShowStudent = () => {
         ? "Prints or downloads the latest student summary."
         : "No enrollment summary is available for this student yet."
       : selectedReportType === "all-summaries"
-        ? enrollmentSummaries.length > 0
-          ? `Prints or downloads a combined PDF for all ${enrollmentSummaries.length} enrollment summaries.`
-          : "No enrollment summaries are available for this student yet."
-        : selectedReportType === "fee"
-          ? selectedFeeReport
-            ? `Prints or downloads the selected fee record: ${selectedFeeReport.feeName}.`
-            : "No fee record is available for this student yet."
-          : selectedReportType === "payment"
-            ? selectedPaymentReport
-              ? `Prints or downloads the selected payment record: ${selectedPaymentReport.feeName}.`
-              : "No payment record is available for this student yet."
-            : selectedReportType === "all-fees"
-              ? feeReports.length > 0
-                ? `Prints or downloads a combined PDF for all ${feeReports.length} fee records.`
-                : "No fee records are available for this student yet."
-              : paymentReports.length > 0
-                ? `Prints or downloads a combined PDF for all ${paymentReports.length} payment records.`
-                : "No payment records are available for this student yet.";
+      ? enrollmentSummaries.length > 0
+        ? `Prints or downloads a combined PDF for all ${enrollmentSummaries.length} enrollment summaries.`
+        : "No enrollment summaries are available for this student yet."
+      : selectedReportType === "fee"
+      ? selectedFeeReport
+        ? `Prints or downloads the selected fee record: ${selectedFeeReport.feeName}.`
+        : "No fee record is available for this student yet."
+      : selectedReportType === "payment"
+      ? selectedPaymentReport
+        ? `Prints or downloads the selected payment record: ${selectedPaymentReport.feeName}.`
+        : "No payment record is available for this student yet."
+      : selectedReportType === "all-fees"
+      ? feeReports.length > 0
+        ? `Prints or downloads a combined PDF for all ${feeReports.length} fee records.`
+        : "No fee records are available for this student yet."
+      : paymentReports.length > 0
+      ? `Prints or downloads a combined PDF for all ${paymentReports.length} payment records.`
+      : "No payment records are available for this student yet.";
 
   const handleSelectedReportPrint = useCallback(async () => {
     if (selectedReportType === "summary") {
@@ -859,7 +872,8 @@ const ShowStudent = () => {
         open?.({
           type: "error",
           message: "Print failed",
-          description: "No enrollment summaries are available for this student.",
+          description:
+            "No enrollment summaries are available for this student.",
         });
         return;
       }
@@ -958,7 +972,8 @@ const ShowStudent = () => {
         open?.({
           type: "error",
           message: "Download failed",
-          description: "No enrollment summaries are available for this student.",
+          description:
+            "No enrollment summaries are available for this student.",
         });
         return;
       }
@@ -1209,19 +1224,22 @@ const ShowStudent = () => {
 
           return (
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() =>
-                  navigate(
-                    `/payments/create?studentId=${studentId}&studentFeeId=${row.original.id}`,
-                  )
-                }
-              >
-                Pay Fee
-              </Button>
+              {(loggedInUser?.role === "admin" ||
+                loggedInUser?.role === "staff") && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer"
+                  onClick={() =>
+                    navigate(
+                      `/payments/create?studentId=${studentId}&studentFeeId=${row.original.id}`,
+                    )
+                  }
+                >
+                  Pay Fee
+                </Button>
+              )}
 
               <ActionTooltip title={actionButtonTitles.print}>
                 <Button
@@ -1466,7 +1484,16 @@ const ShowStudent = () => {
 
   return (
     <ShowView className="class-view class-show space-y-6">
-      <ShowViewHeader resource="students" title="Student Details" />
+      {loggedInUser?.role === "admin" ? (
+        <ShowViewHeader resource="students" title="Student Details" />
+      ) : (
+        <div className="intro-row">
+          <h1 className="page-title">Student Details</h1>
+          <Button onClick={back} className="cursor-pointer" type="button">
+            Go Back
+          </Button>
+        </div>
+      )}
 
       <Card className="hover:shadow-md transition-shadow">
         <CardHeader>
@@ -1547,7 +1574,8 @@ const ShowStudent = () => {
                       <SelectContent>
                         {feeReports.map((fee) => (
                           <SelectItem key={fee.id} value={fee.id.toString()}>
-                            {fee.feeName} | {fee.term} | {formatDate(fee.dueDate)}
+                            {fee.feeName} | {fee.term} |{" "}
+                            {formatDate(fee.dueDate)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1568,8 +1596,12 @@ const ShowStudent = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {paymentReports.map((payment) => (
-                          <SelectItem key={payment.id} value={payment.id.toString()}>
-                            {payment.feeName} | {formatDate(payment.paymentDate)} | {payment.amount}
+                          <SelectItem
+                            key={payment.id}
+                            value={payment.id.toString()}
+                          >
+                            {payment.feeName} |{" "}
+                            {formatDate(payment.paymentDate)} | {payment.amount}
                           </SelectItem>
                         ))}
                       </SelectContent>

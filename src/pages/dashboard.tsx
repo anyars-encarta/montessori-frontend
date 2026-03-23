@@ -482,7 +482,7 @@ const Dashboard = () => {
             {newestStudents.map((item, index) => (
               <Link
                 key={item.id}
-                to={`/students/show/${item.id}`}
+                to={loggedInUser?.role === "admin" || loggedInUser?.role === "teacher" ? `/students/show/${item.id}` : ""}
                 className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
               >
                 <div className="flex items-center gap-3">
@@ -520,7 +520,7 @@ const Dashboard = () => {
             {newestTeachers.map((teacher, index) => (
               <Link
                 key={teacher.id}
-                to={`/staff/show/${teacher.id}`}
+                to={loggedInUser?.role === "admin" ? `/staff/show/${teacher.id}` : ""}
                 className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
               >
                 <div className="flex items-center gap-3">

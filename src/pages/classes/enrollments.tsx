@@ -25,9 +25,10 @@ import {
   RunGradesResponse,
   SchoolDetailsRecord,
   TermRecord,
+  User,
 } from "@/types";
 import { BACKEND_BASE_URL } from "@/constants";
-import { useList, useNotification } from "@refinedev/core";
+import { useGetIdentity, useList, useNotification } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2 } from "lucide-react";
@@ -61,6 +62,8 @@ const extractErrorMessage = async (response: Response) => {
 const EnrollmentsPage = () => {
   const navigate = useNavigate();
   const { open } = useNotification();
+
+  const { data: loggedInUser } = useGetIdentity<User>();
 
   const [studentNameFilter, setStudentNameFilter] = useState("");
   const [classIdFilter, setClassIdFilter] = useState("");
@@ -411,7 +414,9 @@ const EnrollmentsPage = () => {
 
   const fetchFilteredEnrollmentReports = useCallback(async () => {
     if (!classIdFilter || !academicYearIdFilter || !termIdFilter) {
-      throw new Error("Select class, academic year, and term before exporting reports.");
+      throw new Error(
+        "Select class, academic year, and term before exporting reports.",
+      );
     }
 
     const normalizedStudentName = studentNameFilter.trim();
@@ -465,7 +470,9 @@ const EnrollmentsPage = () => {
     const classLabel = selectedClass
       ? `${selectedClass.name} (${selectedClass.level})`
       : "N/A";
-    const yearLabel = selectedAcademicYear ? String(selectedAcademicYear.year) : "N/A";
+    const yearLabel = selectedAcademicYear
+      ? String(selectedAcademicYear.year)
+      : "N/A";
     const termLabel = selectedTerm ? selectedTerm.name : "N/A";
     const studentLabel = studentNameFilter.trim()
       ? ` | Student contains: ${studentNameFilter.trim()}`
@@ -479,7 +486,8 @@ const EnrollmentsPage = () => {
       open?.({
         type: "error",
         message: "Select required filters",
-        description: "Choose class, academic year, and term to print filtered reports.",
+        description:
+          "Choose class, academic year, and term to print filtered reports.",
       });
       return;
     }
@@ -503,7 +511,9 @@ const EnrollmentsPage = () => {
       ]);
 
       if (reports.length === 0) {
-        throw new Error("No students found for the selected class/year/term filters.");
+        throw new Error(
+          "No students found for the selected class/year/term filters.",
+        );
       }
 
       await generateClassEnrollmentSummariesReportPdf(
@@ -545,7 +555,8 @@ const EnrollmentsPage = () => {
       open?.({
         type: "error",
         message: "Select required filters",
-        description: "Choose class, academic year, and term to download filtered reports.",
+        description:
+          "Choose class, academic year, and term to download filtered reports.",
       });
       return;
     }
@@ -559,12 +570,19 @@ const EnrollmentsPage = () => {
       ]);
 
       if (reports.length === 0) {
-        throw new Error("No students found for the selected class/year/term filters.");
+        throw new Error(
+          "No students found for the selected class/year/term filters.",
+        );
       }
 
-      const fileClass = selectedClass?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "class";
-      const fileYear = selectedAcademicYear ? String(selectedAcademicYear.year) : "year";
-      const fileTerm = selectedTerm?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "term";
+      const fileClass =
+        selectedClass?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ??
+        "class";
+      const fileYear = selectedAcademicYear
+        ? String(selectedAcademicYear.year)
+        : "year";
+      const fileTerm =
+        selectedTerm?.name?.toLowerCase().replace(/[^a-z0-9]+/g, "-") ?? "term";
 
       await generateClassEnrollmentSummariesReportPdf(
         reports,
@@ -1063,7 +1081,9 @@ const EnrollmentsPage = () => {
                   type="button"
                   variant="outline"
                   className="gap-2 cursor-pointer"
-                  disabled={!filteredReportAvailable || isPrintingFilteredReport}
+                  disabled={
+                    !filteredReportAvailable || isPrintingFilteredReport
+                  }
                   onClick={handleTerminalReportPrint}
                 >
                   {isPrintingFilteredReport ? (
@@ -1071,14 +1091,18 @@ const EnrollmentsPage = () => {
                   ) : (
                     <ActionButton type="print" />
                   )}
-                  <span>{isPrintingFilteredReport ? "Printing..." : "Print"}</span>
+                  <span>
+                    {isPrintingFilteredReport ? "Printing..." : "Print"}
+                  </span>
                 </Button>
 
                 <Button
                   type="button"
                   variant="outline"
                   className="gap-2 cursor-pointer"
-                  disabled={!filteredReportAvailable || isDownloadingFilteredReport}
+                  disabled={
+                    !filteredReportAvailable || isDownloadingFilteredReport
+                  }
                   onClick={handleTerminalReportDownload}
                 >
                   {isDownloadingFilteredReport ? (
@@ -1087,7 +1111,9 @@ const EnrollmentsPage = () => {
                     <ActionButton type="download" />
                   )}
                   <span>
-                    {isDownloadingFilteredReport ? "Downloading..." : "Download"}
+                    {isDownloadingFilteredReport
+                      ? "Downloading..."
+                      : "Download"}
                   </span>
                 </Button>
               </div>
@@ -1100,161 +1126,163 @@ const EnrollmentsPage = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Promotion / Repeating</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Select students with checkboxes in the table, then choose
-            destination class/year/term and run Promote or Repeat.
-          </p>
+      {loggedInUser?.role === "admin" && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Promotion / Repeating</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Select students with checkboxes in the table, then choose
+              destination class/year/term and run Promote or Repeat.
+            </p>
 
-          <div className="grid gap-4 md:grid-cols-5">
-            <div className="space-y-2">
-              <Label>New Class</Label>
-              <Select
-                value={targetClassId || "all"}
-                onValueChange={(value) =>
-                  setTargetClassId(value === "all" ? "" : value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select class" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Select class</SelectItem>
-                  {classes.map((classRow) => (
-                    <SelectItem key={classRow.id} value={String(classRow.id)}>
-                      {classRow.name} ({classRow.level})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid gap-4 md:grid-cols-5">
+              <div className="space-y-2">
+                <Label>New Class</Label>
+                <Select
+                  value={targetClassId || "all"}
+                  onValueChange={(value) =>
+                    setTargetClassId(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Select class</SelectItem>
+                    {classes.map((classRow) => (
+                      <SelectItem key={classRow.id} value={String(classRow.id)}>
+                        {classRow.name} ({classRow.level})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Academic Year</Label>
-              <Select
-                value={targetAcademicYearId || "all"}
-                onValueChange={(value) =>
-                  setTargetAcademicYearId(value === "all" ? "" : value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Select year</SelectItem>
-                  {academicYears.map((year) => (
-                    <SelectItem key={year.id} value={String(year.id)}>
-                      {year.year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-2">
+                <Label>Academic Year</Label>
+                <Select
+                  value={targetAcademicYearId || "all"}
+                  onValueChange={(value) =>
+                    setTargetAcademicYearId(value === "all" ? "" : value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Select year</SelectItem>
+                    {academicYears.map((year) => (
+                      <SelectItem key={year.id} value={String(year.id)}>
+                        {year.year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label>Term</Label>
-              <Select
-                value={targetTermId || "all"}
-                onValueChange={(value) =>
-                  setTargetTermId(value === "all" ? "" : value)
-                }
-                disabled={!targetAcademicYearId}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      targetAcademicYearId
-                        ? "Select term"
-                        : "Select academic year first"
+              <div className="space-y-2">
+                <Label>Term</Label>
+                <Select
+                  value={targetTermId || "all"}
+                  onValueChange={(value) =>
+                    setTargetTermId(value === "all" ? "" : value)
+                  }
+                  disabled={!targetAcademicYearId}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        targetAcademicYearId
+                          ? "Select term"
+                          : "Select academic year first"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Select term</SelectItem>
+                    {filteredPromotionTerms.map((term) => (
+                      <SelectItem key={term.id} value={String(term.id)}>
+                        {term.name} (Term {term.sequenceNumber})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>Actions</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => promoteRepeat("promote")}
+                    disabled={
+                      isPromoting ||
+                      selectedEnrollmentIds.length === 0 ||
+                      !targetClassId ||
+                      !targetAcademicYearId ||
+                      !targetTermId
                     }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Select term</SelectItem>
-                  {filteredPromotionTerms.map((term) => (
-                    <SelectItem key={term.id} value={String(term.id)}>
-                      {term.name} (Term {term.sequenceNumber})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  >
+                    {isPromoting ? (
+                      <div className="flex gap-1 items-center">
+                        <span>Promoting...</span>
+                        <Loader2 className="inline-block ml-2 animate-spin" />
+                      </div>
+                    ) : (
+                      "Promote"
+                    )}
+                  </Button>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label>Actions</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() => promoteRepeat("promote")}
-                  disabled={
-                    isPromoting ||
-                    selectedEnrollmentIds.length === 0 ||
-                    !targetClassId ||
-                    !targetAcademicYearId ||
-                    !targetTermId
-                  }
-                >
-                  {isPromoting ? (
-                    <div className="flex gap-1 items-center">
-                      <span>Promoting...</span>
-                      <Loader2 className="inline-block ml-2 animate-spin" />
-                    </div>
-                  ) : (
-                    "Promote"
-                  )}
-                </Button>
-
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() => promoteRepeat("repeat")}
-                  disabled={
-                    isRepeating ||
-                    selectedEnrollmentIds.length === 0 ||
-                    !targetClassId ||
-                    !targetAcademicYearId ||
-                    !targetTermId
-                  }
-                >
-                  {isRepeating ? (
-                    <div className="flex gap-1 items-center">
-                      <span>Repeating...</span>
-                      <Loader2 className="inline-block ml-2 animate-spin" />
-                    </div>
-                  ) : (
-                    "Repeat"
-                  )}
-                </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="cursor-pointer"
+                    onClick={() => promoteRepeat("repeat")}
+                    disabled={
+                      isRepeating ||
+                      selectedEnrollmentIds.length === 0 ||
+                      !targetClassId ||
+                      !targetAcademicYearId ||
+                      !targetTermId
+                    }
+                  >
+                    {isRepeating ? (
+                      <div className="flex gap-1 items-center">
+                        <span>Repeating...</span>
+                        <Loader2 className="inline-block ml-2 animate-spin" />
+                      </div>
+                    ) : (
+                      "Repeat"
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3 text-sm">
-            <span className="text-muted-foreground">
-              Selected students: {selectedEnrollmentIds.length}
-            </span>
-            {selectedEnrollmentIds.length > 0 && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="cursor-pointer"
-                onClick={() => setSelectedEnrollmentIds([])}
-              >
-                Clear selection
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex items-center justify-between rounded-md border p-3 text-sm">
+              <span className="text-muted-foreground">
+                Selected students: {selectedEnrollmentIds.length}
+              </span>
+              {selectedEnrollmentIds.length > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="cursor-pointer"
+                  onClick={() => setSelectedEnrollmentIds([])}
+                >
+                  Clear selection
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <DataTable table={enrollmentsTable} />
     </ListView>

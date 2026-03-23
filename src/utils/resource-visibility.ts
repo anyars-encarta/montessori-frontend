@@ -26,7 +26,7 @@ const RESOURCE_VISIBILITY: Record<string, ResourceConfig> = {
   },
   classes: {
     name: "classes",
-    visibleTo: [USER_ROLES.ADMIN, USER_ROLES.TEACHER],
+    visibleTo: [USER_ROLES.ADMIN],
   },
   subjects: {
     name: "subjects",
@@ -62,7 +62,7 @@ const RESOURCE_VISIBILITY: Record<string, ResourceConfig> = {
   },
   reports: {
     name: "reports",
-    visibleTo: [USER_ROLES.ADMIN, USER_ROLES.TEACHER],
+    visibleTo: [USER_ROLES.ADMIN, USER_ROLES.TEACHER, USER_ROLES.STAFF],
   },
   setup: {
     name: "setup",

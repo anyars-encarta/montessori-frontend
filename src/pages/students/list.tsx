@@ -6,7 +6,8 @@ import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
 import { ListView } from "@/components/refine-ui/views/list-view";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Student } from "@/types";
+import { Student, User } from "@/types";
+import { useGetIdentity } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/table-core";
 import { Search } from "lucide-react";
@@ -29,6 +30,8 @@ const getCurrentClassName = (student: Student) => {
 
 const ListStudents = () => {
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { data: loggedInUser } = useGetIdentity<User>();
 
   const searchFilter = searchQuery
     ? [
@@ -59,7 +62,9 @@ const ListStudents = () => {
           size: 130,
           header: () => <p className="column-title">Reg Number</p>,
           cell: ({ getValue }) => (
-            <span className="text-foreground">{getValue<string>() ?? "N/A"}</span>
+            <span className="text-foreground">
+              {getValue<string>() ?? "N/A"}
+            </span>
           ),
         },
         {
@@ -69,7 +74,11 @@ const ListStudents = () => {
           header: () => <p className="column-title">Gender</p>,
           cell: ({ getValue }) => {
             const value = (getValue<string | null>() ?? "N/A").toString();
-            return <Badge variant="secondary">{value.charAt(0).toUpperCase() + value.slice(1)}</Badge>;
+            return (
+              <Badge variant="secondary">
+                {value.charAt(0).toUpperCase() + value.slice(1)}
+              </Badge>
+            );
           },
         },
         {
@@ -82,7 +91,9 @@ const ListStudents = () => {
             const date = new Date(value);
             return (
               <span className="text-foreground">
-                {Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString()}
+                {Number.isNaN(date.getTime())
+                  ? "N/A"
+                  : date.toLocaleDateString()}
               </span>
             );
           },
@@ -92,7 +103,9 @@ const ListStudents = () => {
           size: 100,
           header: () => <p className="column-title">Current Class</p>,
           cell: ({ row }) => (
-            <span className="text-foreground">{getCurrentClassName(row.original)}</span>
+            <span className="text-foreground">
+              {getCurrentClassName(row.original)}
+            </span>
           ),
         },
         {
@@ -115,10 +128,14 @@ const ListStudents = () => {
           header: () => <p className="column-title">Billing Flags</p>,
           cell: ({ row }) => (
             <div className="flex flex-wrap gap-1">
-              <Badge variant={row.original.onScholarship ? "default" : "secondary"}>
+              <Badge
+                variant={row.original.onScholarship ? "default" : "secondary"}
+              >
                 {row.original.onScholarship ? "Scholarship" : "No Scholarship"}
               </Badge>
-              <Badge variant={row.original.getDiscount ? "default" : "secondary"}>
+              <Badge
+                variant={row.original.getDiscount ? "default" : "secondary"}
+              >
                 {row.original.getDiscount ? "Discount" : "No Discount"}
               </Badge>
             </div>
@@ -178,9 +195,11 @@ const ListStudents = () => {
             />
           </div>
 
-          <div className="flex gap-2 w-full sm:w-auto flex-wrap">
-            <CreateButton />
-          </div>
+          {loggedInUser?.role === "admin" && (
+            <div className="flex gap-2 w-full sm:w-auto flex-wrap">
+              <CreateButton />
+            </div>
+          )}
         </div>
       </div>
 
