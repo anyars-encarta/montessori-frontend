@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import useSchoolBranding from "@/components/SchoolBranding";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -244,6 +245,7 @@ function SidebarItemLink({ item, selectedKey }: MenuItemProps) {
 
 function SidebarHeader() {
   const { title } = useRefineOptions();
+  const school = useSchoolBranding();
   const { open, isMobile } = useShadcnSidebar();
 
   return (
@@ -276,7 +278,7 @@ function SidebarHeader() {
           }
         )}
       >
-        <div>{title.icon}</div>
+        <div>{school.logo}</div>
         <h2
           className={cn(
             "text-sm",
