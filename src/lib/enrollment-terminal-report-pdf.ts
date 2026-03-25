@@ -38,20 +38,24 @@ const sanitizeFilePart = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 
-const addPdfFooter = (doc: jsPDF, y = 286) => {
+const addPdfFooter = (doc: jsPDF) => {
   const generatedAt = new Date().toLocaleString();
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const footerText = "Software by Encarta Networks & Multimedia - +233 24 211 9972 / +233 20 259 4960, anyarsencarta@gmail.com";
+  const generatedY = pageHeight - mm(8);
+  const attributionY = pageHeight - mm(3.5);
+  const separatorY = pageHeight - mm(11);
 
   doc.setDrawColor(209, 213, 219);
   doc.setLineWidth(0.2);
-  doc.line(mm(12), y - mm(5), pageWidth - mm(12), y - mm(5));
+  doc.line(mm(12), separatorY, pageWidth - mm(12), separatorY);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(107, 114, 128);
-  doc.text(`Generated on ${generatedAt}`, mm(12), y);
-  doc.text(footerText, pageWidth / 2, y + mm(4), { align: "center" });
+  doc.text(`Generated on ${generatedAt}`, mm(12), generatedY);
+  doc.text(footerText, pageWidth / 2, attributionY, { align: "center" });
 };
 
 const drawSchoolName = (doc: jsPDF, text: string, x: number, y: number) => {
@@ -224,12 +228,12 @@ export const generateEnrollmentTerminalReportPdf = async (
 
   const leftExtraRows = [
     ["No. on Roll", toDisplay(report.class.capacity)],
-    ["Next Term Begins", formatDate(report.term.nextTermStartDate)],
+    ["Attendance", toDisplay(report.attendance)],
   ];
 
   const rightExtraRows = [
     ["School Vacates On", formatDate(report.term.endDate)],
-    ["Attendance", toDisplay(report.attendance)],
+    ["Next Term Begins", formatDate(report.term.nextTermStartDate)],
   ];
 
   for (let i = 0; i < 2; i += 1) {
@@ -258,7 +262,7 @@ export const generateEnrollmentTerminalReportPdf = async (
   const summaryItems: Array<[string, string]> = [
     ["Aggregate", toDisplay(report.aggregate)],
     ["Class Position", toDisplay(report.classPosition)],
-    // ["Remark", toDisplay(report.remarks)],
+    ["Remark", toDisplay(report.remarks)],
   ];
 
   summaryItems.forEach(([label, value], index) => {
@@ -320,8 +324,7 @@ export const generateEnrollmentTerminalReportPdf = async (
     margin: { left: 12, right: 12 },
   });
 
-  const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 265;
-  addPdfFooter(doc, Math.min(finalY + mm(8), 286));
+  addPdfFooter(doc);
 
   if (mode === "download") {
     const fallbackFile = `terminal-report-${sanitizeFilePart(report.student.fullName)}-${report.id}.pdf`;
@@ -918,12 +921,12 @@ export const generateClassEnrollmentSummariesReportPdf = async (
 
       const leftExtraRows = [
         ["No. on Roll", toDisplay(summary.class.capacity)],
-        ["Next Term Begins", formatDate(summary.term.nextTermStartDate)],
+        ["Attendance", toDisplay(summary.attendance)],
       ];
 
       const rightExtraRows = [
         ["School Vacates On", formatDate(summary.term.endDate)],
-        ["Attendance", toDisplay(summary.attendance)],
+        ["Next Term Begins", formatDate(summary.term.nextTermStartDate)],
       ];
 
       for (let i = 0; i < 2; i += 1) {
@@ -952,7 +955,7 @@ export const generateClassEnrollmentSummariesReportPdf = async (
       const summaryItems: Array<[string, string]> = [
         ["Aggregate", toDisplay(summary.aggregate)],
         ["Class Position", toDisplay(summary.classPosition)],
-        ["Remark", toDisplay(summary.remarks)],
+        // ["Remark", toDisplay(summary.remarks)],
       ];
 
       summaryItems.forEach(([label, value], itemIndex) => {
@@ -1014,8 +1017,7 @@ export const generateClassEnrollmentSummariesReportPdf = async (
         margin: { left: 12, right: 12 },
       });
 
-      const finalY = (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ?? 265;
-      addPdfFooter(doc, Math.min(finalY + mm(8), 286));
+      addPdfFooter(doc);
 
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7);
