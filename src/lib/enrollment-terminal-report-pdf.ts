@@ -10,8 +10,6 @@ import type {
   StudentPdfContext,
 } from "@/types";
 
-
-
 const mm = (value: number) => value;
 
 const toDisplay = (value?: string | number | null) => {
@@ -42,10 +40,18 @@ const sanitizeFilePart = (value: string) =>
 
 const addPdfFooter = (doc: jsPDF, y = 286) => {
   const generatedAt = new Date().toLocaleString();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const footerText = "Software by Encarta Networks & Multimedia - +233 24 211 9972 / +233 20 259 4960, anyarsencarta@gmail.com";
+
+  doc.setDrawColor(209, 213, 219);
+  doc.setLineWidth(0.2);
+  doc.line(mm(12), y - mm(5), pageWidth - mm(12), y - mm(5));
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(107, 114, 128);
   doc.text(`Generated on ${generatedAt}`, mm(12), y);
+  doc.text(footerText, pageWidth / 2, y + mm(4), { align: "center" });
 };
 
 const drawSchoolName = (doc: jsPDF, text: string, x: number, y: number) => {
@@ -252,7 +258,7 @@ export const generateEnrollmentTerminalReportPdf = async (
   const summaryItems: Array<[string, string]> = [
     ["Aggregate", toDisplay(report.aggregate)],
     ["Class Position", toDisplay(report.classPosition)],
-    ["Remark", toDisplay(report.remarks)],
+    // ["Remark", toDisplay(report.remarks)],
   ];
 
   summaryItems.forEach(([label, value], index) => {

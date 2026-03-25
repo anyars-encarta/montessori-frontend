@@ -6,7 +6,13 @@ import {
   useNotification,
 } from "@refinedev/core";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
-import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
+import {
+  Copyright,
+  GraduationCap,
+  Layers,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { BACKEND_BASE_URL } from "@/constants";
 
 import { Badge } from "@/components/ui/badge";
@@ -482,7 +488,12 @@ const Dashboard = () => {
             {newestStudents.map((item, index) => (
               <Link
                 key={item.id}
-                to={loggedInUser?.role === "admin" || loggedInUser?.role === "teacher" ? `/students/show/${item.id}` : ""}
+                to={
+                  loggedInUser?.role === "admin" ||
+                  loggedInUser?.role === "teacher"
+                    ? `/students/show/${item.id}`
+                    : ""
+                }
                 className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
               >
                 <div className="flex items-center gap-3">
@@ -558,6 +569,11 @@ const Dashboard = () => {
         </Card>
       </div>
       <Separator />
+
+      <div className="flex items-center justify-start gap-2">
+        <Copyright />{" "}
+        <span className="text-xs">{new Date().getFullYear()} Encarta Networks & Multimedia, All Rights Reserved</span>
+      </div>
     </div>
   );
 };
