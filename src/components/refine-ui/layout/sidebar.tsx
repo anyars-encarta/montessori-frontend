@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   useActiveAuthProvider,
+  useGetIdentity,
   useLink,
   useLogout,
   useMenu,
@@ -32,11 +33,44 @@ import {
 } from "@refinedev/core";
 import { ChevronRight, ListIcon, LogOut } from "lucide-react";
 import React from "react";
+import { isResourceVisibleToRole } from "@/utils/resource-visibility";
+import { User } from "@/types";
+
+const filterMenuItemsByRole = (
+  items: TreeMenuItem[],
+  role: User["role"] | undefined,
+): TreeMenuItem[] => {
+  return items
+    .map((item) => {
+      if (item.meta?.hide) {
+        return null;
+      }
+
+      if (item.meta?.group) {
+        const visibleChildren = filterMenuItemsByRole(item.children ?? [], role);
+        return visibleChildren.length > 0
+          ? { ...item, children: visibleChildren }
+          : null;
+      }
+
+      const visibleChildren = filterMenuItemsByRole(item.children ?? [], role);
+
+      if (visibleChildren.length > 0) {
+        return { ...item, children: visibleChildren };
+      }
+
+      const resourceName = (item.meta?.resource as string | undefined) ?? item.name;
+      return isResourceVisibleToRole(resourceName, role) ? item : null;
+    })
+    .filter((item): item is TreeMenuItem => item !== null);
+};
 
 export function Sidebar() {
   const { open } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
-  const visibleMenuItems = menuItems.filter((item) => !item.meta?.hide);
+  const { data: loggedInUser } = useGetIdentity<User>();
+
+  const visibleMenuItems = filterMenuItemsByRole(menuItems, loggedInUser?.role);
 
   return (
     <ShadcnSidebar collapsible="icon" className={cn("border-none")}>
