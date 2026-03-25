@@ -572,7 +572,13 @@ const Dashboard = () => {
 
       <div className="flex items-center justify-start gap-2">
         <Copyright />{" "}
-        <span className="text-xs">{new Date().getFullYear()} Encarta Networks & Multimedia, All Rights Reserved</span>
+        <div className="flex flex-col items-start text-xs text-muted-foreground">
+          <span>
+            {new Date().getFullYear()} Encarta Networks & Multimedia, All Rights
+            Reserved
+          </span>
+          <span>+233 24 211 9972 / +233 20 259 4960</span>
+        </div>
       </div>
     </div>
   );
