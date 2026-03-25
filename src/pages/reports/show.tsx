@@ -13,8 +13,12 @@ import { User, UserRole } from "@/types";
 
 const ShowReports = () => {
   const navigate = useNavigate();
-  const { data: loggedInUser } = useGetIdentity<User>();
+  const { data: loggedInUser, isLoading } = useGetIdentity<User>();
   const visibleReports = useMemo(() => {
+    if (isLoading) {
+      return [];
+    }
+
     if (!loggedInUser?.role) {
       return [];
     }
@@ -33,14 +37,16 @@ const ShowReports = () => {
     }
 
     return reports.filter((report) => report.visibleTo.includes(currentRole));
-  }, [loggedInUser?.role]);
+  }, [isLoading, loggedInUser?.role]);
 
   return (
     <ListView className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Breadcrumb />
-          <Badge variant="outline">{visibleReports.length} Report Modules</Badge>
+          {!isLoading && (
+            <Badge variant="outline">{visibleReports.length} Report Modules</Badge>
+          )}
         </div>
         <Separator />
       </div>
@@ -57,7 +63,7 @@ const ShowReports = () => {
         </p>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {!isLoading && <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {visibleReports.map((report) => {
           const Icon = report.icon;
 
@@ -107,9 +113,9 @@ const ShowReports = () => {
             </Card>
           );
         })}
-      </section>
+      </section>}
 
-      {visibleReports.length === 0 && (
+      {!isLoading && visibleReports.length === 0 && (
         <Card className="border-dashed bg-muted/10">
           <CardContent className="py-10 text-center">
             <p className="text-sm font-medium">No reports available for your role.</p>

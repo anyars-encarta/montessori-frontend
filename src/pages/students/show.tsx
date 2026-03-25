@@ -1552,6 +1552,7 @@ const ShowStudent = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="summary">Summary</SelectItem>
+                      <SelectItem value="all-summaries">All Summaries</SelectItem>
                       <SelectItem value="fee">Fee</SelectItem>
                       <SelectItem value="payment">Payment</SelectItem>
                       <SelectItem value="all-fees">All Fees</SelectItem>

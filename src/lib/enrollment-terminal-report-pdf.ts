@@ -49,12 +49,7 @@ const addPdfFooter = (doc: jsPDF, y = 286) => {
 };
 
 const drawSchoolName = (doc: jsPDF, text: string, x: number, y: number) => {
-  try {
-    // Use Algerian when available in runtime font registry; fallback otherwise.
-    doc.setFont("algerian", "normal");
-  } catch {
-    doc.setFont("times", "bold");
-  }
+  doc.setFont("times", "bold");
   doc.setFontSize(18);
   doc.text(text.toUpperCase(), x, y);
 };

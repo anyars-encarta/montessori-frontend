@@ -39,6 +39,7 @@ export const SignInForm = () => {
       await login({
         email,
         password,
+        rememberMe,
       });
     } finally {
       setSigningIn(false);

@@ -424,8 +424,9 @@ const EnrollmentsPage = () => {
 
     let page = 1;
     let totalPages = 1;
+const MAX_PAGES = 100; // Safety limit to prevent infinite loops
 
-    while (page <= totalPages) {
+    while (page <= totalPages && page <= MAX_PAGES) {
       const params = new URLSearchParams({
         classId: classIdFilter,
         academicYearId: academicYearIdFilter,
@@ -461,6 +462,10 @@ const EnrollmentsPage = () => {
       allRows.push(...(payload.data ?? []));
       totalPages = payload.pagination?.totalPages ?? 1;
       page += 1;
+    }
+
+    if (page > MAX_PAGES) {
+      console.warn(`Pagination safety limit reached (${MAX_PAGES} pages)`);
     }
 
     return allRows;

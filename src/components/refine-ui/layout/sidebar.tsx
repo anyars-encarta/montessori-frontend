@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import useSchoolBranding from "@/components/SchoolBranding";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -31,20 +30,13 @@ import {
   useRefineOptions,
   type TreeMenuItem,
 } from "@refinedev/core";
-import {
-  getStoredRole,
-  isResourceVisibleToRole,
-} from "@/utils/resource-visibility";
 import { ChevronRight, ListIcon, LogOut } from "lucide-react";
 import React from "react";
 
 export function Sidebar() {
   const { open } = useShadcnSidebar();
   const { menuItems, selectedKey } = useMenu();
-  const userRole = getStoredRole();
-  const visibleMenuItems = menuItems.filter(
-    (item) => !item.meta?.hide && isResourceVisibleToRole(item.name, userRole)
-  );
+  const visibleMenuItems = menuItems.filter((item) => !item.meta?.hide);
 
   return (
     <ShadcnSidebar collapsible="icon" className={cn("border-none")}>
@@ -245,7 +237,6 @@ function SidebarItemLink({ item, selectedKey }: MenuItemProps) {
 
 function SidebarHeader() {
   const { title } = useRefineOptions();
-  const school = useSchoolBranding();
   const { open, isMobile } = useShadcnSidebar();
 
   return (
@@ -278,7 +269,7 @@ function SidebarHeader() {
           }
         )}
       >
-        <div>{school.logo}</div>
+        <div>{title.icon}</div>
         <h2
           className={cn(
             "text-sm",

@@ -517,28 +517,43 @@ const Dashboard = () => {
                 No recent teachers.
               </p>
             )}
-            {newestTeachers.map((teacher, index) => (
-              <Link
-                key={teacher.id}
-                to={loggedInUser?.role === "admin" ? `/staff/show/${teacher.id}` : ""}
-                className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{index + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {teacher.firstName + " " + teacher.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {teacher.email}
-                    </p>
+            {newestTeachers.map((teacher, index) => {
+              const content = (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      #{index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {teacher.firstName + " " + teacher.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {teacher.email}
+                      </p>
+                    </div>
                   </div>
+                  <Badge variant="secondary">New</Badge>
+                </>
+              );
+
+              return loggedInUser?.role === "admin" ? (
+                <Link
+                  key={teacher.id}
+                  to={`/staff/show/${teacher.id}`}
+                  className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div
+                  key={teacher.id}
+                  className="flex items-center justify-between rounded-md border border-transparent px-3 py-2"
+                >
+                  {content}
                 </div>
-                <Badge variant="secondary">New</Badge>
-              </Link>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </div>

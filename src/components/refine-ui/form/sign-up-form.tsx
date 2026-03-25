@@ -17,10 +17,7 @@ import {
 } from "@/components/ui/select";
 import UploadWidget from "@/components/upload-widget";
 import { cn } from "@/lib/utils";
-import {
-  useNotification,
-  useRegister,
-} from "@refinedev/core";
+import { useNotification, useRegister } from "@refinedev/core";
 import { Loader2 } from "lucide-react";
 
 export const SignUpForm = () => {
@@ -44,6 +41,15 @@ export const SignUpForm = () => {
     setCreatingUser(true);
 
     try {
+      if (password.length < 8) {
+        open?.({
+          type: "error",
+          message: "Password too short",
+          description: "Password must be at least 8 characters.",
+        });
+        return;
+      }
+
       if (password !== confirmPassword) {
         open?.({
           type: "error",
@@ -193,7 +199,7 @@ export const SignUpForm = () => {
                 "bg-green-600",
                 "hover:bg-green-700",
                 "text-white",
-                "cursor-pointer"
+                "cursor-pointer",
               )}
             >
               {creatingUser ? (
