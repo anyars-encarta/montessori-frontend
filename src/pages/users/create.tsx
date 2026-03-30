@@ -13,7 +13,7 @@ type SessionResponse = {
   } | null;
 };
 
-const hasValidStoredPasskey = () => {
+const hasValidStoredPasskey = (consumeOnSuccess = false) => {
   if (typeof window === "undefined") {
     return false;
   }
@@ -24,7 +24,13 @@ const hasValidStoredPasskey = () => {
   }
 
   try {
-    return decryptKey(encryptedKey) === ADMIN_PASSKEY;
+    const isValid = decryptKey(encryptedKey) === ADMIN_PASSKEY;
+
+    if (isValid && consumeOnSuccess) {
+      window.localStorage.removeItem("accessKey");
+    }
+
+    return isValid;
   } catch {
     window.localStorage.removeItem("accessKey");
     return false;
@@ -39,7 +45,7 @@ const CreateUser = () => {
     let isMounted = true;
 
     const checkAccess = async () => {
-      const hasPasskeyAccess = hasValidStoredPasskey();
+      const hasPasskeyAccess = hasValidStoredPasskey(true);
 
       try {
         const session = (await authClient.getSession()) as SessionResponse;

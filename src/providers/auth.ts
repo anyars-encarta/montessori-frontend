@@ -121,6 +121,7 @@ export const authProvider: AuthProvider = {
       }
 
       localStorage.removeItem("user");
+      localStorage.removeItem("accessKey");
 
       return {
         success: true,
