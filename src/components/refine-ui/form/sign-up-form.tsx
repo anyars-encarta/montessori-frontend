@@ -19,6 +19,7 @@ import UploadWidget from "@/components/upload-widget";
 import { cn } from "@/lib/utils";
 import { useNotification, useRegister } from "@refinedev/core";
 import { Loader2 } from "lucide-react";
+import { useNavigate } from "react-router";
 
 export const SignUpForm = () => {
   const [name, setName] = useState("");
@@ -29,6 +30,8 @@ export const SignUpForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [creatingUser, setCreatingUser] = useState(false);
+
+  const navigate = useNavigate();
 
   const { open } = useNotification();
 
@@ -213,6 +216,13 @@ export const SignUpForm = () => {
             </Button>
           </form>
         </CardContent>
+
+        <div
+            onClick={() => navigate("/login")}
+            className="text-sm text-primary cursor-pointer flex justify-end"
+          >
+            Back to Login
+          </div>
       </Card>
     </div>
   );

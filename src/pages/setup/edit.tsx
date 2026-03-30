@@ -35,6 +35,7 @@ const emptySchool: SchoolDetailsForm = {
   email: "",
   website: "",
   logo: "",
+  supervisorSignatureUrl: "",
   discountType: "value",
   discountAmount: "0",
 };
@@ -150,6 +151,13 @@ const EditSetup = () => {
     }));
   };
 
+  const handleSupervisorSignatureChange = (value: UploadWidgetValue | null) => {
+    setSchoolForm((prev) => ({
+      ...prev,
+      supervisorSignatureUrl: value?.url ?? "",
+    }));
+  };
+
   useEffect(() => {
     if (!selectedSchool) return;
     setSchoolForm({
@@ -159,6 +167,7 @@ const EditSetup = () => {
       email: selectedSchool.email,
       website: selectedSchool.website ?? "",
       logo: selectedSchool.logo ?? "",
+      supervisorSignatureUrl: selectedSchool.supervisorSignatureUrl ?? "",
       discountType: selectedSchool.discountType,
       discountAmount: String(selectedSchool.discountAmount ?? "0"),
     });
@@ -185,6 +194,7 @@ const EditSetup = () => {
           ...schoolForm,
           website: schoolForm.website.trim() || null,
           logo: schoolForm.logo.trim() || null,
+          supervisorSignatureUrl: schoolForm.supervisorSignatureUrl.trim() || null,
           discountAmount: schoolForm.discountAmount.trim() || "0",
         },
       });
@@ -478,6 +488,21 @@ const EditSetup = () => {
                       : null
                   }
                   onChange={handleLogoChange}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>School Supervisor Signature</Label>
+                <UploadWidget
+                  value={
+                    schoolForm.supervisorSignatureUrl
+                      ? {
+                          url: schoolForm.supervisorSignatureUrl,
+                          publicId: "",
+                        }
+                      : null
+                  }
+                  onChange={handleSupervisorSignatureChange}
                 />
               </div>
             </div>

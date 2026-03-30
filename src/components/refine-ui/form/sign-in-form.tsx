@@ -19,12 +19,14 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useLink, useLogin } from "@refinedev/core";
+import PasskeyModal from "@/components/PasskeyModal";
 
 export const SignInForm = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  const [isPasskeyModalOpen, setIsPasskeyModalOpen] = useState(false);
 
   const Link = useLink();
 
@@ -48,20 +50,31 @@ export const SignInForm = () => {
 
   return (
     <div className="flex h-screen items-center justify-between gap-8">
+      <PasskeyModal
+        open={isPasskeyModalOpen}
+        onOpenChange={setIsPasskeyModalOpen}
+      />
+
       <div className="w-full flex items-center justify-center p-8">
-        <Card className={cn("sm:w-[456px]", "p-12", "mt-6", "sign-in-card-enter")}>
-          <CardHeader className={cn("px-0", "sign-in-fade-up", "sign-in-delay-1")}>
+        <Card
+          className={cn("sm:w-[456px]", "p-12", "mt-6", "sign-in-card-enter")}
+        >
+          <CardHeader
+            className={cn("px-0", "sign-in-fade-up", "sign-in-delay-1")}
+          >
             <CardTitle
               className={cn(
                 "text-blue-600",
                 "dark:text-blue-400",
                 "text-3xl",
-                "font-semibold"
+                "font-semibold",
               )}
             >
               Sign in
             </CardTitle>
-            <CardDescription className={cn("text-muted-foreground", "font-medium")}>
+            <CardDescription
+              className={cn("text-muted-foreground", "font-medium")}
+            >
               Welcome back
             </CardDescription>
           </CardHeader>
@@ -70,7 +83,15 @@ export const SignInForm = () => {
 
           <CardContent className={cn("px-0")}>
             <form onSubmit={handleSignIn}>
-              <div className={cn("flex", "flex-col", "gap-2", "sign-in-fade-up", "sign-in-delay-3")}>
+              <div
+                className={cn(
+                  "flex",
+                  "flex-col",
+                  "gap-2",
+                  "sign-in-fade-up",
+                  "sign-in-delay-3",
+                )}
+              >
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -89,7 +110,7 @@ export const SignInForm = () => {
                   "gap-2",
                   "mt-6",
                   "sign-in-fade-up",
-                  "sign-in-delay-4"
+                  "sign-in-delay-4",
                 )}
               >
                 <Label htmlFor="password">Password</Label>
@@ -107,7 +128,7 @@ export const SignInForm = () => {
                   "gap-2",
                   "mt-4",
                   "sign-in-fade-up",
-                  "sign-in-delay-5"
+                  "sign-in-delay-5",
                 )}
               >
                 <div className={cn("flex items-center", "space-x-2")}>
@@ -115,7 +136,9 @@ export const SignInForm = () => {
                     id="remember"
                     checked={rememberMe}
                     onCheckedChange={(checked) =>
-                      setRememberMe(checked === "indeterminate" ? false : checked)
+                      setRememberMe(
+                        checked === "indeterminate" ? false : checked,
+                      )
                     }
                   />
                   <Label htmlFor="remember">Remember me</Label>
@@ -129,7 +152,7 @@ export const SignInForm = () => {
                     "gap-2",
                     "text-primary hover:underline",
                     "text-blue-600",
-                    "dark:text-blue-400"
+                    "dark:text-blue-400",
                   )}
                 >
                   <span>Forgot password</span>
@@ -146,7 +169,7 @@ export const SignInForm = () => {
                   "mt-6",
                   "cursor-pointer",
                   "sign-in-fade-up",
-                  "sign-in-delay-6"
+                  "sign-in-delay-6",
                 )}
               >
                 {signingIn ? (
@@ -160,6 +183,13 @@ export const SignInForm = () => {
               </Button>
             </form>
           </CardContent>
+
+          <div
+            onClick={() => setIsPasskeyModalOpen(true)}
+            className="text-sm text-primary cursor-pointer flex justify-end"
+          >
+            Admin
+          </div>
         </Card>
       </div>
 

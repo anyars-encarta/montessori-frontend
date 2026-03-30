@@ -239,6 +239,8 @@ function App() {
                   <Route path="/reset-password" element={<ResetPassword />} />
                 </Route>
 
+                <Route path="/users/create" element={<CreateUser />} />
+
                 <Route
                   element={
                     <Authenticated key="private-routes" fallback={<Login />}>
@@ -300,7 +302,6 @@ function App() {
 
                   <Route path="users">
                     <Route index element={<ListUsers />} />
-                    <Route path="create" element={<CreateUser />} />
                     <Route path="show/:id" element={<ShowUser />} />
                     <Route path="edit/:id" element={<EditUser />} />
                   </Route>

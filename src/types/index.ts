@@ -582,6 +582,7 @@ export type SchoolDetailsRecord = {
   email: string;
   website?: string | null;
   logo?: string | null;
+  supervisorSignatureUrl?: string | null;
   discountType: "value" | "percentage";
   discountAmount: string;
 };
@@ -714,6 +715,7 @@ export type SchoolDetailsForm = {
   email: string;
   website: string;
   logo: string;
+  supervisorSignatureUrl: string;
   discountType: "value" | "percentage";
   discountAmount: string;
 };
