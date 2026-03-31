@@ -207,6 +207,7 @@ export type ClassRecord = {
   level: string;
   capacity: number;
   supervisorId: number;
+  classTeacherSignatureUrl: string | null;
   subjectIds: number[];
   createdAt: string;
   updatedAt: string;
@@ -237,6 +238,7 @@ export type ClassEditRecord = {
   level: string;
   capacity: number;
   supervisorId: number;
+  classTeacherSignatureUrl: string | null;
   subjects: ClassSubjectRow[];
 };
 
@@ -411,6 +413,7 @@ export type ClassDetails = {
   status: "active" | "inactive";
   level: string;
   capacity: number;
+  classTeacherSignatureUrl: string | null;
   bannerUrl?: string;
   bannerCldPubId?: string;
   supervisorId: number;

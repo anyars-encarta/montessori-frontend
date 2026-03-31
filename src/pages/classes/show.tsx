@@ -215,6 +215,25 @@ const ShowClass = () => {
 
           <Separator />
 
+          <div>
+            <h3 className="font-semibold mb-3">✍️ Class Teacher Signature</h3>
+            {classDetails.classTeacherSignatureUrl ? (
+              <div className="rounded-lg border p-3 inline-flex bg-white">
+                <img
+                  src={classDetails.classTeacherSignatureUrl}
+                  alt="Class teacher signature"
+                  className="max-h-20 w-auto object-contain"
+                />
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No signature uploaded.
+              </p>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Subjects */}
           {classDetails.subjects && classDetails.subjects.length > 0 && (
             <div>

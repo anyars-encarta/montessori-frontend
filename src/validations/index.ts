@@ -19,6 +19,7 @@ export const createClassSchema = z.object({
     })
     .int()
     .positive("Supervisor is required"),
+  classTeacherSignatureUrl: z.string().nullable(),
   subjectIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
