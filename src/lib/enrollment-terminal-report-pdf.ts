@@ -126,6 +126,130 @@ const addRemarkLegend = (
 
     doc.text(line, x, textY);
   });
+
+  return gridStartY + rowHeight * rowsPerLine + mm(1.5);
+};
+
+const getImageFormatFromDataUrl = (dataUrl: string) =>
+  dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
+
+const addTerminalReportBottomFields = async (
+  doc: jsPDF,
+  payload: {
+    generalComments?: string | null;
+    classTeacherSignatureUrl?: string | null;
+    supervisorSignatureUrl?: string | null;
+  },
+  startY: number,
+) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const sectionX = mm(12);
+  const sectionWidth = pageWidth - mm(24);
+  const bottomLimit = pageHeight - mm(22);
+
+  let y = startY;
+
+  const commentsText =
+    payload.generalComments && payload.generalComments.trim().length
+      ? payload.generalComments.trim()
+      : "N/A";
+  const wrappedComments = doc.splitTextToSize(commentsText, sectionWidth - mm(4));
+  const commentsLineCount = Math.max(1, wrappedComments.length);
+  const commentsHeight = mm(7) + commentsLineCount * mm(3.7) + mm(2.5);
+  const signaturesHeight = mm(29);
+  const requiredHeight = mm(6) + commentsHeight + mm(4) + signaturesHeight;
+
+  if (y + requiredHeight > bottomLimit) {
+    doc.addPage();
+    y = mm(18);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(31, 41, 55);
+
+  y += mm(2.2);
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.2);
+  doc.line(sectionX, y, sectionX + sectionWidth, y);
+  y += mm(3.2);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(17, 24, 39);
+  doc.text("General Comments", sectionX, y);
+  y += mm(1.4);
+
+  doc.setDrawColor(209, 213, 219);
+  doc.setFillColor(249, 250, 251);
+  doc.roundedRect(sectionX, y, sectionWidth, commentsHeight, 1, 1, "FD");
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(55, 65, 81);
+  doc.text(wrappedComments, sectionX + mm(2), y + mm(4));
+  y += commentsHeight + mm(6);
+
+  const columnGap = mm(6);
+  const signatureBoxWidth = (sectionWidth - columnGap) / 2;
+  const signatureBoxHeight = mm(22);
+  const supervisorX = sectionX;
+  const classTeacherX = sectionX + signatureBoxWidth + columnGap;
+
+  const [supervisorDataUrl, classTeacherDataUrl] = await Promise.all([
+    payload.supervisorSignatureUrl?.trim()
+      ? loadImageAsDataUrl(payload.supervisorSignatureUrl)
+      : Promise.resolve(null),
+    payload.classTeacherSignatureUrl?.trim()
+      ? loadImageAsDataUrl(payload.classTeacherSignatureUrl)
+      : Promise.resolve(null),
+  ]);
+
+  const drawSignatureBlock = (
+    label: string,
+    x: number,
+    signatureDataUrl: string | null,
+  ) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(17, 24, 39);
+    doc.text(label, x, y);
+
+    const boxY = y + mm(1.3);
+    doc.setDrawColor(209, 213, 219);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(x, boxY, signatureBoxWidth, signatureBoxHeight, 1, 1, "FD");
+
+    if (signatureDataUrl) {
+      try {
+        doc.addImage(
+          signatureDataUrl,
+          getImageFormatFromDataUrl(signatureDataUrl),
+          x + mm(2),
+          boxY + mm(2),
+          signatureBoxWidth - mm(4),
+          signatureBoxHeight - mm(4),
+        );
+      } catch {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(107, 114, 128);
+        doc.text("Signature unavailable", x + mm(2), boxY + mm(8));
+      }
+      return;
+    }
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    doc.text("N/A", x + mm(2), boxY + mm(8));
+  };
+
+  drawSignatureBlock("Class Teacher Signature", classTeacherX, classTeacherDataUrl);
+  drawSignatureBlock("Supervisor Signature", supervisorX, supervisorDataUrl);
+
+  return y + signatureBoxHeight + mm(4);
 };
 
 const addPdfFooter = (doc: jsPDF) => {
@@ -417,7 +541,20 @@ export const generateEnrollmentTerminalReportPdf = async (
   const singleReportTableEndY =
     (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ??
     summaryTop + summaryHeight + mm(40);
-  addRemarkLegend(doc, report.class.level, singleReportTableEndY + mm(6));
+  const singleReportLegendEndY = addRemarkLegend(
+    doc,
+    report.class.level,
+    singleReportTableEndY + mm(6),
+  );
+  await addTerminalReportBottomFields(
+    doc,
+    {
+      generalComments: report.generalComments,
+      classTeacherSignatureUrl: report.class.classTeacherSignatureUrl ?? null,
+      supervisorSignatureUrl: school?.supervisorSignatureUrl ?? null,
+    },
+    singleReportLegendEndY + mm(4),
+  );
 
   addPdfFooter(doc);
 
@@ -1115,7 +1252,20 @@ export const generateClassEnrollmentSummariesReportPdf = async (
       const classReportTableEndY =
         (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ??
         summaryTop + summaryHeight + mm(40);
-      addRemarkLegend(doc, summary.class.level, classReportTableEndY + mm(6));
+      const classReportLegendEndY = addRemarkLegend(
+        doc,
+        summary.class.level,
+        classReportTableEndY + mm(6),
+      );
+      await addTerminalReportBottomFields(
+        doc,
+        {
+          generalComments: summary.generalComments,
+          classTeacherSignatureUrl: summary.class.classTeacherSignatureUrl ?? null,
+          supervisorSignatureUrl: school?.supervisorSignatureUrl ?? null,
+        },
+        classReportLegendEndY + mm(4),
+      );
 
       addPdfFooter(doc);
 

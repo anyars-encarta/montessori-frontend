@@ -652,6 +652,7 @@ export type ClassEnrollmentOverviewRow = {
     name: string;
     level: string;
     capacity?: number;
+    classTeacherSignatureUrl?: string | null;
   };
   academicYear: {
     id: number;
