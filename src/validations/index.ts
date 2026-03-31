@@ -220,3 +220,11 @@ export const editUserSchema = z
   });
 
 export type EditUserValues = z.infer<typeof editUserSchema>;
+
+export const updateEnrollmentGeneralCommentsSchema = z.object({
+  generalComments: z.string().nullable(),
+});
+
+export type UpdateEnrollmentGeneralCommentsValues = z.infer<
+  typeof updateEnrollmentGeneralCommentsSchema
+>;

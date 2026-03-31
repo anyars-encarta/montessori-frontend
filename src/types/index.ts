@@ -670,6 +670,7 @@ export type ClassEnrollmentOverviewRow = {
   classPosition: string;
   aggregate: string;
   remarks: string;
+  generalComments: string | null;
   assessments: EnrollmentAssessmentRow[];
 };
 
