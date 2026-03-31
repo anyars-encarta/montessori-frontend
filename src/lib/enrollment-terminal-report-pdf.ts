@@ -476,7 +476,7 @@ export const generateEnrollmentTerminalReportPdf = async (
   const summaryItems: Array<[string, string]> = [
     ["Aggregate", toDisplay(report.aggregate)],
     ["Class Position", toDisplay(report.classPosition)],
-    ["Remark", toDisplay(report.remarks)],
+    // ["Remark", toDisplay(report.remarks)],
   ];
 
   summaryItems.forEach(([label, value], index) => {
