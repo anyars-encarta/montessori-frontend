@@ -245,6 +245,7 @@ export type StudentClassEnrollmentRecord = {
   studentId: number;
   classId: number;
   academicYearId: number;
+  termId: number;
   enrollmentDate: string;
   promotionDate: string | null;
   createdAt: string;

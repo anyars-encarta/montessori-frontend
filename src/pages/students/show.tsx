@@ -1,8 +1,10 @@
 import {
   HttpError,
   useBack,
+  useCreate,
   useDelete,
   useGetIdentity,
+  useList,
   useNotification,
   useShow,
 } from "@refinedev/core";
@@ -44,6 +46,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -60,6 +64,8 @@ import {
   StudentPaymentRow,
   StudentSiblingRow,
   User,
+  FeeRecord,
+  TermRecord,
 } from "@/types";
 import PageLoader from "@/components/PageLoader";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
@@ -83,6 +89,9 @@ const formatDate = (value?: string | null) => {
 };
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+
+const normalizeLevel = (value: string | null | undefined) =>
+  (value ?? "").trim().toLowerCase();
 
 const extractErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === "object" && "message" in error) {
@@ -145,6 +154,7 @@ const ShowStudent = () => {
   const studentId = id ?? "";
   const navigate = useNavigate();
   const { open } = useNotification();
+  const { mutateAsync: createStudentFee } = useCreate();
   const { mutateAsync: deleteStudentFee } = useDelete();
   const { mutateAsync: deletePayment } = useDelete();
   const [selectedReportType, setSelectedReportType] =
@@ -162,10 +172,26 @@ const ShowStudent = () => {
     useState<string | null>(null);
   const [isDeletingFee, setIsDeletingFee] = useState(false);
   const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+  const [isAddFeeDialogOpen, setIsAddFeeDialogOpen] = useState(false);
+  const [isAddingFee, setIsAddingFee] = useState(false);
+  const [newFeeForm, setNewFeeForm] = useState({
+    feeId: "",
+    amount: "",
+    dueDate: "",
+  });
 
   const back = useBack();
 
   const { data: loggedInUser } = useGetIdentity<User>();
+
+  const { result: availableFeesResult } = useList<FeeRecord>({
+    resource: "fees",
+    pagination: { pageSize: 2000 },
+  });
+  const { result: termsResult } = useList<TermRecord>({
+    resource: "terms",
+    pagination: { pageSize: 2000 },
+  });
 
   const { query } = useShow<Student>({
     resource: "students",
@@ -173,6 +199,14 @@ const ShowStudent = () => {
   });
 
   const student = query.data?.data;
+  const availableFees = useMemo(
+    () => availableFeesResult.data ?? [],
+    [availableFeesResult.data],
+  );
+  const availableTerms = useMemo(
+    () => termsResult.data ?? [],
+    [termsResult.data],
+  );
 
   const getStudentPrintContext = useCallback(
     () => ({
@@ -641,6 +675,64 @@ const ShowStudent = () => {
   }, [student?.enrollments]);
 
   const latestEnrollmentId = latestEnrollment?.enrollment.id ?? null;
+  const currentEnrollmentAcademicYearId = latestEnrollment?.enrollment.academicYearId ?? null;
+  const currentEnrollmentTermId = latestEnrollment?.enrollment.termId ?? null;
+  const currentEnrollmentClassLevel = latestEnrollment?.class?.level ?? null;
+  const currentEnrollmentAcademicYearLabel =
+    latestEnrollment?.academicYear?.year?.toString() ?? "N/A";
+
+  const currentEnrollmentTermLabel = useMemo(() => {
+    if (!currentEnrollmentTermId) {
+      return "N/A";
+    }
+
+    const term = availableTerms.find((item) => item.id === currentEnrollmentTermId);
+    return term?.name ?? "N/A";
+  }, [availableTerms, currentEnrollmentTermId]);
+
+  const availableFeesForCurrentEnrollment = useMemo(() => {
+    if (!currentEnrollmentAcademicYearId || !currentEnrollmentTermId) {
+      return [];
+    }
+
+    const classLevel = normalizeLevel(currentEnrollmentClassLevel);
+
+    return availableFees
+      .filter((fee) => fee.academicYearId === currentEnrollmentAcademicYearId)
+      .filter(
+        (fee) => fee.applicableTermId === null || fee.applicableTermId === currentEnrollmentTermId,
+      )
+      .filter((fee) => {
+        const level = normalizeLevel(fee.applicableToLevel);
+        const isAllLevel = !level || level === "all" || level === "all levels";
+        return isAllLevel || (classLevel.length > 0 && level === classLevel);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [
+    availableFees,
+    currentEnrollmentAcademicYearId,
+    currentEnrollmentClassLevel,
+    currentEnrollmentTermId,
+  ]);
+
+  const openAddFeeDialog = () => {
+    if (!currentEnrollmentAcademicYearId || !currentEnrollmentTermId) {
+      open?.({
+        type: "error",
+        message: "No active enrollment context",
+        description:
+          "This student has no enrollment term/year context to attach a fee.",
+      });
+      return;
+    }
+
+    setIsAddFeeDialogOpen(true);
+    setNewFeeForm({
+      feeId: "",
+      amount: "",
+      dueDate: "",
+    });
+  };
 
   const enrollmentSummaries = useMemo(() => {
     const enrollments = student?.enrollments ?? [];
@@ -1534,6 +1626,103 @@ const ShowStudent = () => {
     },
   });
 
+  const refetchStudentRelatedTables = async () => {
+    await Promise.all([
+      query.refetch(),
+      feesTable.refineCore.tableQuery?.refetch(),
+      paymentsTable.refineCore.tableQuery?.refetch(),
+    ]);
+  };
+
+  const handleFeeSelection = (feeId: string) => {
+    const selectedFee = availableFeesForCurrentEnrollment.find(
+      (fee) => String(fee.id) === feeId,
+    );
+
+    if (!selectedFee) {
+      setNewFeeForm((prev) => ({
+        ...prev,
+        feeId,
+        amount: "",
+      }));
+      return;
+    }
+
+    setNewFeeForm((prev) => ({
+      ...prev,
+      feeId,
+      amount: selectedFee.amount,
+    }));
+  };
+
+  const handleAssignFeeToStudent = async () => {
+    const feeId = Number.parseInt(newFeeForm.feeId, 10);
+    const termId = currentEnrollmentTermId;
+    const amount = Number.parseFloat(newFeeForm.amount);
+
+    if (!Number.isFinite(feeId) || feeId < 1) {
+      open?.({
+        type: "error",
+        message: "Invalid fee",
+        description: "Please select a fee to assign.",
+      });
+      return;
+    }
+
+    if (!termId || termId < 1) {
+      open?.({
+        type: "error",
+        message: "Invalid term",
+        description: "Could not resolve the current enrollment term.",
+      });
+      return;
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      open?.({
+        type: "error",
+        message: "Invalid amount",
+        description: "Amount must be greater than zero.",
+      });
+      return;
+    }
+
+    setIsAddingFee(true);
+    try {
+      await createStudentFee({
+        resource: "student-fees",
+        values: {
+          studentId: Number(studentId),
+          feeId,
+          termId,
+          amount: amount.toFixed(2),
+          dueDate: newFeeForm.dueDate.trim() || null,
+        },
+        successNotification: false,
+        errorNotification: false,
+      });
+
+      await refetchStudentRelatedTables();
+
+      open?.({
+        type: "success",
+        message: "Fee added",
+        description: "Fee has been assigned to this student.",
+      });
+
+      setIsAddFeeDialogOpen(false);
+      setNewFeeForm({ feeId: "", amount: "", dueDate: "" });
+    } catch (error) {
+      open?.({
+        type: "error",
+        message: "Could not add fee",
+        description: extractErrorMessage(error, "Failed to assign fee to student."),
+      });
+    } finally {
+      setIsAddingFee(false);
+    }
+  };
+
   if (query.isLoading || query.isError || !student) {
     return (
       <ShowView className="class-view class-show">
@@ -1572,7 +1761,7 @@ const ShowStudent = () => {
         },
       );
 
-      await query.refetch();
+      await refetchStudentRelatedTables();
 
       open?.({
         type: "success",
@@ -1624,7 +1813,7 @@ const ShowStudent = () => {
         },
       );
 
-      await query.refetch();
+      await refetchStudentRelatedTables();
 
       open?.({
         type: "success",
@@ -2082,10 +2271,41 @@ const ShowStudent = () => {
 
             {student.fees.length > 0 && (
               <div>
-                <h3 className="font-semibold mb-3">
-                  Fees ({student.fees.length})
-                </h3>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="font-semibold">Fees ({student.fees.length})</h3>
+                  {loggedInUser?.role === "admin" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer"
+                      onClick={openAddFeeDialog}
+                    >
+                      Add Fee
+                    </Button>
+                  )}
+                </div>
                 <DataTable table={feesTable} />
+              </div>
+            )}
+
+            {student.fees.length === 0 && loggedInUser?.role === "admin" && (
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="font-semibold">Fees (0)</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={openAddFeeDialog}
+                  >
+                    Add Fee
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  No fee records yet for this student.
+                </p>
               </div>
             )}
 
@@ -2137,6 +2357,116 @@ const ShowStudent = () => {
                 </span>
               ) : (
                 "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={isAddFeeDialogOpen}
+        onOpenChange={(openState) => {
+          if (!openState && !isAddingFee) {
+            setIsAddFeeDialogOpen(false);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Add fee to student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Assign an existing fee definition using the student's current enrollment context.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Academic Year</Label>
+                <Input value={currentEnrollmentAcademicYearLabel} readOnly />
+              </div>
+              <div className="space-y-2">
+                <Label>Term</Label>
+                <Input value={currentEnrollmentTermLabel} readOnly />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Class Level</Label>
+              <Input value={currentEnrollmentClassLevel ?? "N/A"} readOnly />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-fee-id">Fee</Label>
+              <Select value={newFeeForm.feeId} onValueChange={handleFeeSelection}>
+                <SelectTrigger id="new-fee-id">
+                  <SelectValue placeholder="Select fee" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFeesForCurrentEnrollment.map((fee) => (
+                    <SelectItem key={fee.id} value={String(fee.id)}>
+                      {fee.name} ({fee.amount})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {availableFeesForCurrentEnrollment.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No fees available for the current enrollment level/year/term.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-fee-amount">Amount</Label>
+              <Input
+                id="new-fee-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={newFeeForm.amount}
+                onChange={(event) =>
+                  setNewFeeForm((prev) => ({
+                    ...prev,
+                    amount: event.target.value,
+                  }))
+                }
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="new-fee-due-date">Due Date (optional)</Label>
+              <Input
+                id="new-fee-due-date"
+                type="date"
+                value={newFeeForm.dueDate}
+                onChange={(event) =>
+                  setNewFeeForm((prev) => ({
+                    ...prev,
+                    dueDate: event.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isAddingFee}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (event) => {
+                event.preventDefault();
+                await handleAssignFeeToStudent();
+              }}
+              disabled={isAddingFee}
+            >
+              {isAddingFee ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Adding...
+                </span>
+              ) : (
+                "Add Fee"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
