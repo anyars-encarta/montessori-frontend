@@ -146,6 +146,7 @@ const ShowStudent = () => {
   const navigate = useNavigate();
   const { open } = useNotification();
   const { mutateAsync: deleteStudentFee } = useDelete();
+  const { mutateAsync: deletePayment } = useDelete();
   const [selectedReportType, setSelectedReportType] =
     useState<StudentReportSelection>("summary");
   const [selectedFeeReportId, setSelectedFeeReportId] = useState<string>("");
@@ -153,10 +154,14 @@ const ShowStudent = () => {
     useState<string>("");
   const [feePendingDelete, setFeePendingDelete] =
     useState<StudentFeeRow | null>(null);
-  const [deleteBlockedReason, setDeleteBlockedReason] = useState<string | null>(
-    null,
-  );
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [paymentPendingDelete, setPaymentPendingDelete] =
+    useState<StudentPaymentRow | null>(null);
+  const [feeDeleteBlockedReason, setFeeDeleteBlockedReason] =
+    useState<string | null>(null);
+  const [paymentDeleteBlockedReason, setPaymentDeleteBlockedReason] =
+    useState<string | null>(null);
+  const [isDeletingFee, setIsDeletingFee] = useState(false);
+  const [isDeletingPayment, setIsDeletingPayment] = useState(false);
 
   const back = useBack();
 
@@ -1317,7 +1322,13 @@ const ShowStudent = () => {
         },
       },
     ],
-    [downloadFeeReport, loggedInUser?.role, navigate, printFeeReport, studentId],
+    [
+      downloadFeeReport,
+      loggedInUser?.role,
+      navigate,
+      printFeeReport,
+      studentId,
+    ],
   );
 
   const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(
@@ -1405,12 +1416,26 @@ const ShowStudent = () => {
                   <ActionButton type="download" />
                 </Button>
               </ActionTooltip>
+
+              {loggedInUser?.role === "admin" && (
+                <ActionTooltip title={actionButtonTitles.delete}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => setPaymentPendingDelete(row.original)}
+                  >
+                    <ActionButton type="delete" />
+                  </Button>
+                </ActionTooltip>
+              )}
             </div>
           );
         },
       },
     ],
-    [downloadPaymentReport, printPaymentReport],
+    [downloadPaymentReport, loggedInUser?.role, printPaymentReport],
   );
 
   const siblingsColumns = useMemo<ColumnDef<StudentSiblingRow>[]>(
@@ -1528,10 +1553,10 @@ const ShowStudent = () => {
 
   const studentName = `${student.firstName} ${student.lastName}`;
 
-  const handleConfirmDelete = async () => {
-    if (!feePendingDelete || isDeleting) return;
+  const handleConfirmFeeDelete = async () => {
+    if (!feePendingDelete || isDeletingFee) return;
 
-    setIsDeleting(true);
+    setIsDeletingFee(true);
     try {
       await deleteStudentFee(
         {
@@ -1565,7 +1590,7 @@ const ShowStudent = () => {
       );
 
       if (statusCode === 409) {
-        setDeleteBlockedReason(reason);
+        setFeeDeleteBlockedReason(reason);
       } else {
         open?.({
           type: "error",
@@ -1576,7 +1601,59 @@ const ShowStudent = () => {
 
       setFeePendingDelete(null);
     } finally {
-      setIsDeleting(false);
+      setIsDeletingFee(false);
+    }
+  };
+
+  const handleConfirmPaymentDelete = async () => {
+    if (!paymentPendingDelete || isDeletingPayment) return;
+
+    setIsDeletingPayment(true);
+    try {
+      await deletePayment(
+        {
+          resource: "payments",
+          id: paymentPendingDelete.id,
+          successNotification: false,
+          errorNotification: false,
+        },
+        {
+          onSuccess: () => {
+            setPaymentPendingDelete(null);
+          },
+        },
+      );
+
+      await query.refetch();
+
+      open?.({
+        type: "success",
+        message: "Payment deleted",
+        description: `Payment for "${paymentPendingDelete.feeName}" was deleted successfully.`,
+      });
+    } catch (error) {
+      const statusCode =
+        error && typeof error === "object" && "statusCode" in error
+          ? Number((error as HttpError).statusCode)
+          : undefined;
+      const reason = extractErrorMessage(
+        error,
+        "We could not delete this payment right now.",
+      );
+
+      if (statusCode === 409) {
+        setPaymentDeleteBlockedReason(reason);
+      } else {
+        open?.({
+          type: "error",
+          message: "Delete failed",
+          description: reason,
+        });
+      }
+
+      setPaymentPendingDelete(null);
+    } finally {
+      setIsDeletingPayment(false);
     }
   };
 
@@ -2029,7 +2106,7 @@ const ShowStudent = () => {
       <AlertDialog
         open={Boolean(feePendingDelete)}
         onOpenChange={(openState) => {
-          if (!openState && !isDeleting) {
+          if (!openState && !isDeletingFee) {
             setFeePendingDelete(null);
           }
         }}
@@ -2044,16 +2121,16 @@ const ShowStudent = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeletingFee}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={async (event) => {
                 event.preventDefault();
-                await handleConfirmDelete();
+                await handleConfirmFeeDelete();
               }}
-              disabled={isDeleting}
+              disabled={isDeletingFee}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {isDeleting ? (
+              {isDeletingFee ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Deleting...
@@ -2067,17 +2144,82 @@ const ShowStudent = () => {
       </AlertDialog>
 
       <AlertDialog
-        open={Boolean(deleteBlockedReason)}
+        open={Boolean(feeDeleteBlockedReason)}
         onOpenChange={(openState) => {
           if (!openState) {
-            setDeleteBlockedReason(null);
+            setFeeDeleteBlockedReason(null);
           }
         }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Fee cannot be deleted yet</AlertDialogTitle>
-            <AlertDialogDescription>{deleteBlockedReason}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {feeDeleteBlockedReason}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Understood</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(paymentPendingDelete)}
+        onOpenChange={(openState) => {
+          if (!openState && !isDeletingPayment) {
+            setPaymentPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete payment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {paymentPendingDelete
+                ? `This will permanently delete this payment record for "${paymentPendingDelete.feeName}".`
+                : "This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingPayment}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (event) => {
+                event.preventDefault();
+                await handleConfirmPaymentDelete();
+              }}
+              disabled={isDeletingPayment}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeletingPayment ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(paymentDeleteBlockedReason)}
+        onOpenChange={(openState) => {
+          if (!openState) {
+            setPaymentDeleteBlockedReason(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Payment cannot be deleted yet</AlertDialogTitle>
+            <AlertDialogDescription>
+              {paymentDeleteBlockedReason}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>Understood</AlertDialogAction>
