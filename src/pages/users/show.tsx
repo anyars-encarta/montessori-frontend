@@ -37,6 +37,14 @@ const roleBadgeVariant = (
   return 'outline';
 };
 
+const statusBadgeVariant = (
+  status: string,
+): 'default' | 'secondary' | 'outline' | 'destructive' => {
+  if (status === 'active') return 'default';
+  if (status === 'inactive') return 'destructive';
+  return 'secondary';
+};
+
 const ShowUser = () => {
   const back = useBack();
   const { id } = useParams();
@@ -153,6 +161,18 @@ const ShowUser = () => {
                 <p className="mt-1 flex items-center gap-2 text-sm font-medium">
                   <ShieldCheck className="size-4" />
                   <span className="capitalize">{user.role}</span>
+                </p>
+              </div>
+
+              <div className="rounded-md border p-3">
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="mt-1 flex items-center gap-2 text-sm font-medium">
+                  <Badge
+                    variant={statusBadgeVariant(user.status)}
+                    className="capitalize"
+                  >
+                    {user.status}
+                  </Badge>
                 </p>
               </div>
 

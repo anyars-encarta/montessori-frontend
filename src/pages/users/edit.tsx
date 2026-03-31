@@ -22,7 +22,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";import { InputPassword } from '@/components/refine-ui/form/input-password';import UploadWidget from "@/components/upload-widget";
+} from "@/components/ui/select";
+import { InputPassword } from "@/components/refine-ui/form/input-password";
+import UploadWidget from "@/components/upload-widget";
 import { User } from "@/types";
 import { editUserSchema, EditUserValues } from "@/validations";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -61,12 +63,13 @@ const EditUser = () => {
     },
     defaultValues: {
       name: "",
-      email: '',
-      role: 'staff',
+      email: "",
+      role: "staff",
+      status: "active",
       image: null,
       imageCldPubId: null,
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     },
   });
 
@@ -86,11 +89,12 @@ const EditUser = () => {
     reset({
       name: record.name,
       email: record.email,
-      role: record.role as 'admin' | 'teacher' | 'staff',
+      role: record.role as "admin" | "teacher" | "staff",
+      status: record.status,
       image: record.image ?? null,
       imageCldPubId: record.imageCldPubId ?? null,
-      password: '',
-      confirmPassword: '',
+      password: "",
+      confirmPassword: "",
     });
   }, [reset, userQuery.data?.data]);
 
@@ -100,6 +104,7 @@ const EditUser = () => {
       name: values.name.trim(),
       email: values.email.trim().toLowerCase(),
       role: values.role,
+      status: values.status,
       image: values.image ?? null,
       imageCldPubId: values.imageCldPubId ?? null,
       ...(password ? { password } : {}),
@@ -187,7 +192,7 @@ const EditUser = () => {
                           type="email"
                           placeholder="Email address"
                           {...field}
-                          value={field.value ?? ''}
+                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -216,6 +221,35 @@ const EditUser = () => {
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="teacher">Teacher</SelectItem>
                             <SelectItem value="staff">Staff</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {loggedInUser?.id !== userId && (
+                  <FormField
+                    control={control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Account Status <span className="text-orange-600">*</span>
+                        </FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select account status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="active">Active</SelectItem>
+                            <SelectItem value="inactive">Inactive</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -265,7 +299,7 @@ const EditUser = () => {
                         <InputPassword
                           placeholder="Leave blank to keep current password"
                           {...field}
-                          value={field.value ?? ''}
+                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormMessage />
@@ -283,7 +317,7 @@ const EditUser = () => {
                         <InputPassword
                           placeholder="Repeat new password"
                           {...field}
-                          value={field.value ?? ''}
+                          value={field.value ?? ""}
                         />
                       </FormControl>
                       <FormMessage />

@@ -85,6 +85,7 @@ export type User = {
   image: string | null;
   imageCldPubId: string | null;
   role: UserRole | "staff";
+  status: "active" | "inactive";
   createdAt: string;
   updatedAt: string;
 };

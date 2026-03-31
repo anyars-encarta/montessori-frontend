@@ -139,6 +139,9 @@ const options: CreateDataProviderOptions = {
           if (field === "search" || field === "name" || field === "email") {
             params.search = value;
           }
+          if (field === "status") {
+            params.status = value;
+          }
         }
       });
 

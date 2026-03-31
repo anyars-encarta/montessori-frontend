@@ -48,9 +48,18 @@ const roleBadgeVariant = (
   return "outline";
 };
 
+const statusBadgeVariant = (
+  status: string,
+): "default" | "secondary" | "outline" | "destructive" => {
+  if (status === "active") return "default";
+  if (status === "inactive") return "destructive";
+  return "secondary";
+};
+
 const ListUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
   const [userPendingDelete, setUserPendingDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -81,8 +90,16 @@ const ListUsers = () => {
       });
     }
 
+    if (selectedStatus) {
+      values.push({
+        field: "status",
+        operator: "eq",
+        value: selectedStatus,
+      });
+    }
+
     return values;
-  }, [searchQuery, selectedRole]);
+  }, [searchQuery, selectedRole, selectedStatus]);
 
   const usersTable = useTable<User>({
     columns: useMemo<ColumnDef<User>[]>(
@@ -122,6 +139,20 @@ const ListUsers = () => {
           cell: ({ getValue }) => (
             <Badge
               variant={roleBadgeVariant(String(getValue() ?? ""))}
+              className="capitalize"
+            >
+              {String(getValue() ?? "")}
+            </Badge>
+          ),
+        },
+        {
+          id: "status",
+          accessorKey: "status",
+          size: 110,
+          header: () => <p className="column-title">Status</p>,
+          cell: ({ getValue }) => (
+            <Badge
+              variant={statusBadgeVariant(String(getValue() ?? ""))}
               className="capitalize"
             >
               {String(getValue() ?? "")}
@@ -253,7 +284,8 @@ const ListUsers = () => {
     }
   };
 
-  const hasActiveFilters = Boolean(searchQuery.trim()) || Boolean(selectedRole);
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || Boolean(selectedRole) || Boolean(selectedStatus);
 
   return (
     <ListView>
@@ -295,6 +327,24 @@ const ListUsers = () => {
             </Select>
           </div>
 
+          <div className="w-full sm:w-40">
+            <Select
+              value={selectedStatus || "all"}
+              onValueChange={(value) =>
+                setSelectedStatus(value === "all" ? "" : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <CreateButton resource="users" />
 
           {hasActiveFilters && (
@@ -305,6 +355,7 @@ const ListUsers = () => {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedRole("");
+                setSelectedStatus("");
               }}
             >
               Clear filters

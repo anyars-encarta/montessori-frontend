@@ -196,6 +196,9 @@ export const editUserSchema = z
     role: z.enum(["admin", "teacher", "staff"], {
       required_error: "Role is required",
     }),
+    status: z.enum(["active", "inactive"], {
+      required_error: "Status is required",
+    }),
     image: z.string().nullable(),
     imageCldPubId: z.string().nullable(),
     password: z.string().optional(),

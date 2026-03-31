@@ -69,10 +69,11 @@ export const authProvider: AuthProvider = {
   },
   login: async ({ email, password }) => {
     try {
-      const { data, error } = await authClient.signIn.email({
+      const signInResult = (await authClient.signIn.email({
         email,
         password,
-      });
+      })) as SessionResponse;
+      const { data, error } = signInResult;
 
       if (error) {
         console.error("Login error from auth client:", error);
@@ -81,6 +82,18 @@ export const authProvider: AuthProvider = {
           error: {
             name: "Login failed",
             message: error?.message || "Please try again later.",
+          },
+        };
+      }
+
+      if (data?.user?.status === "inactive") {
+        await authClient.signOut();
+        localStorage.removeItem("user");
+        return {
+          success: false,
+          error: {
+            name: "Account blocked",
+            message: "This account is inactive. Contact an administrator.",
           },
         };
       }
@@ -152,6 +165,20 @@ export const authProvider: AuthProvider = {
       const user = await getCurrentSessionUser();
 
       if (user) {
+        if (user.status === "inactive") {
+          await authClient.signOut();
+          localStorage.removeItem("user");
+          return {
+            authenticated: false,
+            logout: true,
+            redirectTo: "/login",
+            error: {
+              name: "Account blocked",
+              message: "This account is inactive. Contact an administrator.",
+            },
+          };
+        }
+
         localStorage.setItem("user", JSON.stringify(user));
         return {
           authenticated: true,
