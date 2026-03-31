@@ -146,9 +146,7 @@ const addTerminalReportBottomFields = async (
   const pageHeight = doc.internal.pageSize.getHeight();
   const sectionX = mm(12);
   const sectionWidth = pageWidth - mm(24);
-  const bottomLimit = pageHeight - mm(22);
-
-  let y = startY;
+  const footerSeparatorY = pageHeight - mm(11);
 
   const commentsText =
     payload.generalComments && payload.generalComments.trim().length
@@ -157,10 +155,18 @@ const addTerminalReportBottomFields = async (
   const wrappedComments = doc.splitTextToSize(commentsText, sectionWidth - mm(4));
   const commentsLineCount = Math.max(1, wrappedComments.length);
   const commentsHeight = mm(7) + commentsLineCount * mm(3.7) + mm(2.5);
-  const signaturesHeight = mm(29);
-  const requiredHeight = mm(6) + commentsHeight + mm(4) + signaturesHeight;
+  const columnGap = mm(6);
+  const signatureBoxWidth = (sectionWidth - columnGap) / 2;
+  const signatureBoxHeight = mm(22);
+  const supervisorX = sectionX;
+  const classTeacherX = sectionX + signatureBoxWidth + columnGap;
+  const signatureLabelY = footerSeparatorY - (signatureBoxHeight + mm(2.3));
 
-  if (y + requiredHeight > bottomLimit) {
+  const requiredCommentsHeight = commentsHeight + mm(6.8);
+  const commentsStartY = startY;
+
+  let y = commentsStartY;
+  if (y + requiredCommentsHeight > signatureLabelY - mm(3)) {
     doc.addPage();
     y = mm(18);
   }
@@ -189,13 +195,7 @@ const addTerminalReportBottomFields = async (
   doc.setFontSize(8);
   doc.setTextColor(55, 65, 81);
   doc.text(wrappedComments, sectionX + mm(2), y + mm(4));
-  y += commentsHeight + mm(6);
-
-  const columnGap = mm(6);
-  const signatureBoxWidth = (sectionWidth - columnGap) / 2;
-  const signatureBoxHeight = mm(22);
-  const supervisorX = sectionX;
-  const classTeacherX = sectionX + signatureBoxWidth + columnGap;
+  y = signatureLabelY;
 
   const [supervisorDataUrl, classTeacherDataUrl] = await Promise.all([
     payload.supervisorSignatureUrl?.trim()
