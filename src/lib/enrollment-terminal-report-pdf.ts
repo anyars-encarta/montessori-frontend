@@ -87,12 +87,19 @@ const addRemarkLegend = (
   classLevel: string,
   startY: number,
 ) => {
+  const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const availableBottom = pageHeight - mm(14);
   const legend = getRemarkLegendRows(classLevel);
-  const rowHeight = mm(3.7);
-  const headingHeight = mm(4.5);
-  const requiredHeight = headingHeight + rowHeight * legend.rows.length + mm(2);
+  const columns = 3;
+  const columnGap = mm(2.5);
+  const rowHeight = mm(4.6);
+  const headingHeight = mm(5);
+  const rowsPerLine = Math.ceil(legend.rows.length / columns);
+  const requiredHeight = headingHeight + rowHeight * rowsPerLine + mm(1.5);
+  const containerX = mm(12);
+  const containerWidth = pageWidth - mm(24);
+  const cellWidth = (containerWidth - columnGap * (columns - 1)) / columns;
 
   let y = startY;
 
@@ -104,16 +111,20 @@ const addRemarkLegend = (
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
   doc.setTextColor(31, 41, 55);
-  doc.text(legend.title, mm(12), y);
+  doc.text(legend.title, containerX, y);
 
-  let lineY = y + mm(4);
+  const gridStartY = y + mm(3.6);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(55, 65, 81);
 
-  legend.rows.forEach((line) => {
-    doc.text(line, mm(12), lineY);
-    lineY += rowHeight;
+  legend.rows.forEach((line, index) => {
+    const row = Math.floor(index / columns);
+    const col = index % columns;
+    const x = containerX + col * (cellWidth + columnGap);
+    const textY = gridStartY + row * rowHeight;
+
+    doc.text(line, x, textY);
   });
 };
 
