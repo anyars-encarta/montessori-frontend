@@ -1,5 +1,7 @@
 import {
+  HttpError,
   useBack,
+  useDelete,
   useGetIdentity,
   useNotification,
   useShow,
@@ -29,6 +31,16 @@ import {
   ShowViewHeader,
 } from "@/components/refine-ui/views/show-view";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -53,6 +65,7 @@ import PageLoader from "@/components/PageLoader";
 import { ShowButton } from "@/components/refine-ui/buttons/show";
 import ActionButton from "@/components/actionButton";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 const getInitials = (name = "") => {
   const parts = name.trim().split(" ").filter(Boolean);
@@ -70,6 +83,17 @@ const formatDate = (value?: string | null) => {
 };
 
 const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+
+const extractErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
+};
 
 const buildApiUrl = (path: string) => {
   const normalizedBase = BACKEND_BASE_URL.replace(/\/+$/, "");
@@ -121,11 +145,19 @@ const ShowStudent = () => {
   const studentId = id ?? "";
   const navigate = useNavigate();
   const { open } = useNotification();
+  const { mutateAsync: deleteStudentFee } = useDelete();
   const [selectedReportType, setSelectedReportType] =
     useState<StudentReportSelection>("summary");
   const [selectedFeeReportId, setSelectedFeeReportId] = useState<string>("");
   const [selectedPaymentReportId, setSelectedPaymentReportId] =
     useState<string>("");
+  const [feePendingDelete, setFeePendingDelete] =
+    useState<StudentFeeRow | null>(null);
+  const [deleteBlockedReason, setDeleteBlockedReason] = useState<string | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const back = useBack();
 
   const { data: loggedInUser } = useGetIdentity<User>();
@@ -1266,12 +1298,26 @@ const ShowStudent = () => {
                   <ActionButton type="download" />
                 </Button>
               </ActionTooltip>
+
+              {loggedInUser?.role === "admin" && (
+                <ActionTooltip title={actionButtonTitles.delete}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => setFeePendingDelete(row.original)}
+                  >
+                    <ActionButton type="delete" />
+                  </Button>
+                </ActionTooltip>
+              )}
             </div>
           );
         },
       },
     ],
-    [downloadFeeReport, navigate, printFeeReport, studentId],
+    [downloadFeeReport, loggedInUser?.role, navigate, printFeeReport, studentId],
   );
 
   const paymentColumns = useMemo<ColumnDef<StudentPaymentRow>[]>(
@@ -1482,6 +1528,58 @@ const ShowStudent = () => {
 
   const studentName = `${student.firstName} ${student.lastName}`;
 
+  const handleConfirmDelete = async () => {
+    if (!feePendingDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteStudentFee(
+        {
+          resource: "student-fees",
+          id: feePendingDelete.id,
+          successNotification: false,
+          errorNotification: false,
+        },
+        {
+          onSuccess: () => {
+            setFeePendingDelete(null);
+          },
+        },
+      );
+
+      await query.refetch();
+
+      open?.({
+        type: "success",
+        message: "Fee deleted",
+        description: `"${feePendingDelete.feeName}" was deleted successfully.`,
+      });
+    } catch (error) {
+      const statusCode =
+        error && typeof error === "object" && "statusCode" in error
+          ? Number((error as HttpError).statusCode)
+          : undefined;
+      const reason = extractErrorMessage(
+        error,
+        "We could not delete this fee right now.",
+      );
+
+      if (statusCode === 409) {
+        setDeleteBlockedReason(reason);
+      } else {
+        open?.({
+          type: "error",
+          message: "Delete failed",
+          description: reason,
+        });
+      }
+
+      setFeePendingDelete(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <ShowView className="class-view class-show space-y-6">
       {loggedInUser?.role === "admin" ? (
@@ -1552,7 +1650,9 @@ const ShowStudent = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="summary">Summary</SelectItem>
-                      <SelectItem value="all-summaries">All Summaries</SelectItem>
+                      <SelectItem value="all-summaries">
+                        All Summaries
+                      </SelectItem>
                       <SelectItem value="fee">Fee</SelectItem>
                       <SelectItem value="payment">Payment</SelectItem>
                       <SelectItem value="all-fees">All Fees</SelectItem>
@@ -1925,6 +2025,65 @@ const ShowStudent = () => {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog
+        open={Boolean(feePendingDelete)}
+        onOpenChange={(openState) => {
+          if (!openState && !isDeleting) {
+            setFeePendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete fee?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {feePendingDelete
+                ? `This will permanently delete "${feePendingDelete.feeName}" for this student.`
+                : "This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async (event) => {
+                event.preventDefault();
+                await handleConfirmDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Deleting...
+                </span>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={Boolean(deleteBlockedReason)}
+        onOpenChange={(openState) => {
+          if (!openState) {
+            setDeleteBlockedReason(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Fee cannot be deleted yet</AlertDialogTitle>
+            <AlertDialogDescription>{deleteBlockedReason}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>Understood</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </ShowView>
   );
 };
