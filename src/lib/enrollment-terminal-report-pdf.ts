@@ -38,6 +38,85 @@ const sanitizeFilePart = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
 
+const parseClassLevelNumber = (level: string) => {
+  const match = level.match(/(\d+)/);
+  if (!match) return null;
+  const parsed = Number.parseInt(match[1] ?? "", 10);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const getRemarkLegendRows = (classLevel: string) => {
+  const levelNumber = parseClassLevelNumber(classLevel);
+  const isUpperClass = levelNumber !== null && levelNumber > 6;
+
+  if (isUpperClass) {
+    return {
+      title: "LEGEND",
+      rows: [
+        "90 - 100 : EXCELLENT",
+        "80 - 89 : VERY GOOD",
+        "70 - 79 : HIGH",
+        "60 - 69 : HIGH AVERAGE",
+        "55 - 59 : AVERAGE",
+        "50 - 54 : LOW AVERAGE",
+        "40 - 49 : LOW",
+        "35 - 39 : CREDIT",
+        "0 - 34 : FAIL",
+      ],
+    };
+  }
+
+  return {
+    title: "LEGEND",
+    rows: [
+      "90 - 100 : HIGHEST",
+      "85 - 89 : HIGHER",
+      "80 - 84 : HIGH",
+      "75 - 79 : HIGH AVERAGE",
+      "70 - 74 : AVERAGE",
+      "65 - 69 : LOW AVERAGE",
+      "60 - 64 : LOW",
+      "50 - 59 : LOWER",
+      "0 - 49 : LOWEST",
+    ],
+  };
+};
+
+const addRemarkLegend = (
+  doc: jsPDF,
+  classLevel: string,
+  startY: number,
+) => {
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const availableBottom = pageHeight - mm(14);
+  const legend = getRemarkLegendRows(classLevel);
+  const rowHeight = mm(3.7);
+  const headingHeight = mm(4.5);
+  const requiredHeight = headingHeight + rowHeight * legend.rows.length + mm(2);
+
+  let y = startY;
+
+  if (y + requiredHeight > availableBottom) {
+    doc.addPage();
+    y = mm(18);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.setTextColor(31, 41, 55);
+  doc.text(legend.title, mm(12), y);
+
+  let lineY = y + mm(4);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(55, 65, 81);
+
+  legend.rows.forEach((line) => {
+    doc.text(line, mm(12), lineY);
+    lineY += rowHeight;
+  });
+};
+
 const addPdfFooter = (doc: jsPDF) => {
   const generatedAt = new Date().toLocaleString();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -323,6 +402,11 @@ export const generateEnrollmentTerminalReportPdf = async (
     },
     margin: { left: 12, right: 12 },
   });
+
+  const singleReportTableEndY =
+    (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ??
+    summaryTop + summaryHeight + mm(40);
+  addRemarkLegend(doc, report.class.level, singleReportTableEndY + mm(6));
 
   addPdfFooter(doc);
 
@@ -1016,6 +1100,11 @@ export const generateClassEnrollmentSummariesReportPdf = async (
         },
         margin: { left: 12, right: 12 },
       });
+
+      const classReportTableEndY =
+        (doc as jsPDF & { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY ??
+        summaryTop + summaryHeight + mm(40);
+      addRemarkLegend(doc, summary.class.level, classReportTableEndY + mm(6));
 
       addPdfFooter(doc);
 
