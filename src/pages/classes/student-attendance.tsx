@@ -147,6 +147,9 @@ const StudentAttendancePage = () => {
 
       const response = await fetch(
         buildApiUrl(`/student-attendances/daily-register?${params.toString()}`),
+        {
+          credentials: "include",
+        },
       );
 
       const payload = (await response.json()) as DailyRegisterResponse;
@@ -231,6 +234,7 @@ const StudentAttendancePage = () => {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           classId,
           academicYearId,
@@ -291,6 +295,9 @@ const StudentAttendancePage = () => {
 
       const response = await fetch(
         buildApiUrl(`/student-attendances?${params.toString()}`),
+        {
+          credentials: "include",
+        },
       );
 
       const payload = (await response.json()) as AttendanceHistoryResponse;
