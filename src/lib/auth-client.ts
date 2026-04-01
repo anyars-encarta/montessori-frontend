@@ -11,6 +11,7 @@ export const authClient = createAuthClient({
     inferAdditionalFields({
       user: {
         role: { type: "string" },
+        status: { type: "string" },
         imageCldPubId: { type: "string" },
       },
     }),
