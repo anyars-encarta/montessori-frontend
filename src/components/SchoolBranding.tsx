@@ -50,7 +50,8 @@ export const useSchoolBranding = (): SchoolBranding => {
   );
 
   return {
-    name: school?.name?.trim() || fallbackName,
+    // name: school?.name?.trim() || fallbackName,
+    name: "Encarta Systems",
     logo: logoNode,
   };
 };

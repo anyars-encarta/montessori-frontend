@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,7 +29,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { User } from "@/types";
-import { HttpError, useDelete, useNotification } from "@refinedev/core";
+import {
+  HttpError,
+  useDelete,
+  useGetIdentity,
+  useNotification,
+  useUpdate,
+} from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, Search } from "lucide-react";
@@ -60,11 +67,15 @@ const ListUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [userPendingDelete, setUserPendingDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const { open } = useNotification();
+  const { data: loggedInUser } = useGetIdentity<User>();
   const { mutateAsync: deleteUser } = useDelete();
+  const { mutateAsync: updateUser } = useUpdate();
 
   const filters = useMemo(() => {
     const values: Array<{
@@ -104,6 +115,73 @@ const ListUsers = () => {
   const usersTable = useTable<User>({
     columns: useMemo<ColumnDef<User>[]>(
       () => [
+        {
+          id: "select",
+          size: 48,
+          header: ({ table }) => {
+            const visibleRows = table.getRowModel().rows;
+            const visibleIds = visibleRows.map((row) => row.original.id);
+            const selectedVisibleCount = visibleIds.filter((id) =>
+              selectedUserIds.includes(id),
+            ).length;
+
+            const allVisibleSelected =
+              visibleIds.length > 0 && selectedVisibleCount === visibleIds.length;
+            const partiallySelected =
+              selectedVisibleCount > 0 && selectedVisibleCount < visibleIds.length;
+
+            return (
+              <Checkbox
+                aria-label="Select all visible users"
+                checked={partiallySelected ? "indeterminate" : allVisibleSelected}
+                onCheckedChange={(checked) => {
+                  const shouldSelect =
+                    checked === "indeterminate" ? true : Boolean(checked);
+
+                  setSelectedUserIds((prev) => {
+                    const current = new Set(prev);
+
+                    if (shouldSelect) {
+                      visibleIds.forEach((id) => {
+                        current.add(id);
+                      });
+                    } else {
+                      visibleIds.forEach((id) => {
+                        current.delete(id);
+                      });
+                    }
+
+                    return Array.from(current);
+                  });
+                }}
+              />
+            );
+          },
+          cell: ({ row }) => {
+            const rowId = row.original.id;
+            const isSelected = selectedUserIds.includes(rowId);
+
+            return (
+              <Checkbox
+                aria-label={`Select ${row.original.name}`}
+                checked={isSelected}
+                onCheckedChange={(checked) => {
+                  const shouldSelect =
+                    checked === "indeterminate" ? true : Boolean(checked);
+
+                  setSelectedUserIds((prev) => {
+                    if (shouldSelect) {
+                      if (prev.includes(rowId)) return prev;
+                      return [...prev, rowId];
+                    }
+
+                    return prev.filter((id) => id !== rowId);
+                  });
+                }}
+              />
+            );
+          },
+        },
         {
           id: "name",
           accessorKey: "name",
@@ -219,7 +297,7 @@ const ListUsers = () => {
           ),
         },
       ],
-      [],
+      [selectedUserIds],
     ),
     refineCoreProps: {
       resource: "users",
@@ -281,6 +359,77 @@ const ListUsers = () => {
       setUserPendingDelete(null);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const selectedUsers = usersTable.reactTable
+    .getRowModel()
+    .rows.map((row) => row.original)
+    .filter((record) => selectedUserIds.includes(record.id));
+
+  const handleBulkStatusUpdate = async (nextStatus: "active" | "inactive") => {
+    if (!selectedUsers.length || isBulkUpdating) return;
+
+    const usersToUpdate = selectedUsers.filter((record) => {
+      if (record.status === nextStatus) return false;
+      if (loggedInUser?.id === record.id) return false;
+      return true;
+    });
+
+    if (!usersToUpdate.length) {
+      open?.({
+        type: "error",
+        message: "No eligible users selected",
+        description:
+          "Selected users are already in that status or include your own account.",
+      });
+      return;
+    }
+
+    setIsBulkUpdating(true);
+    try {
+      const results = await Promise.allSettled(
+        usersToUpdate.map((record) =>
+          updateUser({
+            resource: "users",
+            id: record.id,
+            values: {
+              name: record.name,
+              email: record.email,
+              role: record.role,
+              status: nextStatus,
+              image: record.image ?? null,
+              imageCldPubId: record.imageCldPubId ?? null,
+            },
+            successNotification: false,
+            errorNotification: false,
+          }),
+        ),
+      );
+
+      const successCount = results.filter((result) => result.status === "fulfilled").length;
+      const failedCount = results.length - successCount;
+
+      if (successCount > 0) {
+        open?.({
+          type: "success",
+          message: `${successCount} user${successCount > 1 ? "s" : ""} updated`,
+          description: `Status set to ${nextStatus}.`,
+        });
+      }
+
+      if (failedCount > 0) {
+        open?.({
+          type: "error",
+          message: `${failedCount} update${failedCount > 1 ? "s" : ""} failed`,
+          description: "Some selected users could not be updated.",
+        });
+      }
+
+      setSelectedUserIds([]);
+      await usersTable.refineCore.tableQuery?.refetch();
+    } finally {
+      setIsBulkUpdating(false);
     }
   };
 
@@ -346,6 +495,26 @@ const ListUsers = () => {
           </div>
 
           <CreateButton resource="users" />
+
+          <Button
+            type="button"
+            variant="outline"
+            className="cursor-pointer"
+            onClick={() => handleBulkStatusUpdate("active")}
+            disabled={isBulkUpdating || selectedUsers.length === 0}
+          >
+            {isBulkUpdating ? "Updating..." : "Activate Selected"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="cursor-pointer"
+            onClick={() => handleBulkStatusUpdate("inactive")}
+            disabled={isBulkUpdating || selectedUsers.length === 0}
+          >
+            {isBulkUpdating ? "Updating..." : "Deactivate Selected"}
+          </Button>
 
           {hasActiveFilters && (
             <Button
