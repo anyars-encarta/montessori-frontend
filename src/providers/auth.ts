@@ -34,6 +34,7 @@ export const authProvider: AuthProvider = {
         role: role || "staff",
         image: image || "",
         imageCldPubId: imageCldPubId || "",
+        status: "active",
       });
 
       if (error) {
