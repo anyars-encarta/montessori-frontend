@@ -134,6 +134,15 @@ const options: CreateDataProviderOptions = {
           if (field === "startDate") params.startDate = value;
           if (field === "endDate") params.endDate = value;
         }
+
+        if (resource === "users") {
+          if (field === "search" || field === "name" || field === "email") {
+            params.search = value;
+          }
+          if (field === "status") {
+            params.status = value;
+          }
+        }
       });
 
       return params;
@@ -230,6 +239,8 @@ const options: CreateDataProviderOptions = {
   //   Promise,
 };
 
-const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options);
+const { dataProvider } = createDataProvider(BACKEND_BASE_URL, options, {
+  credentials: "include",
+});
 
 export { dataProvider };

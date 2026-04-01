@@ -19,6 +19,7 @@ export const createClassSchema = z.object({
     })
     .int()
     .positive("Supervisor is required"),
+  classTeacherSignatureUrl: z.string().nullable(),
   subjectIds: z.array(z.number().int().positive()).optional().default([]),
 });
 
@@ -183,3 +184,50 @@ export type CreateStaffValues = z.infer<typeof createStaffSchema>;
 export const editStaffSchema = createStaffSchema;
 
 export type EditStaffValues = z.infer<typeof editStaffSchema>;
+
+export const editUserSchema = z
+  .object({
+    name: z.string().trim().min(1, "Name is required"),
+    email: z
+      .string()
+      .trim()
+      .min(1, "Email is required")
+      .email("Invalid email address"),
+    role: z.enum(["admin", "teacher", "staff"], {
+      required_error: "Role is required",
+    }),
+    status: z.enum(["active", "inactive"], {
+      required_error: "Status is required",
+    }),
+    image: z.string().nullable(),
+    imageCldPubId: z.string().nullable(),
+    password: z.string().optional(),
+    confirmPassword: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const pwd = data.password?.trim();
+    if (pwd && pwd.length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Password must be at least 8 characters",
+        path: ["password"],
+      });
+    }
+    if (pwd && pwd !== (data.confirmPassword?.trim() ?? "")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      });
+    }
+  });
+
+export type EditUserValues = z.infer<typeof editUserSchema>;
+
+export const updateEnrollmentGeneralCommentsSchema = z.object({
+  generalComments: z.string().nullable(),
+});
+
+export type UpdateEnrollmentGeneralCommentsValues = z.infer<
+  typeof updateEnrollmentGeneralCommentsSchema
+>;

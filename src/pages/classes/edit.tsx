@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import UploadWidget from "@/components/upload-widget";
 import { ClassEditRecord, EditClassFormValues, Staff, Subject } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -38,6 +39,7 @@ import { SubmitHandler } from "react-hook-form";
 import { createClassSchema } from "@/validations";
 import PageLoader from "@/components/PageLoader";
 import { Loader2 } from "lucide-react";
+import { UploadWidgetValue } from "@/types";
 
 const EditClass = () => {
   const back = useBack();
@@ -64,6 +66,7 @@ const EditClass = () => {
       level: "",
       capacity: 0,
       supervisorId: undefined,
+      classTeacherSignatureUrl: "",
       subjectIds: [],
     },
   });
@@ -85,6 +88,7 @@ const EditClass = () => {
       level: record.level,
       capacity: record.capacity,
       supervisorId: record.supervisorId,
+      classTeacherSignatureUrl: record.classTeacherSignatureUrl ?? "",
       subjectIds: record.subjects?.map((subject) => subject.subjectId) ?? [],
     });
   }, [classQuery.data?.data, reset]);
@@ -118,6 +122,7 @@ const EditClass = () => {
       level: values.level.trim(),
       capacity: values.capacity,
       supervisorId: values.supervisorId,
+      classTeacherSignatureUrl: values.classTeacherSignatureUrl?.trim() || null,
       subjectIds: values.subjectIds ?? [],
     });
   };
@@ -284,6 +289,32 @@ const EditClass = () => {
                           ))}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="classTeacherSignatureUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Class Teacher Signature</FormLabel>
+                      <FormControl>
+                        <UploadWidget
+                          value={
+                            field.value
+                              ? {
+                                  url: field.value,
+                                  publicId: "",
+                                }
+                              : null
+                          }
+                          onChange={(value: UploadWidgetValue | null) => {
+                            field.onChange(value?.url ?? "");
+                          }}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

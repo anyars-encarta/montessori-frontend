@@ -213,8 +213,8 @@ const CreatePayment = () => {
               academicYears={academicYears}
               terms={terms}
               isSubmitting={isSubmitting}
-              submitLabel="Create Payment"
-              submittingLabel="Creating Payment..."
+              submitLabel="Accept Payment"
+              submittingLabel="Accepting Payment..."
             />
           </CardContent>
         </Card>

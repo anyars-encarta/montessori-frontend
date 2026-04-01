@@ -1,7 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLink, useList, useNotification } from "@refinedev/core";
+import {
+  useGetIdentity,
+  useLink,
+  useList,
+  useNotification,
+} from "@refinedev/core";
 import { RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
-import { GraduationCap, Layers, ShieldCheck, Users } from "lucide-react";
+import {
+  Copyright,
+  GraduationCap,
+  Layers,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { BACKEND_BASE_URL } from "@/constants";
 
 import { Badge } from "@/components/ui/badge";
@@ -15,9 +26,11 @@ import type {
   StudentFeeRecord,
   PaymentRecord,
   DashboardSummary,
+  User,
 } from "@/types";
 import AttendanceChartContainer from "@/components/AttendanceChartContainer";
 import FinanceChart from "@/components/FinanceChart";
+import ActionButton from "@/components/actionButton";
 
 const roleColors = ["#f97316", "#0ea5e9", "#22c55e", "#a855f7"];
 
@@ -45,8 +58,15 @@ const getCurrentWeekRange = () => {
 const Dashboard = () => {
   const Link = useLink();
   const { open } = useNotification();
-  const [studentsAttendances, setStudentsAttendances] = useState<StudentAttendance[]>([]);
+
+  const [studentsAttendances, setStudentsAttendances] = useState<
+    StudentAttendance[]
+  >([]);
+
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
+
+  const { data: loggedInUser } = useGetIdentity<User>();
+
   const { result: studentsResult } = useList<Student>({
     resource: "students",
     pagination: { mode: "server", currentPage: 1, pageSize: 100 },
@@ -107,7 +127,13 @@ const Dashboard = () => {
         });
 
         const response = await fetch(
-          `${BACKEND_BASE_URL.replace(/\/+$/, "")}/student-attendances?${params.toString()}`,
+          `${BACKEND_BASE_URL.replace(
+            /\/+$/,
+            "",
+          )}/student-attendances?${params.toString()}`,
+          {
+            credentials: "include",
+          },
         );
 
         const payload = (await response.json()) as AttendanceHistoryResponse;
@@ -115,13 +141,15 @@ const Dashboard = () => {
           throw new Error(payload.error ?? "Failed to load attendance data");
         }
 
-        const mappedRows: StudentAttendance[] = (payload.data ?? []).map((row) => ({
-          id: row.id,
-          studentId: row.studentId,
-          attendanceDate: row.attendanceDate,
-          status: row.status,
-          remarks: row.remarks,
-        }));
+        const mappedRows: StudentAttendance[] = (payload.data ?? []).map(
+          (row) => ({
+            id: row.id,
+            studentId: row.studentId,
+            attendanceDate: row.attendanceDate,
+            status: row.status,
+            remarks: row.remarks,
+          }),
+        );
 
         allRows.push(...mappedRows);
 
@@ -154,7 +182,7 @@ const Dashboard = () => {
     return () => {
       isDisposed = true;
     };
-  }, []);
+  }, [open]);
 
   const dashboardSummary = useMemo(
     () => dashboardSummaryResult.data?.[0] ?? null,
@@ -170,7 +198,8 @@ const Dashboard = () => {
     staff.filter((staffMember) => staffMember.staffType === "teacher").length;
   const totalNonTeachingCount =
     dashboardSummary?.totalNonTeachingStaff ??
-    staff.filter((staffMember) => staffMember.staffType === "non_teaching").length;
+    staff.filter((staffMember) => staffMember.staffType === "non_teaching")
+      .length;
   const totalClassesCount = dashboardSummary?.totalClasses ?? 0;
 
   const boys = dashboardSummary?.maleStudents ?? 0;
@@ -269,16 +298,32 @@ const Dashboard = () => {
     [studentPaymentsResult.data],
   );
 
-  const user = localStorage.getItem("user");
-
   return (
     <div className="space-y-6">
       <div>
         <div className="flex items-center justify-between">
           <h1 className="page-title">Dashboard</h1>
-          <span className="text-primary">
-            Welcome, {user ? JSON.parse(user).name : "Guest"}
-          </span>
+
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-primary">
+                Welcome, {loggedInUser?.name ?? "Guest"}
+              </span>
+              <Link
+                to={`/users/edit/${loggedInUser?.id}`}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <ActionButton type="update" />
+              </Link>
+            </div>
+
+            <Badge variant="outline">
+              {loggedInUser?.role
+                ? loggedInUser?.role.charAt(0).toUpperCase() +
+                  loggedInUser?.role.slice(1)
+                : "No role"}
+            </Badge>
+          </div>
         </div>
         <p className="text-muted-foreground">
           A quick snapshot of the latest activity and key metrics.
@@ -443,7 +488,12 @@ const Dashboard = () => {
             {newestStudents.map((item, index) => (
               <Link
                 key={item.id}
-                to={`/students/show/${item.id}`}
+                to={
+                  loggedInUser?.role === "admin" ||
+                  loggedInUser?.role === "teacher"
+                    ? `/students/show/${item.id}`
+                    : ""
+                }
                 className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
               >
                 <div className="flex items-center gap-3">
@@ -478,32 +528,58 @@ const Dashboard = () => {
                 No recent teachers.
               </p>
             )}
-            {newestTeachers.map((teacher, index) => (
-              <Link
-                key={teacher.id}
-                to={`/staff/show/${teacher.id}`}
-                className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    #{index + 1}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {teacher.firstName + " " + teacher.lastName}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {teacher.email}
-                    </p>
+            {newestTeachers.map((teacher, index) => {
+              const content = (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      #{index + 1}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {teacher.firstName + " " + teacher.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {teacher.email}
+                      </p>
+                    </div>
                   </div>
+                  <Badge variant="secondary">New</Badge>
+                </>
+              );
+
+              return loggedInUser?.role === "admin" ? (
+                <Link
+                  key={teacher.id}
+                  to={`/staff/show/${teacher.id}`}
+                  className="flex items-center justify-between rounded-md border border-transparent px-3 py-2 transition-colors hover:border-primary/30 hover:bg-muted/40"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div
+                  key={teacher.id}
+                  className="flex items-center justify-between rounded-md border border-transparent px-3 py-2"
+                >
+                  {content}
                 </div>
-                <Badge variant="secondary">New</Badge>
-              </Link>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </div>
       <Separator />
+
+      <div className="flex items-center justify-start gap-2">
+        <Copyright />{" "}
+        <div className="flex flex-col items-start text-xs text-muted-foreground">
+          <span>
+            {new Date().getFullYear()} Encarta Networks & Multimedia, All Rights
+            Reserved
+          </span>
+          <span>+233 24 211 9972 / +233 20 259 4960</span>
+        </div>
+      </div>
     </div>
   );
 };

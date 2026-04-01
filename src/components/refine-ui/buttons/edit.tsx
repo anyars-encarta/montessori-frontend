@@ -1,6 +1,8 @@
 "use client";
 
+import { ActionTooltip, tableActionButtonClassName } from "@/components/actionButton";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { type BaseKey, useEditButton } from "@refinedev/core";
 import { Pencil } from "lucide-react";
 import React from "react";
@@ -50,8 +52,21 @@ export const EditButton = React.forwardRef<
 
     if (isHidden) return null;
 
-    return (
-      <Button {...rest} ref={ref} disabled={isDisabled} asChild>
+    const isIconOnly = Boolean(children);
+    const className = cn(isIconOnly ? tableActionButtonClassName : undefined, rest.className);
+    const title = rest.title ?? (isIconOnly ? label : undefined);
+    const size = isIconOnly ? "icon" : rest.size;
+
+    const buttonEl = (
+      <Button
+        {...rest}
+        className={className}
+        aria-label={title}
+        size={size}
+        ref={ref}
+        disabled={isDisabled}
+        asChild
+      >
         <LinkComponent
           to={to}
           replace={false}
@@ -75,6 +90,11 @@ export const EditButton = React.forwardRef<
         </LinkComponent>
       </Button>
     );
+
+    if (isIconOnly && title) {
+      return <ActionTooltip title={title}>{buttonEl}</ActionTooltip>;
+    }
+    return buttonEl;
   }
 );
 

@@ -24,6 +24,7 @@ const initialValues: SchoolDetailsForm = {
   email: "",
   website: "",
   logo: "",
+  supervisorSignatureUrl: "",
   discountType: "value",
   discountAmount: "0",
 };
@@ -57,6 +58,13 @@ const CreateSetup = () => {
     }));
   };
 
+  const handleSupervisorSignatureChange = (value: UploadWidgetValue | null) => {
+    setFormValues((prev) => ({
+      ...prev,
+      supervisorSignatureUrl: value?.url ?? "",
+    }));
+  };
+
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -66,6 +74,7 @@ const CreateSetup = () => {
         ...formValues,
         website: formValues.website.trim() || null,
         logo: formValues.logo.trim() || null,
+        supervisorSignatureUrl: formValues.supervisorSignatureUrl.trim() || null,
         discountAmount: formValues.discountAmount.trim() || "0",
       };
 
@@ -238,6 +247,21 @@ const CreateSetup = () => {
                       : null
                   }
                   onChange={handleLogoChange}
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>School Supervisor Signature</Label>
+                <UploadWidget
+                  value={
+                    formValues.supervisorSignatureUrl
+                      ? {
+                          url: formValues.supervisorSignatureUrl,
+                          publicId: "",
+                        }
+                      : null
+                  }
+                  onChange={handleSupervisorSignatureChange}
                 />
               </div>
             </div>

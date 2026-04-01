@@ -11,8 +11,8 @@ import { ListView } from "@/components/refine-ui/views/list-view";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FeeRecord, PaymentRecord, StudentBasic, StudentFeeRecord, TermRecord } from "@/types";
-import { useBack, useList } from "@refinedev/core";
+import { FeeRecord, PaymentRecord, StudentBasic, StudentFeeRecord, TermRecord, User } from "@/types";
+import { useBack, useGetIdentity, useList } from "@refinedev/core";
 import { useTable } from "@refinedev/react-table";
 import { ColumnDef } from "@tanstack/react-table";
 import { Search } from "lucide-react";
@@ -38,6 +38,7 @@ const ListPayments = () => {
   const [debouncedStudentSearchQuery, setDebouncedStudentSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const { data: loggedInUser } = useGetIdentity<User>();
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -189,14 +190,16 @@ const ListPayments = () => {
               <EditButton resource="payments" recordItemId={row.original.id} variant="outline" size="sm">
                 <ActionButton type="update" />
               </EditButton>
-              <DeleteButton resource="payments" recordItemId={row.original.id} variant="outline" size="sm" className="cursor-pointer">
-                <ActionButton type="delete" />
-              </DeleteButton>
+              {loggedInUser?.role === "admin" && (
+                <DeleteButton resource="payments" recordItemId={row.original.id} variant="outline" size="sm" className="cursor-pointer">
+                  <ActionButton type="delete" />
+                </DeleteButton>
+              )}
             </div>
           ),
         },
       ],
-      [fees, studentFees, students, terms],
+      [fees, studentFees, students, terms, loggedInUser?.role],
     ),
     refineCoreProps: {
       resource: "payments",

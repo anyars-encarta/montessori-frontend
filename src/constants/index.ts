@@ -1,15 +1,28 @@
+import { ReportCard, UserRole } from "@/types";
 import { GraduationCap, School } from "lucide-react";
 
+import {
+    BarChart3,
+    BookOpen,
+    BriefcaseBusiness,
+    CalendarCheck2,
+    ChartNoAxesCombined,
+    Coins,
+    FileBarChart2,
+    Landmark,
+    Layers,
+} from "lucide-react";
+
 export const USER_ROLES = {
-    STUDENT: "student",
+    STAFF: "staff",
     TEACHER: "teacher",
     ADMIN: "admin",
 };
 
 export const ROLE_OPTIONS = [
     {
-        value: USER_ROLES.STUDENT,
-        label: "Student",
+        value: USER_ROLES.STAFF,
+        label: "Staff",
         icon: GraduationCap,
     },
     {
@@ -75,6 +88,7 @@ export const BACKEND_BASE_URL = normalizeApiBaseUrl(getEnvVar("VITE_BACKEND_BASE
 export const BASE_URL = getEnvVar("VITE_API_URL");
 export const ACCESS_TOKEN_KEY = getEnvVar("VITE_ACCESS_TOKEN_KEY");
 export const REFRESH_TOKEN_KEY = getEnvVar("VITE_REFRESH_TOKEN_KEY");
+export const ADMIN_PASSKEY = getEnvVar("VITE_ADMIN_PASSKEY");
 
 export const REFRESH_TOKEN_URL = `${BASE_URL}/refresh-token`;
 
@@ -104,4 +118,111 @@ export const subjects = [
   { id: 8, name: "World History", code: "HIST" },
   { id: 9, name: "Spanish Language", code: "SPAN" },
   { id: 10, name: "Art and Design", code: "ART" }
+];
+
+export const reports: ReportCard[] = [
+    {
+        title: "Class Report",
+        summary:
+            "Class-level summary and enrollment totals by gender, with detailed enrollment records per class.",
+        category: "Academic",
+        status: "guided",
+        icon: Layers,
+        actions: [
+            { label: "Open Classes", path: "/classes" },
+            { label: "Open Enrollment Details", path: "/classes/enrollments" },
+        ],
+        visibleTo: [UserRole.ADMIN],
+    },
+    {
+        title: "Enrollments Report",
+        summary:
+            "Summary and detailed enrollment report with filters for academic year, term, and class.",
+        category: "Academic",
+        status: "ready",
+        icon: FileBarChart2,
+        actions: [{ label: "Open Enrollments", path: "/classes/enrollments" }],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
+    },
+    {
+        title: "Student Attendance Report",
+        summary:
+            "Daily register, attendance history, and CSV export for student attendance tracking.",
+        category: "Attendance",
+        status: "ready",
+        icon: CalendarCheck2,
+        actions: [
+            { label: "Open Student Attendance", path: "/classes/student-attendance" },
+        ],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
+    },
+    {
+        title: "Staff Attendance Report",
+        summary:
+            "Daily register, attendance history, and CSV export for staff attendance insights.",
+        category: "Attendance",
+        status: "ready",
+        icon: BriefcaseBusiness,
+        actions: [{ label: "Open Staff Attendance", path: "/staff/staff-attendance" }],
+        visibleTo: [UserRole.ADMIN],
+    },
+    {
+        title: "Income and Expenditure Report",
+        summary:
+            "Use payments and fee records to review incoming cashflow and compare against billed amounts.",
+        category: "Finance",
+        status: "guided",
+        icon: Landmark,
+        actions: [
+            { label: "Open Payments", path: "/payments" },
+            { label: "Open Fees", path: "/fees" },
+        ],
+        visibleTo: [UserRole.ADMIN],
+    },
+    {
+        title: "Terminal Report",
+        summary:
+            "Use term setup and enrollment/attendance pages to analyze results for a specific term.",
+        category: "Academic",
+        status: "guided",
+        icon: BookOpen,
+        actions: [
+            { label: "Open Setup (Terms)", path: "/setup" },
+            { label: "Open Enrollments", path: "/classes/enrollments" },
+        ],
+        visibleTo: [UserRole.ADMIN, UserRole.TEACHER],
+    },
+    {
+        title: "Subject Performance Analysis",
+        summary:
+            "Analyze student performance by subject from enrollment workflows and class/subject context.",
+        category: "Analytics",
+        status: "guided",
+        icon: BarChart3,
+        actions: [
+            { label: "Open Subjects", path: "/subjects" },
+            { label: "Open Enrollments", path: "/classes/enrollments" },
+        ],
+        visibleTo: [UserRole.ADMIN],
+    },
+    {
+        title: "Revenue Report",
+        summary:
+            "Track total collections, payment methods, and trends from payment records.",
+        category: "Finance",
+        status: "ready",
+        icon: Coins,
+        actions: [{ label: "Open Payments", path: "/payments" }],
+        visibleTo: [UserRole.ADMIN],
+    },
+    {
+        title: "Fees Summary Report",
+        summary:
+            "Review fee configuration and scope by fee type, academic year, term, and class level.",
+        category: "Finance",
+        status: "ready",
+        icon: ChartNoAxesCombined,
+        actions: [{ label: "Open Fees", path: "/fees" }],
+        visibleTo: [UserRole.ADMIN],
+    },
 ];

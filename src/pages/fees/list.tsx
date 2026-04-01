@@ -68,6 +68,9 @@ const ListFees = () => {
       while (currentPage <= totalPages) {
         const response = await fetch(
           `${BACKEND_BASE_URL}/classes?page=${currentPage}&limit=${pageSize}`,
+          {
+            credentials: "include",
+          },
         );
 
         if (!response.ok) {
@@ -106,6 +109,7 @@ const ListFees = () => {
 
   const academicYears = yearsResult.data;
   const terms = termsResult.data;
+
   const classLevels = useMemo(() => {
     return Array.from(new Set(classes.map((classRow) => classRow.level))).sort(
       (a, b) => a.localeCompare(b),

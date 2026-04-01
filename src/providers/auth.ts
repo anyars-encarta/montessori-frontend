@@ -1,6 +1,21 @@
 import type { AuthProvider } from "@refinedev/core";
 import { User, SignUpPayload } from "@/types";
 import { authClient } from "@/lib/auth-client";
+import { BACKEND_BASE_URL } from "@/constants";
+
+type SessionResponse = {
+  data?: {
+    user?: User;
+  } | null;
+  error?: {
+    message?: string;
+  } | null;
+};
+
+const getCurrentSessionUser = async () => {
+  const result = (await authClient.getSession()) as SessionResponse;
+  return result?.data?.user ?? null;
+};
 
 export const authProvider: AuthProvider = {
   register: async ({
@@ -16,7 +31,7 @@ export const authProvider: AuthProvider = {
         name: name || "",
         email,
         password,
-        role: role || "teacher",
+        role: role || "staff",
         image: image || "",
         imageCldPubId: imageCldPubId || "",
       });
@@ -54,10 +69,11 @@ export const authProvider: AuthProvider = {
   },
   login: async ({ email, password }) => {
     try {
-      const { data, error } = await authClient.signIn.email({
+      const signInResult = (await authClient.signIn.email({
         email,
         password,
-      });
+      })) as SessionResponse;
+      const { data, error } = signInResult;
 
       if (error) {
         console.error("Login error from auth client:", error);
@@ -66,6 +82,18 @@ export const authProvider: AuthProvider = {
           error: {
             name: "Login failed",
             message: error?.message || "Please try again later.",
+          },
+        };
+      }
+
+      if (data?.user?.status === "inactive") {
+        await authClient.signOut();
+        localStorage.removeItem("user");
+        return {
+          success: false,
+          error: {
+            name: "Account blocked",
+            message: "This account is inactive. Contact an administrator.",
           },
         };
       }
@@ -106,6 +134,7 @@ export const authProvider: AuthProvider = {
       }
 
       localStorage.removeItem("user");
+      localStorage.removeItem("accessKey");
 
       return {
         success: true,
@@ -132,28 +161,55 @@ export const authProvider: AuthProvider = {
     return { error };
   },
   check: async () => {
-    const user = localStorage.getItem("user");
+    try {
+      const user = await getCurrentSessionUser();
 
-    if (user) {
-      return {
-        authenticated: true,
-      };
+      if (user) {
+        if (user.status === "inactive") {
+          await authClient.signOut();
+          localStorage.removeItem("user");
+          return {
+            authenticated: false,
+            logout: true,
+            redirectTo: "/login",
+            error: {
+              name: "Account blocked",
+              message: "This account is inactive. Contact an administrator.",
+            },
+          };
+        }
+
+        localStorage.setItem("user", JSON.stringify(user));
+        return {
+          authenticated: true,
+        };
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error);
     }
 
+    localStorage.removeItem("user");
     return {
       authenticated: false,
       logout: true,
       redirectTo: "/login",
       error: {
         name: "Unauthorized",
-        message: "Check failed",
+        message: "Please log in to continue.",
       },
     };
   },
   getPermissions: async () => {
-    const user = localStorage.getItem("user");
+    const sessionUser = await getCurrentSessionUser();
 
+    if (sessionUser) {
+      localStorage.setItem("user", JSON.stringify(sessionUser));
+      return { role: sessionUser.role };
+    }
+
+    const user = localStorage.getItem("user");
     if (!user) return null;
+
     try {
       const parsedUser: User = JSON.parse(user);
       return { role: parsedUser.role };
@@ -162,10 +218,61 @@ export const authProvider: AuthProvider = {
       return null;
     }
   },
-  getIdentity: async () => {
-    const user = localStorage.getItem("user");
+  forgotPassword: async ({ email }: { email: string }) => {
+    try {
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const res = await fetch(
+        `${BACKEND_BASE_URL.replace(/\/+$/, "")}/auth/request-password-reset`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, redirectTo }),
+        },
+      );
 
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        return {
+          success: false,
+          error: {
+            name: "Forgot password failed",
+            message:
+              (body as { message?: string }).message ??
+              "Unable to send reset email. Please try again.",
+          },
+        };
+      }
+
+      return { success: true };
+    } catch {
+      return {
+        success: false,
+        error: {
+          name: "Forgot password failed",
+          message: "Unable to send reset email. Please try again.",
+        },
+      };
+    }
+  },
+  getIdentity: async () => {
+    const sessionUser = await getCurrentSessionUser();
+
+    if (sessionUser) {
+      localStorage.setItem("user", JSON.stringify(sessionUser));
+      return {
+        id: sessionUser.id,
+        name: sessionUser.name,
+        email: sessionUser.email,
+        image: sessionUser.image,
+        role: sessionUser.role,
+        imageCldPubId: sessionUser.imageCldPubId,
+      };
+    }
+
+    const user = localStorage.getItem("user");
     if (!user) return null;
+
     try {
       const parsedUser: User = JSON.parse(user);
       return {

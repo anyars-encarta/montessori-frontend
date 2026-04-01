@@ -129,6 +129,9 @@ const StaffAttendancePage = () => {
 
       const response = await fetch(
         buildApiUrl(`/staff-attendances/daily-register?${params.toString()}`),
+        {
+          credentials: "include",
+        },
       );
 
       const payload = (await response.json()) as StaffDailyRegisterResponse;
@@ -216,6 +219,7 @@ const StaffAttendancePage = () => {
           headers: {
             "Content-Type": "application/json",
           },
+          credentials: "include",
           body: JSON.stringify({
             attendanceDate,
             entries: rows.map((row) => ({
@@ -281,6 +285,9 @@ const StaffAttendancePage = () => {
 
         const response = await fetch(
           buildApiUrl(`/staff-attendances?${params.toString()}`),
+          {
+            credentials: "include",
+          },
         );
         const payload =
           (await response.json()) as StaffAttendanceHistoryResponse;

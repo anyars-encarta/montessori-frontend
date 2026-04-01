@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 
 import PageLoader from "@/components/PageLoader";
@@ -7,6 +7,7 @@ import { EditView } from "@/components/refine-ui/views/edit-view";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   ClassEnrollmentOverviewRow,
   EnrollmentAssessmentRow,
@@ -27,6 +28,8 @@ const EnrollmentScoresEditPage = () => {
   const [savingAssessmentId, setSavingAssessmentId] = useState<number | null>(
     null,
   );
+  const [generalCommentsDraft, setGeneralCommentsDraft] = useState<string>("");
+  const [isSavingGeneralComments, setIsSavingGeneralComments] = useState(false);
 
   const { query, result } = useList<ClassEnrollmentOverviewRow>({
     resource: "student-class-enrollments/overview",
@@ -48,6 +51,14 @@ const EnrollmentScoresEditPage = () => {
     () => enrollment?.assessments ?? [],
     [enrollment],
   );
+
+  useEffect(() => {
+    if (enrollment?.generalComments) {
+      setGeneralCommentsDraft(enrollment.generalComments);
+    } else {
+      setGeneralCommentsDraft("");
+    }
+  }, [enrollment?.id]);
 
   const onScoreChange = (
     assessment: EnrollmentAssessmentRow,
@@ -116,6 +127,40 @@ const EnrollmentScoresEditPage = () => {
       });
     } finally {
       setSavingAssessmentId(null);
+    }
+  };
+
+  const saveGeneralComments = async () => {
+    if (!enrollment) return;
+
+    setIsSavingGeneralComments(true);
+
+    try {
+      await updateRecord({
+        resource: "student-class-enrollments",
+        id: enrollment.id,
+        values: {
+          generalComments: generalCommentsDraft || null,
+        },
+        successNotification: false,
+        errorNotification: false,
+      });
+
+      open?.({ type: "success", message: "General comments updated" });
+      await query.refetch();
+    } catch (error) {
+      const message =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Failed to update general comments";
+
+      open?.({
+        type: "error",
+        message: "Failed to update general comments",
+        description: message,
+      });
+    } finally {
+      setIsSavingGeneralComments(false);
     }
   };
 
@@ -191,6 +236,7 @@ const EnrollmentScoresEditPage = () => {
                     <th className="p-2 font-medium">Class Score</th>
                     <th className="p-2 font-medium">Exam Score</th>
                     <th className="p-2 font-medium">Total Score</th>
+                    <th className="p-2 font-medium">Grade</th>
                     <th className="p-2 font-medium">Position</th>
                     <th className="p-2 font-medium">Remarks</th>
                     <th className="p-2 font-medium">Actions</th>
@@ -310,6 +356,9 @@ const EnrollmentScoresEditPage = () => {
                           {assessment.totalMark}
                         </td>
                         <td className="p-2 font-medium">
+                          {assessment.grade}
+                        </td>
+                        <td className="p-2 font-medium">
                           {assessment.subjectPosition}
                         </td>
                         <td className="p-2 font-medium">
@@ -339,6 +388,35 @@ const EnrollmentScoresEditPage = () => {
               </table>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>General Comments</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Textarea
+            placeholder="Enter general comments about this student's enrollment..."
+            value={generalCommentsDraft || enrollment?.generalComments || ""}
+            onChange={(event) => setGeneralCommentsDraft(event.target.value)}
+            rows={6}
+            className="resize-none"
+          />
+          <Button
+            className="cursor-pointer"
+            onClick={saveGeneralComments}
+            disabled={isSavingGeneralComments}
+          >
+            {isSavingGeneralComments ? (
+              <div className="flex gap-2 items-center">
+                <Loader2 className="inline-block animate-spin w-4 h-4" />
+                <span>Saving...</span>
+              </div>
+            ) : (
+              "Save Comments"
+            )}
+          </Button>
         </CardContent>
       </Card>
     </EditView>

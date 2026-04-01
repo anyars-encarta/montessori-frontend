@@ -1,4 +1,5 @@
 import { CreateClassValues, CreatePaymentValues } from "@/validations";
+import { type LucideIcon } from "lucide-react";
 import { UseFormReturn } from "react-hook-form";
 
 export type Subject = {
@@ -75,6 +76,19 @@ export enum UserRole {
   TEACHER = "teacher",
   ADMIN = "admin",
 }
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  imageCldPubId: string | null;
+  role: UserRole | "staff";
+  status: "active" | "inactive";
+  createdAt: string;
+  updatedAt: string;
+};
 
 export type StudentBasic = {
   id: number;
@@ -194,6 +208,7 @@ export type ClassRecord = {
   level: string;
   capacity: number;
   supervisorId: number;
+  classTeacherSignatureUrl: string | null;
   subjectIds: number[];
   createdAt: string;
   updatedAt: string;
@@ -224,6 +239,7 @@ export type ClassEditRecord = {
   level: string;
   capacity: number;
   supervisorId: number;
+  classTeacherSignatureUrl: string | null;
   subjects: ClassSubjectRow[];
 };
 
@@ -232,6 +248,7 @@ export type StudentClassEnrollmentRecord = {
   studentId: number;
   classId: number;
   academicYearId: number;
+  termId: number;
   enrollmentDate: string;
   promotionDate: string | null;
   createdAt: string;
@@ -397,6 +414,7 @@ export type ClassDetails = {
   status: "active" | "inactive";
   level: string;
   capacity: number;
+  classTeacherSignatureUrl: string | null;
   bannerUrl?: string;
   bannerCldPubId?: string;
   supervisorId: number;
@@ -484,6 +502,7 @@ export type Student = StudentBasic & {
   payments: StudentPayment[];
   attendances: StudentAttendance[];
   gender?: string | null;
+  isActive?: boolean;
 };
 
 export type StaffGender = "male" | "female" | "other";
@@ -551,7 +570,7 @@ export type SignUpPayload = {
   password: string;
   image?: string;
   imageCldPubId?: string;
-  role: UserRole;
+  role: "admin" | "teacher" | "staff";
   department?: string;
 };
 
@@ -568,6 +587,7 @@ export type SchoolDetailsRecord = {
   email: string;
   website?: string | null;
   logo?: string | null;
+  supervisorSignatureUrl?: string | null;
   discountType: "value" | "percentage";
   discountAmount: string;
 };
@@ -586,6 +606,7 @@ export type TermRecord = {
   academicYearId: number;
   startDate: string;
   endDate: string;
+  holidayDates?: string[];
 };
 
 export type AcademicYearForm = {
@@ -600,6 +621,7 @@ export type TermForm = {
   academicYearId: string;
   startDate: string;
   endDate: string;
+  holidayDatesText: string;
 };
 
 export type EnrollmentAssessmentRow = {
@@ -614,6 +636,7 @@ export type EnrollmentAssessmentRow = {
   classMark: string;
   examMark: string;
   totalMark: string;
+  grade: string | null;
   subjectPosition: string;
   remarks: string;
 };
@@ -629,6 +652,8 @@ export type ClassEnrollmentOverviewRow = {
     id: number;
     name: string;
     level: string;
+    capacity?: number;
+    classTeacherSignatureUrl?: string | null;
   };
   academicYear: {
     id: number;
@@ -638,11 +663,16 @@ export type ClassEnrollmentOverviewRow = {
     id: number;
     name: string;
     sequenceNumber: number;
+    startDate?: string;
+    endDate?: string;
+    nextTermStartDate?: string | null;
   };
   enrollmentDate: string;
+  attendance?: string;
   classPosition: string;
   aggregate: string;
   remarks: string;
+  generalComments: string | null;
   assessments: EnrollmentAssessmentRow[];
 };
 
@@ -692,6 +722,7 @@ export type SchoolDetailsForm = {
   email: string;
   website: string;
   logo: string;
+  supervisorSignatureUrl: string;
   discountType: "value" | "percentage";
   discountAmount: string;
 };
@@ -832,4 +863,35 @@ export type DashboardSummary = {
   maleStudents: number;
   femaleStudents: number;
   otherStudents: number;
+};
+
+export type ReportState = "ready" | "guided";
+
+export type ReportAction = {
+    label: string;
+    path: string;
+};
+
+export type ReportCard = {
+    title: string;
+    summary: string;
+    category: "Academic" | "Attendance" | "Finance" | "Analytics";
+    status: ReportState;
+    icon: LucideIcon;
+    actions: ReportAction[];
+    visibleTo: UserRole[];
+};
+
+export type PdfMode = "download" | "print";
+
+export type GenerateEnrollmentReportPdfOptions = {
+  mode?: PdfMode;
+  filename?: string;
+  autoClosePrintWindow?: boolean;
+  printWindow?: Window | null;
+};
+
+export type StudentPdfContext = {
+  fullName: string;
+  registrationNumber?: string | null;
 };
