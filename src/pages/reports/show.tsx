@@ -23,14 +23,13 @@ const ShowReports = () => {
       return [];
     }
 
-    const currentRole =
-      loggedInUser.role === "admin"
-        ? UserRole.ADMIN
-        : loggedInUser.role === "teacher"
-          ? UserRole.TEACHER
-          : loggedInUser.role === "staff"
-            ? UserRole.STAFF
-            : null;
+    const normalizedRole = loggedInUser.role.trim().toLowerCase();
+    const roleMap: Record<string, UserRole> = {
+      admin: UserRole.ADMIN,
+      teacher: UserRole.TEACHER,
+      staff: UserRole.STAFF,
+    };
+    const currentRole = roleMap[normalizedRole] ?? null;
 
     if (!currentRole) {
       return [];

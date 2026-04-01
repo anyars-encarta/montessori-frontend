@@ -1353,7 +1353,7 @@ const ShowStudent = () => {
 
           return (
             <div className="flex items-center gap-2">
-              {(loggedInUser?.role === "admin" ||
+              {!isPaid && (loggedInUser?.role === "admin" ||
                 loggedInUser?.role === "staff") && (
                 <Button
                   type="button"
@@ -1370,6 +1370,7 @@ const ShowStudent = () => {
                 </Button>
               )}
 
+{/* Print/Download buttons always available */}
               <ActionTooltip title={actionButtonTitles.print}>
                 <Button
                   type="button"

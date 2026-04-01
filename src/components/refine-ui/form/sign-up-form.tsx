@@ -165,6 +165,7 @@ export const SignUpForm = () => {
                   setImage(value?.url ?? null);
                   setImageCldPubId(value?.publicId ?? null);
                 }}
+                disabled={creatingUser}
               />
             </div>
 
