@@ -2,7 +2,6 @@
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -64,7 +63,7 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
 
       onOpenChange(nextOpen);
     }}>
-      <AlertDialogContent className="space-y-5 bg-gray-900/50 border-gray-700 outline-none text-white">
+      <AlertDialogContent className="space-y-5 bg-gray-900/80 border-gray-700 outline-none text-white">
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-start justify-between">
             Admin Access Verification
@@ -90,32 +89,32 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
           >
             <InputOTPGroup className="w-full flex justify-between">
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={0}
                 mask
               />
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={1}
                 mask
               />
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={2}
                 mask
               />
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={3}
                 mask
               />
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={4}
                 mask
               />
               <InputOTPSlot
-                className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
+                className="text-36-bold justify-center flex border border-primary rounded-lg size-16 gap-4 text-primary"
                 index={5}
                 mask
               />
@@ -130,12 +129,13 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogAction
+          <button
             onClick={validatePasskey}
-            className="bg-purple-800 text-white w-full cursor-pointer hover:bg-blue-400"
+            disabled={loading}
+            className="bg-primary text-gray-900 w-full cursor-pointer hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-md font-normal transition-colors"
           >
             {loading ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center gap-4">
                 <img
                   src="/loader.svg"
                   alt="loader"
@@ -148,7 +148,7 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
             ) : (
               "Enter Admin Passkey"
             )}
-          </AlertDialogAction>
+          </button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
