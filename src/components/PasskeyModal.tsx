@@ -92,26 +92,32 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={0}
+                mask
               />
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={1}
+                mask
               />
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={2}
+                mask
               />
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={3}
+                mask
               />
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={4}
+                mask
               />
               <InputOTPSlot
                 className="text-36-bold justify-center flex border border-purple-800 rounded-lg size-16 gap-4 text-blue-400"
                 index={5}
+                mask
               />
             </InputOTPGroup>
           </InputOTP>
@@ -137,7 +143,7 @@ const PasskeyModal = ({ open, onOpenChange }: PasskeyModalProps) => {
                   height={24}
                   className="animate-spin"
                 />
-                Loading admin panel...
+                Loading...
               </div>
             ) : (
               "Enter Admin Passkey"
